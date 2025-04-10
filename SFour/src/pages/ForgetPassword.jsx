@@ -1,0 +1,58 @@
+import { FaFacebook, FaGoogle } from "react-icons/fa";
+import signinPic from "../assets/images/signinpic.png";
+import { useNavigate } from "react-router-dom";
+import logo from "../assets/images/logo.png";
+export default function ForgetPassword() {
+      const navigate = useNavigate();
+    
+  return (
+    <div className="flex flex-col md:flex-row h-screen w-full ">
+      {/* Left Section */}
+      <div className="md:w-1/2 flex flex-col justify-center items-center bg-white px-10 text-center md:text-left">
+        <div className="mb-6">
+          <img src={logo} alt="Logo" className="h-20" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">Forget Password</h2>
+        <p className="text-gray-500">Go back to <span className="text-orange-500 cursor-pointer">Sign In</span></p>
+        <p className="text-gray-500">Don't have an account? <span className="text-orange-500 cursor-pointer">Create Account</span></p>
+        
+        <div className="w-full mt-6">
+          <input type="email" placeholder="Email address" className="w-full border px-4 py-2 rounded-md mb-4" />
+          <button className="w-full bg-orange-500 text-white py-2 rounded-md  " onClick={() => navigate("/ResetPassword")}>Reset Password</button>
+        </div>
+        
+        <p className="text-gray-500 my-4">or</p>
+        
+        <div className="flex space-x-4">
+          <button className="flex items-center px-4 py-2 border rounded-md">
+            <FaFacebook className="text-blue-600 mr-2" /> Sign in with Facebook
+          </button>
+          <button className="flex items-center px-4 py-2 border rounded-md">
+            <FaGoogle className="text-red-500 mr-2" /> Sign in with Google
+          </button>
+        </div>
+      </div>
+      
+      {/* Right Section */}
+      <div className="hidden md:flex w-1/2 justify-center items-center bg-cover bg-center " style={{ backgroundImage: `url(${signinPic})` }}>
+        <div className="text-white text-center px-9">
+          <h2 className="text-2xl font-semibold">Over 1,75,324 candidates waiting for good employees.</h2>
+          <div className="flex justify-center space-x-10 mt-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold">1,75,324</p>
+              <p className="text-sm">Live Job</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">97,354</p>
+              <p className="text-sm">Companies</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">7,532</p>
+              <p className="text-sm">New Jobs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
