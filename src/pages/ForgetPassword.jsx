@@ -2,6 +2,7 @@ import { FaFacebook, FaGoogle } from "react-icons/fa";
 import signinPic from "../assets/images/signinpic.png";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/images/logo.png";
+import JobStatsDisplay from "../components/common/JobStatsDisplay"; 
 export default function ForgetPassword() {
       const navigate = useNavigate();
     
@@ -34,25 +35,7 @@ export default function ForgetPassword() {
       </div>
       
       {/* Right Section */}
-      <div className="hidden md:flex w-1/2 justify-center items-center bg-cover bg-center " style={{ backgroundImage: `url(${signinPic})` }}>
-        <div className="text-white text-center px-9">
-          <h2 className="text-2xl font-semibold">Over 1,75,324 candidates waiting for good employees.</h2>
-          <div className="flex justify-center space-x-10 mt-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold">1,75,324</p>
-              <p className="text-sm">Live Job</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">97,354</p>
-              <p className="text-sm">Companies</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">7,532</p>
-              <p className="text-sm">New Jobs</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <JobStatsDisplay />
     </div>
   );
 }

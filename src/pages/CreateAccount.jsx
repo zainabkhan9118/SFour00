@@ -2,12 +2,12 @@ import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../Auth/firebaseConfig";
+import { db, auth } from "../config/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
-import { collection, query, where, getDocs } from "firebase/firestore"; // Importing necessary Firestore functions
+import { collection, query, where, getDocs } from "firebase/firestore"; 
 import logo from "../assets/images/logo.png";
-import signinPic from "../assets/images/signinpic.png";
+import JobStatsDisplay from "../components/common/JobStatsDisplay"; 
 
 export default function CreateAccount() {
   const [showPassword, setShowPassword] = useState(false);
@@ -226,20 +226,7 @@ export default function CreateAccount() {
       </div>
 
       {/* Right Section */}
-      <div
-        className="hidden md:flex w-1/2 justify-center items-center bg-cover bg-center p-6"
-        style={{ backgroundImage: `url(${signinPic})` }}
-      >
-        <div className="text-white text-center px-6 md:px-9">
-          <h2 className="text-lg md:text-2xl font-semibold">
-            Over 1,75,000+ Jobs Available
-          </h2>
-          <p className="text-sm md:text-base mt-4">
-            Sign up and start your journey towards finding the best jobs in
-            the industry.
-          </p>
-        </div>
-      </div>
+      <JobStatsDisplay />
     </div>
   );
 }
