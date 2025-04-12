@@ -8,7 +8,7 @@ import {
     query,
     where,
     doc,
-    setDoc, // ✅ Add this line
+    setDoc,
   } from "firebase/firestore";
   const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

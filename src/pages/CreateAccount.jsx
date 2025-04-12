@@ -1,61 +1,27 @@
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../config/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
-import { collection, query, where, getDocs } from "firebase/firestore"; 
+import axios from "axios";
 import logo from "../assets/images/logo.png";
-import JobStatsDisplay from "../components/common/JobStatsDisplay"; 
+import JobStatsDisplay from "../components/common/JobStatsDisplay";
+import { AppContext } from "../context/AppContext";
+import { auth } from "../config/firebaseConfig";
 
 export default function CreateAccount() {
+  const { BASEURL,setUser } = useContext(AppContext);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [userType, setUserType] = useState("Employers");
+  const [userType, setUserType] = useState("company");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const checkIfUserExists = async (email) => {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", email));
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
-  };
-
-  const createNewUser = async (user) => {
-    try {
-      const newUserRef = doc(collection(db, "user"), user.uid);
-      const userData =
-        userType === "Employers"
-          ? {
-              fullName,
-              email,
-              phone,
-              userType,
-              createdAt: new Date(),
-            }
-          : {
-              companyName,
-              email,
-              phone,
-              userType,
-              createdAt: new Date(),
-            };
-
-      await setDoc(newUserRef, userData);
-      alert(`${userType} account created successfully!`);
-      navigate("/user-login");
-    } catch (error) {
-      console.error("Error creating user:", error);
-      alert("Something went wrong while creating the account.");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,24 +36,45 @@ export default function CreateAccount() {
       return;
     }
 
-    const userExists = await checkIfUserExists(email);
-    if (userExists) {
-      alert("User already exists with this email.");
-      return;
-    }
-
+    setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseId = userCredential.user.uid;
+      // console.log('firebaseid', firebaseId);
 
-      await createNewUser(user);
+      const userData =
+        userType === "jobseeker"
+          ? {
+              email,
+              phone,
+              role: "Job Seeker", 
+              firebaseId,
+            }
+          : {
+              email,
+              phone,
+              role: "Company",  
+              firebaseId,
+            };
+
+      const response = await axios.post(`/api/user`, userData);
+      if (response.data && response.status === 201) {
+        setUser(response.data);
+        // console.log("User saved to backend:", response.data);
+        alert("Account created successfully!");
+      
+        if (userType === "jobseeker") {
+          navigate("/User-UserProfile");
+        } else {
+          navigate("/company-profile");
+        }
+      }
+     
     } catch (error) {
-      console.error("Error during sign-up:", error);
-      alert("Error during sign-up: " + error.message);
+      console.error("Error during sign-up:", error.message);
+      alert("Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,15 +105,15 @@ export default function CreateAccount() {
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
               >
-                <option value="Employers">Employers</option>
-                <option value="Company">Company</option>
+                <option value="jobseeker">Job Seeker</option>
+                <option value="company">Company</option>
               </select>
             </div>
           </div>
 
           {/* Form Fields */}
           <div className="mt-6 space-y-4">
-            {userType === "Employers" ? (
+            {userType === "jobseeker" ? (
               <input
                 type="text"
                 placeholder="Full Name"
@@ -194,7 +181,6 @@ export default function CreateAccount() {
             </div>
           </div>
 
-          {/* Terms and Submit */}
           <div className="mt-4 flex items-center">
             <input type="checkbox" id="terms" className="mr-2" />
             <label htmlFor="terms" className="text-sm text-gray-600">
@@ -208,11 +194,11 @@ export default function CreateAccount() {
           <button
             className="w-full bg-orange-500 text-white py-2 rounded-md text-sm font-semibold hover:bg-orange-600 transition mt-4"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Create Account →
+            {loading ? "Creating Account..." : "Create Account →"}
           </button>
 
-          {/* Social Logins */}
           <div className="mt-4 text-center text-sm text-gray-500">or</div>
           <div className="flex justify-center gap-4 mt-4">
             <button className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm hover:bg-gray-100">
@@ -225,7 +211,6 @@ export default function CreateAccount() {
         </div>
       </div>
 
-      {/* Right Section */}
       <JobStatsDisplay />
     </div>
   );
