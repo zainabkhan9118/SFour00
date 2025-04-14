@@ -14,7 +14,7 @@ const UserProfile = () => {
     <div className="flex flex-col flex-1">
       {/* Header */}
       <Header />
-   
+
       <main className="flex-  ">
       <div className="flex flex-col flex-1">
       <UserSidebar />

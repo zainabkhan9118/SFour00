@@ -10,7 +10,7 @@ import { AppContext } from "../context/AppContext";
 import { auth } from "../config/firebaseConfig";
 
 export default function CreateAccount() {
-  const { BASEURL,setUser } = useContext(AppContext);
+  const { BASEURL,setUser,setRole } = useContext(AppContext);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userType, setUserType] = useState("company");
@@ -22,7 +22,6 @@ export default function CreateAccount() {
   const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -59,21 +58,20 @@ export default function CreateAccount() {
                   };
 
         // 2. Send to backend
-        const response = await axios.post(`${BASEURL}/user`, userData);
-        
+        const response = await axios.post(`${BASEURL}/user`,userData);
+
         // 3. If backend is successful
         if (response.data && response.status === 201) {
             setUser(response.data);
-            alert("Account created successfully!");
 
-          
-                navigate("/login");
-          
-           
+            // Store role in localStorage
+            localStorage.setItem("userRole", setRole(userData.role)); 
+            localStorage.setItem("userEmail", email); 
+            alert("Account created successfully!");
+            navigate("/login");
         } else {
             throw new Error("Backend user creation failed");
         }
-
     } catch (error) {
         console.error("Error during sign-up:", error);
 
@@ -82,7 +80,7 @@ export default function CreateAccount() {
         if (currentUser) {
             try {
                 await currentUser.delete();
-                // console.log(" Firebase user deleted due to backend failure.");
+                console.error("Firebase user deleted due to backend failure.");
             } catch (deleteError) {
                 console.error("Failed to delete Firebase user:", deleteError);
             }

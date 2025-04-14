@@ -50,11 +50,12 @@ export default function LoginPage() {
     
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 // console.log("Login successful, user data from backend:", response.data);
+                
                 setUser(response.data); 
                 alert("Login successful!");
-            
-                const role = response.data.data?.role;
-                console.log("👤 User Role:", role);
+                
+                const role = response.data.data.role;
+                console.log("User Role:", role);
             
                 if (role === "Job Seeker") {
                     navigate("/User-UserProfile");
