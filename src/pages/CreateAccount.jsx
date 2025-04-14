@@ -27,56 +27,72 @@ export default function CreateAccount() {
     e.preventDefault();
 
     if (!email || !password || !confirmPassword || !phone) {
-      alert("Please fill in all required fields.");
-      return;
+        alert("Please fill in all required fields.");
+        return;
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
+        alert("Passwords do not match.");
+        return;
     }
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseId = userCredential.user.uid;
-      // console.log('firebaseid', firebaseId);
+        // 1. Create user in Firebase
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+        const firebaseId = firebaseUser.uid;
 
-      const userData =
-        userType === "jobseeker"
-          ? {
-              email,
-              phone,
-              role: "Job Seeker", 
-              firebaseId,
-            }
-          : {
-              email,
-              phone,
-              role: "Company",  
-              firebaseId,
-            };
+        const userData =
+            userType === "jobseeker"
+                ? {
+                      email,
+                      phone,
+                      role: "Job Seeker",
+                      firebaseId,
+                  }
+                : {
+                      email,
+                      phone,
+                      role: "Company",
+                      firebaseId,
+                  };
 
-      const response = await axios.post(`/api/user`, userData);
-      if (response.data && response.status === 201) {
-        setUser(response.data);
-        // console.log("User saved to backend:", response.data);
-        alert("Account created successfully!");
-      
-        if (userType === "jobseeker") {
-          navigate("/User-UserProfile");
+        // 2. Send to backend
+        const response = await axios.post(`${BASEURL}/user`, userData);
+        
+        // 3. If backend is successful
+        if (response.data && response.status === 201) {
+            setUser(response.data);
+            alert("Account created successfully!");
+
+          
+                navigate("/login");
+          
+           
         } else {
-          navigate("/company-profile");
+            throw new Error("Backend user creation failed");
         }
-      }
-     
+
     } catch (error) {
-      console.error("Error during sign-up:", error.message);
-      alert("Signup failed. Please try again.");
+        console.error("Error during sign-up:", error);
+
+        // If Firebase user was created but backend failed, delete Firebase user
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            try {
+                await currentUser.delete();
+                // console.log(" Firebase user deleted due to backend failure.");
+            } catch (deleteError) {
+                console.error("Failed to delete Firebase user:", deleteError);
+            }
+        }
+
+        alert("Signup failed. Please try again.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   return (
     <div className="flex h-screen">

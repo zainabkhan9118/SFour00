@@ -3,8 +3,8 @@ import { FaFacebook, FaGoogle, FaEye, FaEyeSlash, FaArrowRight } from "react-ico
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
-import axios from "axios"; // Make sure this is imported
-import { AppContext } from "../context/AppContext"; // This provides BASEURL and setUser
+import axios from "axios"; 
+import { AppContext } from "../context/AppContext"; 
 import logo from "../assets/images/logo.png";
 import JobStatsDisplay from "../components/common/JobStatsDisplay";
 
@@ -13,10 +13,10 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState("user"); // Default to user role
+    const [role, setRole] = useState("user"); 
     const [loading, setLoading] = useState(false);
 
-    const { BASEURL, setUser } = useContext(AppContext); // Inside LoginPage component
+    const { BASEURL, setUser } = useContext(AppContext); 
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -27,36 +27,58 @@ export default function LoginPage() {
             alert("Please fill in all fields.");
             return;
         }
-
+    
         setLoading(true);
         try {
+            // console.log("Attempting Firebase sign-in...");
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const firebaseId = userCredential.user.uid;
+            // console.log("Firebase sign-in successful:", userCredential);
+    
+            const user = userCredential.user;
+            console.log("user",user);
+            
+    
+            // Get Firebase ID token
+            const idToken = await user.getIdToken();
+            console.log("🪪 Firebase ID Token:", idToken);    
+            const response = await axios.post(`${BASEURL}/auth/login`, {
+                idToken: idToken,
 
-            const response = await axios.get(`/api/user/${firebaseId}`);
-
-            if (response.status === 200 && response.data) {
-              // console.log("User data:", response.data); 
-              
+            });
+    
+            console.log("Backend response:", response.data);
+    
+            if ((response.status === 200 || response.status === 201) && response.data?.data) {
+                // console.log("Login successful, user data from backend:", response.data);
                 setUser(response.data); 
                 alert("Login successful!");
-                // console.log("role:", response.data.data.role); 
-                if (response.data.data.role === "Job Seeker") {
+            
+                const role = response.data.data?.role;
+                console.log("👤 User Role:", role);
+            
+                if (role === "Job Seeker") {
                     navigate("/User-UserProfile");
                 } else {
                     navigate("/company-profile");
                 }
             } else {
+                // console.warn("No user found in backend or invalid response");
                 alert("No user found in backend.");
             }
-
+    
         } catch (error) {
-            console.error("Login Error:", error);
-            alert("Login failed: " + error.message);
+            if (error.response) {
+                alert("Backend Error: " + (error.response.data?.message || "Unknown error"));
+            } else {
+                // console.error("Firebase/Auth Error:", error.message);
+                alert("Login failed: " + error.message);
+            }
         } finally {
             setLoading(false);
+            // console.log("Login process finished.");
         }
     };
+    
 
     const handleGoogleSignIn = async () => {
         const provider = new GoogleAuthProvider();
