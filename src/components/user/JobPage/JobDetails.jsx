@@ -1,4 +1,4 @@
-import { ArrowRight, X, Upload ,Bookmark} from "lucide-react"
+import { ArrowRight, X, Upload, Bookmark } from "lucide-react"
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../SideBar";
@@ -6,6 +6,19 @@ import Header from "../Header";
 export default function JobDetails() { 
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    
+    const handleFileChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        setSelectedFile(file);
+      }
+    };
+    
+    const handleUpload = () => {
+      document.getElementById('resumeUpload').click();
+    };
+    
   return (
     <div className="flex h-screen">
     {/* Sidebar */}
@@ -65,7 +78,7 @@ export default function JobDetails() {
               <button className="p-4  bg-gray-100 rounded-[50px]">
                 <Bookmark className="w-5 h-5 text-orange-500" />
               </button>
-              <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-yellow-400 text-white px-[40px] py-4 rounded-[50px] font-medium">
+              <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-orange-500 text-white px-[40px] py-4 rounded-[50px] font-medium">
                 Apply Now
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -198,17 +211,32 @@ export default function JobDetails() {
               {/* Modal Body */}
               <form className="space-y-5">
                 {/* Resume Upload */}
-                <div className="border border-dashed border-gray-300 rounded-[50px] p-4 flex items-center justify-center">
+                <div className="border border-dashed border-gray-300 rounded-[50px] p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center gap-2 text-gray-500">
                     <Upload className="w-5 h-5 text-blue-500" />
-                    <span>Upload Resume</span>
+                    <span onClick={handleUpload} className="cursor-pointer">Upload Resume</span>
+                    <input
+                      type="file"
+                      id="resumeUpload"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                    />
                   </div>
+                  {selectedFile && (
+                    <div className="mt-2 text-sm text-green-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {selectedFile.name}
+                    </div>
+                  )}
                 </div>
 
                 {/* Form Fields */}
                 <div>
                   <label htmlFor="name1" className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Full Name
+                    Your First Name
                   </label>
                   <input
                     type="text"
@@ -220,7 +248,7 @@ export default function JobDetails() {
 
                 <div>
                   <label htmlFor="name2" className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Full Name
+                    Your Last Name
                   </label>
                   <input
                     type="text"
@@ -266,7 +294,7 @@ export default function JobDetails() {
       )}
     </div>
     </div>
-        </div>
+    </div>
   )
 }
 
