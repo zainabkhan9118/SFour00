@@ -21,6 +21,7 @@ import InProgressJobDetail from "../components/company/profile/jobs/inprogress/I
 import Completed from "../components/company/profile/jobs/completed/Completed";
 import CompletedJobDetail from "../components/company/profile/jobs/completed/CompletedJobDetail";
 import Notification from "../components/company/Notification/Notification";
+import Qrcode from "../components/common/Qrcode";
 
 const CompanyRoutes = [
   // <Route key="company-login" path="/company-login" element={<CompanyLogin />} />,
@@ -41,7 +42,10 @@ const CompanyRoutes = [
   <Route key="completed-job" path="/completed-job" element={<Completed />} />,
   <Route key="completed-jobDetail" path="/completed-jobDetail" element={<CompletedJobDetail />} />,
   <Route key="faq" path="/faq" element={<FAQ />} />,
-  <Route key="notification" path="/notification" element={<Notification />} />
+  <Route key="notification" path="/notification" element={<Notification />} />,
+  <Route key="qrcode" path="/qrcode" element={<Qrcode/>} />
+
+
 ];
 
 export default CompanyRoutes;

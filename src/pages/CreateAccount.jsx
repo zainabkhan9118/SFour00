@@ -1,7 +1,7 @@
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import axios from "axios";
 import logo from "../assets/images/logo.png";
@@ -10,7 +10,7 @@ import { AppContext } from "../context/AppContext";
 import { auth } from "../config/firebaseConfig";
 
 export default function CreateAccount() {
-  const { BASEURL,setUser,setRole } = useContext(AppContext);
+  const { BASEURL, setUser, setRole } = useContext(AppContext);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userType, setUserType] = useState("company");
@@ -21,76 +21,93 @@ export default function CreateAccount() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.initialRole) {
+      setUserType(location.state.initialRole); 
+    }
+  }, [location.state]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password || !confirmPassword || !phone) {
-        alert("Please fill in all required fields.");
-        return;
+      alert("Please fill in all required fields.");
+      return;
     }
 
     if (password !== confirmPassword) {
-        alert("Passwords do not match.");
-        return;
+      alert("Passwords do not match.");
+      return;
     }
 
     setLoading(true);
     try {
-        // 1. Create user in Firebase
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const firebaseUser = userCredential.user;
-        const firebaseId = firebaseUser.uid;
+      // 1. Create user in Firebase
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const firebaseUser = userCredential.user;
+      const firebaseId = firebaseUser.uid;
 
-        const userData =
-            userType === "jobseeker"
-                ? {
-                      email,
-                      phone,
-                      role: "Job Seeker",
-                      firebaseId,
-                  }
-                : {
-                      email,
-                      phone,
-                      role: "Company",
-                      firebaseId,
-                  };
-
-        // 2. Send to backend
-        const response = await axios.post(`${BASEURL}/user`,userData);
-
-        // 3. If backend is successful
-        if (response.data && response.status === 201) {
-            setUser(response.data);
-
-            // Store role in localStorage
-            localStorage.setItem("userRole", setRole(userData.role)); 
-            localStorage.setItem("userEmail", email); 
-            alert("Account created successfully!");
-            navigate("/login");
-        } else {
-            throw new Error("Backend user creation failed");
-        }
-    } catch (error) {
-        console.error("Error during sign-up:", error);
-
-        // If Firebase user was created but backend failed, delete Firebase user
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            try {
-                await currentUser.delete();
-                console.error("Firebase user deleted due to backend failure.");
-            } catch (deleteError) {
-                console.error("Failed to delete Firebase user:", deleteError);
+      const userData =
+        userType === "jobseeker"
+          ? {
+              email,
+              phone,
+              role: "Job Seeker",
+              firebaseId,
             }
-        }
+          : {
+              email,
+              phone,
+              role: "Company",
+              firebaseId,
+            };
 
-        alert("Signup failed. Please try again.");
+      // 2. Send to backend
+      const response = await axios.post(`${BASEURL}/user`, userData);
+
+      // 3. If backend is successful
+      if (response.data && response.status === 201) {
+        setUser(response.data);
+        console.log(response.data);
+        const userData = response.data.data;
+        // console.log(userData.role);
+        
+        // Store role in localStorage
+        setRole(userData.role)
+        localStorage.setItem("userRole", userData.role);
+        localStorage.setItem("userEmail", email);
+        alert("Account created successfully!");
+        navigate("/login");
+      } else {
+        throw new Error("Backend user creation failed");
+      }
+    } catch (error) {
+      console.error("Error during sign-up:", error);
+
+      // If Firebase user was created but backend failed, delete Firebase user
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          await currentUser.delete();
+          console.error("Firebase user deleted due to backend failure.");
+        } catch (deleteError) {
+          console.error("Failed to delete Firebase user:", deleteError);
+        }
+      }
+
+      alert("Signup failed. Please try again.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   return (
     <div className="flex h-screen">
@@ -184,9 +201,7 @@ export default function CreateAccount() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <button
-                onClick={() =>
-                  setShowConfirmPassword(!showConfirmPassword)
-                }
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 type="button"
                 className="absolute right-3 top-3 text-gray-500"
               >
