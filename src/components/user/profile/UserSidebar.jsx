@@ -1,8 +1,16 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FaUser, FaLock, FaFileInvoice, FaHeadset, FaQuestionCircle, FaSignOutAlt, FaUniversity } from "react-icons/fa";
 
 const UserSidebar = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  // Function to check if the link is active
+  const isActive = (path) => {
+    return currentPath === path;
+  };
+
   return (
     <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
       <div className="flex items-center space-x-3 pb-4">
@@ -15,43 +23,64 @@ const UserSidebar = () => {
       </div>
       <ul className="mt-4 space-y-8 text-gray-700">
         <li>
-          <Link to="/User-PersonalDetails" className="flex items-center space-x-3 font-semibold text-black">
-            <FaUser className="text-gray-600" />
+          <Link 
+            to="/User-PersonalDetails" 
+            className={`flex items-center space-x-3 ${isActive("/User-PersonalDetails") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
+            <FaUser className={`${isActive("/User-PersonalDetails") ? "text-orange-500" : "text-gray-600"}`} />
             <span>Personal Details</span>
           </Link>
         </li>
         <li>
-          <Link to="/User-BankDetails" className="flex items-center space-x-3">
-            <FaUniversity className="text-orange-500" />
+          <Link 
+            to="/User-BankDetails" 
+            className={`flex items-center space-x-3 ${isActive("/User-BankDetails") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
+            <FaUniversity className={`${isActive("/User-BankDetails") ? "text-orange-500" : "text-orange-500"}`} />
             <span>Bank Details</span>
           </Link>
         </li>
         <li>
-          <Link to="/reset-password" className="flex items-center space-x-3">
+          <Link 
+            to="/reset-password" 
+            className={`flex items-center space-x-3 ${isActive("/reset-password") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
             <FaLock className="text-orange-500" />
             <span>Reset Password</span>
           </Link>
         </li>
         <li>
-          <Link to="/User-InvoiceList" className="flex items-center space-x-3">
+          <Link 
+            to="/User-InvoiceList" 
+            className={`flex items-center space-x-3 ${isActive("/User-InvoiceList") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
             <FaFileInvoice className="text-orange-500" />
             <span>My Invoices</span>
           </Link>
         </li>
         <li>
-          <Link to="/contact-support" className="flex items-center space-x-3">
+          <Link 
+            to="/User-ContactSupport" 
+            className={`flex items-center space-x-3 ${isActive("/contact-support") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
             <FaHeadset className="text-orange-500" />
             <span>Contact S4 Support</span>
           </Link>
         </li>
         <li>
-          <Link to="/User-FAQSection" className="flex items-center space-x-3">
+          <Link 
+            to="/User-FAQSection" 
+            className={`flex items-center space-x-3 ${isActive("/User-FAQSection") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+          >
             <FaQuestionCircle className="text-orange-500" />
-            <span>FAQ’s</span>
+            <span>FAQ's</span>
           </Link>
         </li>
         <li>
-          <Link to="/logout" className="flex items-center space-x-3 text-red-500">
+          <Link 
+            to="/logout" 
+            className={`flex items-center space-x-3 text-red-500 ${isActive("/logout") ? "bg-orange-100 p-2 rounded-md font-semibold" : ""}`}
+          >
             <FaSignOutAlt className="text-orange-500" />
             <span>Logout</span>
           </Link>

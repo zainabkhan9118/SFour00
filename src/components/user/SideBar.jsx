@@ -27,8 +27,18 @@ const Sidebar = () => {
     notifications: "/User-UserNotification"
   };
 
-  // Check if current path matches route
-  const isActive = (path) => currentPath === path;
+  // Check if current path matches route or is a sub-route
+  const isActive = (path) => {
+    // For profile routes, check if the path starts with User-User or User-Personal
+    if (path === routes.profile) {
+      return currentPath === path || 
+             currentPath.startsWith("/User-Personal") || 
+             currentPath.startsWith("/User-Bank") ||
+             currentPath.startsWith("/User-FAQSection");
+    }
+    // For other routes, exact match
+    return currentPath === path;
+  };
 
   // Toggle menu visibility on mobile
   const toggleMenu = () => {

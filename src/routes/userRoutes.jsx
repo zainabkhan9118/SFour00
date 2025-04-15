@@ -13,11 +13,12 @@ import UserNotification from "../components/user/Notification/Notification";
 import UserProfile from "../components/user/profile/UserProfile";
 import UserSidebar from "../components/user/profile/UserSidebar";
 import PersonalDetails from "../components/user/profile/PersonalDetails/PersonalDetails";
-import FAQSection from "../components/user/Faqs/Faqs";
-import InvoiceList from "../components/user/AllInvoices/InvoiceList";
-import BankAccountDetails from "../components/user/BankAccountDetails/BankAccountDetails";
+import FAQSection from "../components/user/profile/Faqs/Faqs";
+import InvoiceList from "../components/user/profile/AllInvoices/InvoiceList";
+import BankAccountDetails from "../components/user/profile/BankAccountDetails/BankAccountDetails";
 import UserChatPage from "../components/user/Chat/UserChatPage";
 import UserWorkInprogess from "../components/user/WorkInprogress/UserWorkInprogess";
+import ContactSupport from "../components/user/profile/ContactSupport/ContactSupport";
 
 const UserRoutes = [
   // <Route key="user-login" path="/user-login" element={<UserLogin />} />,
@@ -35,7 +36,8 @@ const UserRoutes = [
   <Route key="User-FAQSection" path="/User-FAQSection" element={<FAQSection />} />,
   <Route key="User-InvoiceList" path="/User-InvoiceList" element={<InvoiceList />} />,
   <Route key="User-BankDetails" path="/User-BankDetails" element={<BankAccountDetails />} />,
-  <Route key="User-UserChatPage" path="/User-UserChatPage" element={<UserChatPage />} />
+  <Route key="User-UserChatPage" path="/User-UserChatPage" element={<UserChatPage />} />,
+  <Route key="User-ContactSupport" path="/User-ContactSupport" element={<ContactSupport />} />
 ];
 
 export default UserRoutes;

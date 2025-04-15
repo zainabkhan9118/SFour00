@@ -25,6 +25,8 @@ const Header = () => {
         return "Work In Progress";
       case "/User-UserChatPage":
         return "Chat";
+      case "/contact-support":
+        return "S4 Supports";
       case "/User-CompanyDetails":
         return "Company Details";
       case "/User-BankDetails":
