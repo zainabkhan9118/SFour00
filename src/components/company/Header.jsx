@@ -1,12 +1,51 @@
 import React from "react";
 import { FaBell } from "react-icons/fa";
 import Avatar from "../../assets/images/logo.png";
+import { useLocation } from "react-router-dom";
 
 const Header = () => {
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  // Function to get the title based on current route
+  const getPageTitle = () => {
+    switch (pathname) {
+      case "/notification":
+        return "Notifications";
+      case "/company-profile":
+        return "Company Profile";
+      case "/user-JobDetails":
+        return "Job Posting";
+      case "/recents-jobs":
+        return "Recent Jobs";
+      case "/job-assigned":
+        return "Assigned Jobs";
+      case "/in-progress":
+        return "In-Progress Jobs";
+      case "/completed-job":
+        return "Completed Jobs";
+      case "/chat":
+        return "Messages";
+      case "/rota-management":
+        return "Rota Management";
+      case "/chat-support":
+        return "Chat Support";
+      case "/faq":
+        return "FAQ";
+      default:
+        return null; // Don't display a title if route isn't recognized
+    }
+  };
+
+  const title = getPageTitle();
+
   return (
     <div className="flex justify-between items-center bg-white px-6 py-4 shadow-md md:mb-4 lg:mb-0">
-      {/* Title */}
-      <h1 className="text-xl font-bold text-gray-800">Notifications</h1>
+      {/* Title - only shown if there's a title for the current route */}
+      {title && (
+        <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+      )}
+      {!title && <div></div>} {/* Empty div to maintain flex layout when no title */}
 
       {/* User Info */}
       <div className="flex items-center space-x-4">
@@ -22,7 +61,7 @@ const Header = () => {
         {/* User Avatar */}
         <div className="flex items-center space-x-2">
           <img
-            src={Avatar} // Replace with the correct path to the user avatar
+            src={Avatar}
             alt="User Avatar"
             className="w-10 h-10 rounded-full"
           />
