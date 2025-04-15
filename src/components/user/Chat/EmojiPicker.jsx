@@ -22,12 +22,13 @@ const EmojiPicker = ({ onEmojiSelect, isOpen, onClose }) => {
     };
   }, [isOpen, onClose]);
 
+  // If not open, don't render
   if (!isOpen) return null;
 
   return (
     <div 
       ref={pickerRef} 
-      className="absolute bottom-14 right-0 z-10 shadow-lg rounded-lg bg-white"
+      className="absolute bottom-14 right-0 z-10 shadow-lg rounded-lg bg-white max-w-[90vw] sm:max-w-[350px] transform scale-90 sm:scale-100 origin-bottom-right"
       data-testid="emoji-picker"
     >
       <Picker 
@@ -38,6 +39,8 @@ const EmojiPicker = ({ onEmojiSelect, isOpen, onClose }) => {
         }}
         theme="light"
         set="native"
+        previewPosition="none"
+        skinTonePosition="none"
       />
     </div>
   );

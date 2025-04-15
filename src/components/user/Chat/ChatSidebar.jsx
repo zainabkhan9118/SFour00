@@ -16,7 +16,7 @@ const ChatSidebar = ({ contacts, onSelect, selectedContact }) => {
   } = useContactSearch(contacts);
 
   return (
-    <div className="w-[320px] bg-white border-r overflow-y-auto flex flex-col">
+    <div className="w-full md:w-[320px] bg-white border-r flex flex-col h-[calc(100vh-64px)] md:h-screen">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ const ChatSidebar = ({ contacts, onSelect, selectedContact }) => {
                     <div className="absolute bottom-0 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                   )}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0"> {/* Add min-width to prevent flex items from overflowing */}
                   <div className="flex justify-between">
                     <span className={`font-medium ${contact.name === selectedContactName ? 'text-white' : 'text-gray-800'}`}>
                       {contact.name}
@@ -77,7 +77,7 @@ const ChatSidebar = ({ contacts, onSelect, selectedContact }) => {
                       {contact.role}
                     </span>
                     <span className={`text-sm truncate mt-1 ${contact.name === selectedContactName ? 'text-white' : 'text-gray-600'}`}>
-                      {contact.message.length > 35 ? contact.message.substring(0, 35) + "..." : contact.message}
+                      {contact.message}
                     </span>
                   </div>
                 </div>
