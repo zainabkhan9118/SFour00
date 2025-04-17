@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaUser, FaComments, FaBriefcase, FaBell, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaUser, FaComments, FaBriefcase, FaBell, FaSignOutAlt, FaBars, FaQrcode } from "react-icons/fa";
 import logo from "./.././../assets/images/logo.png";
 import { Link } from "react-router-dom";
 
@@ -15,43 +15,7 @@ export default function Sidebar() {
       >
         <FaBars className="text-2xl" />
       </button>
-
-      {/* Menu Items */}
-      {/* <nav className="w-full">
-        <ul className="space-y-6">
-        
-        <li>
-            <Link to='/applicant-profile' className="flex items-center px-6 py-2 text-lg font-semibold hover:bg-[#1F2A48] rounded-lg cursor-pointer">
-              <FaUser className="mr-3 text-xl" /> Profile
-            </Link>
-          </li>
-          <li>
-            <Link to='/chat' className="flex items-center px-6 py-2 text-lg text-gray-500 cursor-not-allowed cursor-pointer">
-              <FaComments className="mr-3 text-xl" /> Chat
-            </Link>
-          </li>
-          <li>
-            <Link to='/my-work' className="flex items-center px-6 py-2 text-lg text-gray-500 cursor-not-allowed cursor-pointer">
-              <FaBriefcase className="mr-3 text-xl" /> My Work
-            </Link>
-          </li>
-          <li>
-            <Link to='/notifications' className="flex items-center px-6 py-2 text-lg text-gray-500 cursor-not-allowed cursor-pointer">
-              <FaBell className="mr-3 text-xl" /> Notifications
-            </Link>
-          </li>
-        </ul>
-      </nav> */}
-      {/* <nav className="w-full">
-        <ul className="space-y-6">
-          <Link to='/applicant-profile'>
-            <li className="flex items-center px-6 py-2 text-lg font-semibold hover:bg-[#1F2A48] rounded-lg">
-              <FaUser className="mr-3 text-xl" /> Profile
-            </li>
-          </Link>
-        </ul>
-      </nav> */}
-      {/* Sidebar */}
+    
       <div
         className={`fixed top-0 left-0 min-h-screen w-64 bg-[#16213E] text-white flex flex-col items-center py-6 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
@@ -83,6 +47,12 @@ export default function Sidebar() {
             <li>
               <Link to='/notification' className="flex items-center px-6 py-2 text-lg text-gray-500 cursor-not-allowed cursor-pointer">
                 <FaBell className="mr-3 text-xl" /> Notifications
+              </Link>
+            </li>
+            {/* QR Code Menu Item */}
+            <li>
+              <Link to='/qr-code' className="flex items-center px-6 py-2 text-lg text-gray-500 cursor-not-allowed cursor-pointer">
+                <FaQrcode className="mr-3 text-xl" /> QR Code
               </Link>
             </li>
           </ul>

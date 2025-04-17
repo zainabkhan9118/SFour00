@@ -43,7 +43,7 @@ const CompanyRoutes = [
   <Route key="completed-jobDetail" path="/completed-jobDetail" element={<CompletedJobDetail />} />,
   <Route key="faq" path="/faq" element={<FAQ />} />,
   <Route key="notification" path="/notification" element={<Notification />} />,
-  <Route key="qrcode" path="/qrcode" element={<Qrcode/>} />
+  <Route key="qrcode" path="/qr-code" element={<Qrcode/>} />
 
 
 ];
