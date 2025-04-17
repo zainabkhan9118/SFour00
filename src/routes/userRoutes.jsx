@@ -18,6 +18,10 @@ import InvoiceList from "../components/user/AllInvoices/InvoiceList";
 import BankAccountDetails from "../components/user/BankAccountDetails/BankAccountDetails";
 import UserChatPage from "../components/user/Chat/UserChatPage";
 import UserWorkInprogess from "../components/user/WorkInprogress/UserWorkInprogess";
+import WorkAssignedBook from "../components/user/WorkedAssignedBook/WorkAssignedBook";
+import AppliedjobDetail from "../components/user/WorkApplied/AppliedjobDetail";
+import ReportProblem from "../components/user/reportProblem/ReportProblem";
+import UserCompleted from "../components/user/completed/UserCompleted";
 
 const UserRoutes = [
   // <Route key="user-login" path="/user-login" element={<UserLogin />} />,
@@ -27,6 +31,14 @@ const UserRoutes = [
   <Route key="User-CompanyDetails" path="/User-CompanyDetails" element={<CompanyDetails />} />,
   <Route key="User-WorkApplied" path="/User-WorkApplied" element={<WorkApplied />} />,
   <Route key="User-MyWorkAssignedPage" path="/User-MyWorkAssignedPage" element={<MyWorkAssignedPage />} />,
+  <Route key="User-MyWorkAssignBook" path="/User-MyWorkAssignedBook" element={<WorkAssignedBook/>} />,
+  <Route key="User-AppliedAndAssignedDetail" path="/User-AppliedAndAssignedDetail" element={<AppliedjobDetail/>} />,
+  <Route key="User-ReportProblem" path="/User-reportProblem" element={<ReportProblem/>} />,
+  <Route key="User-WorkCompleted" path="/User-WorkCompleted" element={<UserCompleted/>} />,
+
+
+
+
   <Route key="User-workInprogess" path="/User-workInprogess" element={<UserWorkInprogess />} />,
   <Route key="User-UserNotification" path="/User-UserNotification" element={<UserNotification />} />,
   <Route key="User-UserProfile" path="/User-UserProfile" element={<UserProfile />} />,

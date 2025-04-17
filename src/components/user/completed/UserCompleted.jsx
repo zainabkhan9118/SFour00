@@ -3,7 +3,7 @@ import { useState } from "react";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
-import { useNavigate } from 'react-router-dom';
+import PopupModelJobCompleted from '../popupModel/popupModel-Inprogress/PopupModelJobCompleted';
 
 
 const CheckIcon = () => (
@@ -86,14 +86,9 @@ const jobs = [
   },
 ];
 
-const UserWorkInprogess = () => {
-
-  const navigate  = useNavigate();
-
-  const handleNavigate = () => {
-    navigate("/User-AppliedAndAssignedDetail"); 
-  }
-
+const UserCompleted = () => {
+    const [showPopup, setShowPopup] = useState(false);
+    
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
     {/* Sidebar */}
@@ -147,11 +142,17 @@ const UserWorkInprogess = () => {
                   <BookmarkIcon  />
                 </button>
                 <button
-                  onClick={handleNavigate}
-                  className="bg-[#1F2B44] text-white w-full sm:w-[110px] h-[40px] text-sm font-normal rounded-full"
+                onClick={() => setShowPopup(true)}
+                  className="bg-[#FD7F00] text-white w-full sm:w-[110px] h-[40px] text-sm font-normal rounded-full"
                 >
-                  Book Off
+                  Completed
                 </button>
+
+                {
+                    showPopup && (
+                        <PopupModelJobCompleted onClose = {()=>setShowPopup(false)}/>
+                    )
+                }
               
               </div>
             </div>
@@ -163,4 +164,4 @@ const UserWorkInprogess = () => {
   )
 }
 
-export default UserWorkInprogess
+export default UserCompleted

@@ -3,8 +3,9 @@ import { useState } from "react";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
-import { useNavigate } from 'react-router-dom';
-
+import PopupButton4 from '../popupModel/PopupButton4';
+import PopupButton5 from '../popupModel/PopupButton5';
+import PopupButton6 from '../popupModel/PopupButton6';
 
 const CheckIcon = () => (
   <svg
@@ -86,14 +87,10 @@ const jobs = [
   },
 ];
 
-const UserWorkInprogess = () => {
-
-  const navigate  = useNavigate();
-
-  const handleNavigate = () => {
-    navigate("/User-AppliedAndAssignedDetail"); 
-  }
-
+const WorkAssignedBook = () => {
+    const [showButton4, setShowButton4] = useState(false);
+    const [showButton5, setShowButton5] = useState(false);
+    const [showButton6, setShowButton6] = useState(false);
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
     {/* Sidebar */}
@@ -147,12 +144,42 @@ const UserWorkInprogess = () => {
                   <BookmarkIcon  />
                 </button>
                 <button
-                  onClick={handleNavigate}
-                  className="bg-[#1F2B44] text-white w-full sm:w-[110px] h-[40px] text-sm font-normal rounded-full"
+                  onClick={() => setShowButton4(true)}
+                  className="bg-orange-500 text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
                 >
-                  Book Off
+                  Book On
                 </button>
-              
+                {showButton4 && (
+                  <PopupButton4
+                    onClose={() => {
+                      setShowButton4(false);
+                      setShowButton5(true);
+                    }}
+                    onClose4={() => {
+                      setShowButton4(false);
+                    }}
+
+                  />
+                )}
+
+                {showButton5 && (
+                  <PopupButton5
+                    onClose={() => {
+                      setShowButton5(false); 
+                      setShowButton6(true);                   
+                    }}
+                    onClose5={() => {
+                      setShowButton5(false);
+                    }}
+                  />
+                )}
+                {showButton6 && (
+                  <PopupButton6
+                    onClose={() => {
+                      setShowButton6(false);
+                    }}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -163,4 +190,4 @@ const UserWorkInprogess = () => {
   )
 }
 
-export default UserWorkInprogess
+export default WorkAssignedBook
