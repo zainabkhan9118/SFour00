@@ -5,13 +5,12 @@ import { QrReader } from "@blackbox-vision/react-qr-reader";
 
 const PopupInprogess = ({ onClose }) => {
   const buttonRef = useRef();
-  const qrReaderRef = useRef(); // Ref for QrReader component
-  const [showScanner, setShowScanner] = useState(null);
+  const [showScanner, setShowScanner] = useState(null); // State to control QR scanner visibility and identify which QR is being scanned
   const [qrData, setQrData] = useState({
     pointA: null,
     pointB: null,
     pointC: null,
-  });
+  }); // State to store scanned QR data for each point
 
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
@@ -19,32 +18,37 @@ const PopupInprogess = ({ onClose }) => {
     }
   };
 
-  const closeCamera = () => {
-    if (qrReaderRef.current && qrReaderRef.current.videoRef.current) {
-      const videoElement = qrReaderRef.current.videoRef.current;
-      if (videoElement.srcObject) {
-        const tracks = videoElement.srcObject.getTracks();
-        tracks.forEach((track) => {
-          track.stop(); // Stop each track
-        });
-        videoElement.srcObject = null; // Clear the video source
-      }
-    }
-    setShowScanner(null); // Reset the scanner state
-  };
-
   const handleScanResult = (result, error) => {
     if (!!result && result?.text) {
-      console.log(`Scanned QR Code for ${showScanner}:`, result?.text);
-      setQrData((prev) => ({
-        ...prev,
-        [showScanner]: result?.text,
-      }));
-      closeCamera(); // Close the camera after a successful scan
+        console.log(`Scanned QR Code for ${showScanner}:`, result?.text);
+        setQrData((prev) => ({
+            ...prev,
+            [showScanner]: result?.text, 
+        }));
+        stopCamera();
+        setShowScanner(null); // Close the scanner UI
     } else if (!!error) {
-      console.warn("QR Scan Error:", error);
+        console.warn("QR Scan Error:", error);
+    } else {
+        console.log("No valid QR code detected yet.");
     }
-  };
+};
+
+const stopCamera = () => {
+    // Stop the camera stream if it's active
+    const videoElement = document.querySelector("video");
+    if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => track.stop()); // Stop all tracks
+        videoElement.srcObject = null; // Clear the video source
+    }
+};
+
+const closeScanner = () => {
+    stopCamera(); // Ensure camera stops when scanner closes
+    setShowScanner(null); // Properly set the scanner state to null
+};
 
   return (
     <div
@@ -54,7 +58,7 @@ const PopupInprogess = ({ onClose }) => {
     >
       <div
         className="bg-white rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
       >
         {/* Close Button */}
         <div className="w-12 h-12 rounded-full bg-[#E7F0FA] absolute top-[-20px] right-[-3px] flex items-center justify-center">
@@ -98,7 +102,10 @@ const PopupInprogess = ({ onClose }) => {
             ) : (
               <FaQrcode
                 className="text-gray-500 text-xl cursor-pointer"
-                onClick={() => setShowScanner("pointA")}
+                onClick={() => {
+                  console.log("QR Code A clicked");
+                  setShowScanner("pointA"); // Open scanner for point A
+                }}
               />
             )}
           </div>
@@ -111,7 +118,10 @@ const PopupInprogess = ({ onClose }) => {
             ) : (
               <FaQrcode
                 className="text-gray-500 text-xl cursor-pointer"
-                onClick={() => setShowScanner("pointB")}
+                onClick={() => {
+                  console.log("QR Code B clicked");
+                  setShowScanner("pointB"); // Open scanner for point B
+                }}
               />
             )}
           </div>
@@ -124,7 +134,10 @@ const PopupInprogess = ({ onClose }) => {
             ) : (
               <FaQrcode
                 className="text-gray-500 text-xl cursor-pointer"
-                onClick={() => setShowScanner("pointC")}
+                onClick={() => {
+                  console.log("QR Code C clicked");
+                  setShowScanner("pointC"); // Open scanner for point C
+                }}
               />
             )}
           </div>
@@ -135,21 +148,18 @@ const PopupInprogess = ({ onClose }) => {
           <div className="fixed inset-0 bg-black w-full h-screen bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-4 rounded-xl shadow-lg w-[90%] max-w-[500px] h-auto md:h-[435px] flex flex-col items-center relative">
               <QrReader
-                ref={qrReaderRef}
-                key={showScanner}
-                constraints={{
-                  facingMode: "environment",
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 },
-                }}
+               key={showScanner}
+                constraints={{ facingMode: "environment" }}
                 onResult={handleScanResult}
                 containerStyle={{ width: "400px", height: "400px" }}
                 videoStyle={{ width: "100%" }}
               />
               {/* Close Button */}
-              <div className="absolute top-[-20px] right-[-20px] w-12 h-12 rounded-full bg-[#E7F0FA] flex items-center justify-center">
+              <div
+                className="absolute top-[-20px] right-[-20px] sm:top-[-15px] sm:right-[-15px] md:top-[-20px] md:right-[-20px] lg:top-[-20px] lg:right-[-20px] w-12 h-12 rounded-full bg-[#E7F0FA] flex items-center justify-center"
+              >
                 <button
-                  onClick={closeCamera}
+                  onClick={closeScanner}
                   className="text-gray-500 focus:outline-none"
                 >
                   <IoCloseCircleOutline className="text-4xl text-orange-400" />
@@ -161,7 +171,7 @@ const PopupInprogess = ({ onClose }) => {
 
         {/* Submit Button */}
         <button
-          onClick={onClose}
+        onClick={onClose}
           className="mt-6 px-6 py-2 w-full md:w-[140px] h-12 bg-[#1F2B44] text-white rounded-full hover:bg-gray-900 transition duration-200"
         >
           Submit

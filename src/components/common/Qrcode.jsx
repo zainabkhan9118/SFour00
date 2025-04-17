@@ -55,7 +55,7 @@ const Qrcode = () => {
 
           {/* Input Fields */}
           {!isGenerated && (
-            <div className="w-full max-w-md p-4 bg-white rounded shadow-xl">
+            <div className="w-full max-w-md p-4 bg-white rounded-xl shadow-xl">
               <div className="mb-4">
                 <label className="block text-gray-700 font-semibold text-base mb-2">
                   Location

@@ -23,22 +23,27 @@ const PopupButton5 = ({ onClose, onClose5 }) => {
   const handleScanResult = (result, error) => {
     if (!!result) {
       console.log("Scanned QR Code:", result?.text);
-      setQrData(result?.text); // Set QR data after successful scan
-      setShowScanner(false); // Close scanner after successful scan
-
-      // Stop the camera stream after scanning
-      const videoElement = document.querySelector("video");
-      if (videoElement && videoElement.srcObject) {
-        const stream = videoElement.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => track.stop()); // Stop all tracks
-        videoElement.srcObject = null; // Clear the video source
-      }
+      setQrData(result?.text);
+      setShowScanner(false);
+      stopCamera();
+  
+      // Add a short delay before stopping the camera
+      setTimeout(() => {
+        const videoElement = document.querySelector("video");
+        if (videoElement && videoElement.srcObject) {
+          const stream = videoElement.srcObject;
+          const tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
+          videoElement.srcObject = null;
+        }
+      }, 500); // Wait 500ms before stopping camera
     }
+  
     if (!!error) {
       console.warn("QR Scan Error:", error);
     }
   };
+  
 
   const closeCameraAndPopup = () => {
     setShowScanner(false);
