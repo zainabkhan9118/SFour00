@@ -8,6 +8,10 @@ const UserSidebar = () => {
 
   // Function to check if the link is active
   const isActive = (path) => {
+    // For personal details, highlight for both the main page and edit page
+    if (path === "/User-PersonalDetails") {
+      return currentPath === "/User-PersonalDetails" || currentPath === "/edit-personal-details " || currentPath === "/edit-experience" || currentPath === "/edit-education" || currentPath === "/edit-certificate" || currentPath === "/edit-license" || currentPath === "/edit-utr-number";
+    }
     return currentPath === path;
   };
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaMapMarkerAlt,
   FaEdit,
@@ -16,6 +17,32 @@ import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
 
 const PersonalDetails = () => {
+  const navigate = useNavigate();
+
+  const handleEditProfile = () => {
+    navigate("/edit-personal-details");
+  };
+
+  const handleEditExperience = () => {
+    navigate("/edit-experience");
+  };
+
+  const handleEditEducation = () => {
+    navigate("/edit-education");
+  };
+
+  const handleEditUTRNumber = () => {
+    navigate("/edit-utr-number");
+  };
+
+  const handleEditCertificate = () => {
+    navigate("/edit-certificate");
+  };
+
+  const handleEditLicense = () => {
+    navigate("/edit-license");
+  };
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -43,7 +70,10 @@ const PersonalDetails = () => {
                   <div className="mt-4 md:mt-0 md:ml-6 flex-1">
                     <div className="flex justify-between items-start">
                       <h2 className="text-2xl font-bold">About Dany</h2>
-                      <FaEdit className="text-gray-500 cursor-pointer" />
+                      <FaEdit
+                        className="text-gray-500 cursor-pointer"
+                        onClick={handleEditProfile}
+                      />
                     </div>
                     <p className="mt-2 text-gray-600">
                       Lorem Ipsum is simply dummy text of the printing and typesetting
@@ -70,7 +100,10 @@ const PersonalDetails = () => {
                   <div>
                     <div className="flex justify-between items-center">
                       <h3 className="text-xl font-bold">Experience</h3>
-                      <FaEdit className="text-gray-500 cursor-pointer" />
+                      <FaEdit
+                        className="text-gray-500 cursor-pointer"
+                        onClick={handleEditExperience}
+                      />
                     </div>
                     <div className="mt-4 space-y-4">
                       {[0, 1, 2].map((i) => (
@@ -99,7 +132,10 @@ const PersonalDetails = () => {
                   <div>
                     <div className="flex justify-between items-center">
                       <h3 className="text-xl font-bold">Education</h3>
-                      <FaEdit className="text-gray-500 cursor-pointer" />
+                      <FaEdit
+                        className="text-gray-500 cursor-pointer"
+                        onClick={handleEditEducation}
+                      />
                     </div>
                     <div className="mt-4 space-y-4">
                       <div className="flex justify-between items-start">
@@ -111,7 +147,7 @@ const PersonalDetails = () => {
                             <p className="text-gray-600">Oct 2017 - Nov 7 2021</p>
                           </div>
                         </div>
-                        <FaArrowRight className="text-gray-500 mt-2" />
+                        <FaArrowRight className="text-gray-500 mt-2" onClick={handleEditEducation}/>
                       </div>
 
                       <div className="flex justify-between items-start">
@@ -122,7 +158,10 @@ const PersonalDetails = () => {
                             <p className="text-gray-600">Work Reference</p>
                           </div>
                         </div>
-                        <FaArrowRight className="text-gray-500 mt-2" />
+                        <FaArrowRight 
+                          className="text-gray-500 mt-2 cursor-pointer" 
+                          onClick={handleEditCertificate}
+                        />
                       </div>
 
                       <div className="flex justify-between items-start">
@@ -135,7 +174,10 @@ const PersonalDetails = () => {
                             </h4>
                           </div>
                         </div>
-                        <FaArrowRight className="text-gray-500 mt-2" />
+                        <FaArrowRight 
+                          className="text-gray-500 mt-2 cursor-pointer" 
+                          onClick={handleEditLicense}
+                        />
                       </div>
 
                       <div className="flex justify-between items-start">
@@ -145,7 +187,10 @@ const PersonalDetails = () => {
                             <h4 className="font-bold">UTR Number</h4>
                           </div>
                         </div>
-                        <FaArrowRight className="text-gray-500 mt-2" />
+                        <FaArrowRight 
+                          className="text-gray-500 mt-2 cursor-pointer" 
+                          onClick={handleEditUTRNumber}
+                        />
                       </div>
                     </div>
                   </div>
