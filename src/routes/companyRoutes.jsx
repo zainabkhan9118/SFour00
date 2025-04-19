@@ -1,9 +1,5 @@
 import React from "react";
 import { Route } from "react-router-dom";
-
-// Company components
-// import CompanyLogin from "../components/company/CompanyLogin";
-// import Dashboard from "../components/company/Dashboard";
 import ProfileCompany from "../components/company/profile/ProfileCompany";
 import JobPosting from "../components/company/profile/JobPosting";
 import RecentJob from "../components/company/profile/jobs/RecentJob";
@@ -25,8 +21,6 @@ import Qrcode from "../components/common/Qrcode";
 import AlertLog from "../components/user/WorkInprogress/AlertLog";
 
 const CompanyRoutes = [
-  // <Route key="company-login" path="/company-login" element={<CompanyLogin />} />,
-  // <Route key="dashboard" path="/dashboard" element={<Dashboard />} />,
   <Route key="company-profile" path="/company-profile" element={<ProfileCompany />} />,
   <Route key="job-posting" path="/job-posting" element={<JobPosting />} />,
   <Route key="recents-jobs" path="/recents-jobs" element={<RecentJob />} />,

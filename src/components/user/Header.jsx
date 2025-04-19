@@ -25,7 +25,7 @@ const Header = () => {
         return "Work In Progress";
       case "/User-UserChatPage":
         return "Chat";
-      case "/contact-support":
+      case "/User-ContactSupport":
         return "S4 Supports";
       case "/User-CompanyDetails":
         return "Company Details";
@@ -36,7 +36,19 @@ const Header = () => {
       case "/User-FAQSection":
         return "FAQ";
       case "/User-PersonalDetails":
-        return "Personal Details";
+        return "Profile";
+      case "/edit-personal-details":
+        return "Profile";
+      case "/edit-experience":
+          return "Profile";
+      case "/edit-education":
+          return "Profile";
+      case "/edit-utr-number":
+          return "Profile";
+      case "/edit-certificate":
+          return "Profile";
+      case "/edit-license":
+          return "Profile";
       default:
         return null; // Don't display a title if route isn't recognized
     }

@@ -1,17 +1,15 @@
 import React, { useState } from "react";
-import Sidebar from "../../SideBar";
 import Header from "../../Header";
+import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
-import { Send } from "lucide-react";
 
 const ContactSupport = () => {
   const [message, setMessage] = useState("");
   
-  // Sample predefined messages
   const messages = [
     { id: 1, text: "This is Auto-Generated Message!", type: "received" },
     { id: 2, text: "Tap to send message!", type: "received" },
-    { id: 3, text: "Lorem ipsum Dolor Sit Amet", type: "received" },
+    { id: 3, text: "Lorem Ipsum Dolor Sit Amet", type: "received" },
   ];
 
   const handleSendMessage = (e) => {
@@ -33,11 +31,11 @@ const ContactSupport = () => {
         {/* Header */}
         <Header />
 
-        <main className="flex-3">
+        <main className="flex-1">
           <div className="flex flex-row flex-1">
             <UserSidebar />
-            <div className="w-[60vw] ml-4 p-6">
-              <div className="bg-white rounded-lg p-5 h-[calc(100vh-200px)] flex flex-col">
+            <div className="w-[60vw] ml-3 mx-auto p-6">
+              <div className="bg-white rounded-lg p-6">
                 {/* Support agent info */}
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl mr-3">
@@ -48,37 +46,68 @@ const ContactSupport = () => {
                     <p className="text-gray-500 text-sm">Customer Support</p>
                   </div>
                 </div>
-                
-                {/* Chat area */}
-                <div className="flex-1 overflow-y-auto mb-4 px-2">
-                  <div className="space-y-3">
+
+                {/* Chat Section */}
+                <div className="flex flex-col h-[calc(100vh-300px)]">
+                  <div className="flex-grow"></div>
+                  
+                  {/* Auto-Generated Messages */}
+                  <div className="flex flex-col space-y-4 items-end mb-6">
                     {messages.map((msg) => (
-                      <div key={msg.id} className="flex items-end">
-                        <div className="bg-gray-300 text-gray-700 rounded-lg py-2 px-4 max-w-[70%]">
+                      <div key={msg.id} className="flex items-center space-x-2 justify-end">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="w-5 h-5 text-gray-500 [transform:rotate(120deg)]"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.25 12l19.5-9-7.875 9L21.75 21l-19.5-9z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="bg-gray-100 px-4 py-2 rounded-lg text-gray-600 text-sm">
                           {msg.text}
                         </div>
-                        <div className="w-3 h-3 transform rotate-45 -ml-1 bg-gray-300"></div>
                       </div>
                     ))}
                   </div>
+
+                  {/* Message Input */}
+                  <form onSubmit={handleSendMessage} className="flex items-center mt-2">
+                    <input
+                      type="text"
+                      placeholder="Write a message..."
+                      className="flex-1 px-4 py-2 border border-orange-300 rounded-full h-[62px] focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      className="ml-4 bg-orange-400 text-orange-600 p-3 rounded-full hover:bg-orange-800 transition duration-200"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-8 h-8 text-gray-500 [transform:rotate(180deg)]"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M2.25 12l19.5-9-7.875 9L21.75 21l-19.5-9z"
+                        />
+                      </svg>
+                    </button>
+                  </form>
                 </div>
-                
-                {/* Message input */}
-                <form onSubmit={handleSendMessage} className="flex items-center bg-gray-100 rounded-full p-1 pl-4">
-                  <input
-                    type="text"
-                    placeholder="Write a message..."
-                    className="flex-1 bg-transparent outline-none"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center ml-2"
-                  >
-                    <Send size={16} color="white" />
-                  </button>
-                </form>
               </div>
             </div>
           </div>

@@ -1,9 +1,7 @@
 import React from "react";
 import { Route } from "react-router-dom";
 
-// User components
-//import UserLogin from "../components/user/UserLogin";
-// import UserDashboard from "../components/user/UserDashboard";
+
 import Job from "../components/user/JobPage/Job";
 import JobDetails from "../components/user/JobPage/JobDetails";
 import CompanyDetails from "../components/user/CompanyDetails/CompanyDetails";
@@ -13,6 +11,12 @@ import UserNotification from "../components/user/Notification/Notification";
 import UserProfile from "../components/user/profile/UserProfile";
 import UserSidebar from "../components/user/profile/UserSidebar";
 import PersonalDetails from "../components/user/profile/PersonalDetails/PersonalDetails";
+import EditPersonalDetails from "../components/user/profile/PersonalDetails/Forms/EditPersonalDetails";
+import EditExperience from "../components/user/profile/PersonalDetails/Forms/EditExperience";
+import EditEducation from "../components/user/profile/PersonalDetails/Forms/EditEducation";
+import EditUTRNumber from "../components/user/profile/PersonalDetails/Forms/EditUTRNumber";
+import EditCertificate from "../components/user/profile/PersonalDetails/Forms/EditCertificate";
+import EditLicense from "../components/user/profile/PersonalDetails/Forms/EditLicense";
 import FAQSection from "../components/user/profile/Faqs/Faqs";
 import InvoiceList from "../components/user/profile/AllInvoices/InvoiceList";
 import BankAccountDetails from "../components/user/profile/BankAccountDetails/BankAccountDetails";
@@ -28,8 +32,6 @@ import ContactSupport from "../components/user/profile/ContactSupport/ContactSup
 
 
 const UserRoutes = [
-  // <Route key="user-login" path="/user-login" element={<UserLogin />} />,
-  // <Route key="User-Dashboard" path="/User-Dashboard" element={<UserDashboard />} />,
   <Route key="User-Job" path="/User-Job" element={<Job />} />,
   <Route key="User-JobDetails" path="/User-JobDetails" element={<JobDetails />} />,
   <Route key="User-CompanyDetails" path="/User-CompanyDetails" element={<CompanyDetails />} />,
@@ -48,6 +50,12 @@ const UserRoutes = [
   <Route key="User-UserProfile" path="/User-UserProfile" element={<UserProfile />} />,
   <Route key="User-UserSidebar" path="/User-UserSidebar" element={<UserSidebar />} />,
   <Route key="User-PersonalDetails" path="/User-PersonalDetails" element={<PersonalDetails />} />,
+  <Route key="edit-personal-details" path="/edit-personal-details" element={<EditPersonalDetails />} />,
+  <Route key="edit-experience" path="/edit-experience" element={<EditExperience />} />,
+  <Route key="edit-education" path="/edit-education" element={<EditEducation />} />,
+  <Route key="edit-utr-number" path="/edit-utr-number" element={<EditUTRNumber />} />,
+  <Route key="edit-certificate" path="/edit-certificate" element={<EditCertificate />} />,
+  <Route key="edit-license" path="/edit-license" element={<EditLicense />} />,
   <Route key="User-FAQSection" path="/User-FAQSection" element={<FAQSection />} />,
   <Route key="User-InvoiceList" path="/User-InvoiceList" element={<InvoiceList />} />,
   <Route key="User-BankDetails" path="/User-BankDetails" element={<BankAccountDetails />} />,

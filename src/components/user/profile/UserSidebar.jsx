@@ -8,6 +8,10 @@ const UserSidebar = () => {
 
   // Function to check if the link is active
   const isActive = (path) => {
+    // For personal details, highlight for both the main page and edit page
+    if (path === "/User-PersonalDetails") {
+      return currentPath === "/User-PersonalDetails" || currentPath === "/edit-personal-details " || currentPath === "/edit-experience" || currentPath === "/edit-education" || currentPath === "/edit-certificate" || currentPath === "/edit-license" || currentPath === "/edit-utr-number";
+    }
     return currentPath === path;
   };
 
@@ -42,8 +46,8 @@ const UserSidebar = () => {
         </li>
         <li>
           <Link 
-            to="/reset-password" 
-            className={`flex items-center space-x-3 ${isActive("/reset-password") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+            to="/ResetPassword" 
+            className={`flex items-center space-x-3 ${isActive("/ResetPassword") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
           >
             <FaLock className="text-orange-500" />
             <span>Reset Password</span>
@@ -61,7 +65,7 @@ const UserSidebar = () => {
         <li>
           <Link 
             to="/User-ContactSupport" 
-            className={`flex items-center space-x-3 ${isActive("/contact-support") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
+            className={`flex items-center space-x-3 ${isActive("/User-ContactSupport") ? "bg-orange-100 p-2 rounded-md font-semibold text-black" : ""}`}
           >
             <FaHeadset className="text-orange-500" />
             <span>Contact S4 Support</span>
