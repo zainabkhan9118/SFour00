@@ -1,7 +1,7 @@
 import React from 'react'
 import { ArrowRight, X, Upload, Bookmark } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import salary from "../../../assets/images/salary.png";
@@ -10,8 +10,7 @@ import PopupInprogess from '../popupModel/popupModel-Inprogress/PopupInprogess';
 
 const AppliedjobDetail = () => {
     const [isInProgressOpen, setIsInProgressOpen] = useState(false); 
-    const [isMessageOpen, setIsMessageOpen] = useState(false); 
-    const [isViewMapOpen, setIsViewMapOpen] = useState(false); 
+    
     
   return (
     <div className="flex flex-row min-h-screen">
@@ -229,7 +228,7 @@ const AppliedjobDetail = () => {
             </div>
             <div className="flex justify-end items-center gap-1 text-base text-gray-500 hover:text-gray-700 cursor-pointer mt-3 mr-3">
                 <AiOutlineInfoCircle className="text-gray-400 text-lg " />{" "}
-                <a href="">Report a Problem</a>
+                <Link to='/User-reportProblem'>Report a Problem</Link>
               </div>
         </div>
         {isInProgressOpen && (

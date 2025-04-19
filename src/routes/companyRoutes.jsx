@@ -22,6 +22,7 @@ import Completed from "../components/company/profile/jobs/completed/Completed";
 import CompletedJobDetail from "../components/company/profile/jobs/completed/CompletedJobDetail";
 import Notification from "../components/company/Notification/Notification";
 import Qrcode from "../components/common/Qrcode";
+import AlertLog from "../components/user/WorkInprogress/AlertLog";
 
 const CompanyRoutes = [
   // <Route key="company-login" path="/company-login" element={<CompanyLogin />} />,
@@ -43,7 +44,9 @@ const CompanyRoutes = [
   <Route key="completed-jobDetail" path="/completed-jobDetail" element={<CompletedJobDetail />} />,
   <Route key="faq" path="/faq" element={<FAQ />} />,
   <Route key="notification" path="/notification" element={<Notification />} />,
-  <Route key="qrcode" path="/qr-code" element={<Qrcode/>} />
+  <Route key="qrcode" path="/qr-code" element={<Qrcode/>} />,
+  <Route key="alert-log" path="/alert-log" element={<AlertLog/>} />
+
 
 
 ];
