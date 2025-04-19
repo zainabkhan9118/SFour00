@@ -1,9 +1,7 @@
 import React from "react";
 import { Route } from "react-router-dom";
 
-// User components
-//import UserLogin from "../components/user/UserLogin";
-// import UserDashboard from "../components/user/UserDashboard";
+
 import Job from "../components/user/JobPage/Job";
 import JobDetails from "../components/user/JobPage/JobDetails";
 import CompanyDetails from "../components/user/CompanyDetails/CompanyDetails";
@@ -27,8 +25,6 @@ import UserWorkInprogess from "../components/user/WorkInprogress/UserWorkInproge
 import ContactSupport from "../components/user/profile/ContactSupport/ContactSupport";
 
 const UserRoutes = [
-  // <Route key="user-login" path="/user-login" element={<UserLogin />} />,
-  // <Route key="User-Dashboard" path="/User-Dashboard" element={<UserDashboard />} />,
   <Route key="User-Job" path="/User-Job" element={<Job />} />,
   <Route key="User-JobDetails" path="/User-JobDetails" element={<JobDetails />} />,
   <Route key="User-CompanyDetails" path="/User-CompanyDetails" element={<CompanyDetails />} />,
