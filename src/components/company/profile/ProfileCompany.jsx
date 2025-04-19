@@ -77,6 +77,8 @@ const ProfileCompany = () => {
         </main>
       </div>
     </div>
+    </div>
+  </div>
   );
 };
 
