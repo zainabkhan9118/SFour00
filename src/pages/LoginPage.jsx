@@ -21,57 +21,61 @@ export default function LoginPage() {
         setShowPassword(!showPassword);
     };
 
-    const handleSignIn = async () => {
-        if (!email || !password) {
-            alert("Please fill in all fields.");
-            return;
-        }
-    
-        const role = localStorage.getItem("userRole");
-        if (!role || (role !== "Job Seeker" && role !== "Company")) {
-            alert("Invalid or missing user role. Please select a role before logging in.");
-            return;
-        }
-    
-        setLoading(true);
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            const idToken = await user.getIdToken();
-    
-            const response = await axios.post(`${BASEURL}/auth/login`, {
-                idToken: idToken,
-            });
-    
-            console.log("Backend response:", response.data);
-    
-            if ((response.status === 200 || response.status === 201) && response.data?.data) {
-                const userData = response.data.data;
-                setUser(userData);
-    
-                localStorage.setItem("userEmail", email);
-    
-                alert("Login successful!");
-    
-                if (role === "Job Seeker") {
-                    navigate("/User-UserProfile");
-                } else if (role === "Company") {
-                    navigate("/company-profile");
-                }
-            } else {
-                alert("No user found in backend.");
+  const handleSignIn = async () => {
+    if (!email || !password) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    // const role = localStorage.getItem("userRole");
+    // if (!role || (role !== "Job Seeker" && role !== "Company")) {
+    //     alert("Invalid or missing user role. Please select a role before logging in.");
+    //     return;
+    // }
+
+    setLoading(true);
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const idToken = await user.getIdToken();
+
+        const response = await axios.post(`${BASEURL}/auth/login`, {
+            idToken: idToken,
+        });
+
+        console.log("Backend response:", response.data);
+
+        if ((response.status === 200 || response.status === 201) && response.data?.data) {
+            const userData = response.data.data;
+            // const role = response.data.data.role;
+            // console.log("role",role);
+            setUser(userData);
+
+            localStorage.setItem("userEmail", email);
+
+            alert("Login successful!");
+            const role = userData.role;
+            console.log("role", role);
+            
+            if (role === "Job Seeker") {
+                navigate("/User-UserProfile");
+            } else if (role === "Company") {
+                navigate("/company-profile");
             }
-        } catch (error) {
-            console.error("Error during login:", error);
-            if (error.response) {
-                alert("Backend Error: " + (error.response.data?.message || "Unknown error"));
-            } else {
-                alert("Login failed: " + error.message);
-            }
-        } finally {
-            setLoading(false);
+        } else {
+            alert("No user found in backend.");
         }
-    };
+    } catch (error) {
+        console.error("Error during login:", error);
+        if (error.response) {
+            alert("Backend Error: " + (error.response.data?.message || "Unknown error"));
+        } else {
+            alert("Login failed: " + error.message);
+        }
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleGoogleSignIn = async () => {
         const role = localStorage.getItem("userRole");

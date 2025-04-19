@@ -11,7 +11,7 @@ import CompanySideBar from "./CompanySideBar";
 
 const ProfileCompany = () => {
   return (
-    <div className="flex flex-row h-screen">
+    <div className="flex flex-row min-h-screen">
       {/* Sidebar */}
       <Sidebar className="w-full md:w-1/4" />
 

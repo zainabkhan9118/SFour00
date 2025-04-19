@@ -82,7 +82,7 @@ export default function CreateAccount() {
         
         // Store role in localStorage
         setRole(userData.role)
-        localStorage.setItem("userRole", userData.role);
+        // localStorage.setItem("userRole", userData.role);
         localStorage.setItem("userEmail", email);
         alert("Account created successfully!");
         navigate("/login");
