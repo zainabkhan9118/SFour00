@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
+import { CiClock1 } from "react-icons/ci";
 
 const Notification = () => {
   const [notifications, setNotifications] = useState([
@@ -56,7 +57,7 @@ const Notification = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-row min-h-screen">
       {/* Sidebar */}
       <Sidebar />
 
@@ -66,44 +67,48 @@ const Notification = () => {
         <Header />
 
         {/* Notification Section */}
-        <div className="w-full mx-auto p-6">
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            {/* Notifications List */}
-            {notifications.map((notif) => (
-              <div
-                key={notif.id}
-                className={`p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b 
-                  ${notif.unread ? "bg-orange-500 text-white" : "bg-white text-black"}
-                  hover:bg-orange-500 hover:text-white transition duration-300 cursor-pointer`}
-              >
-                <div>
-                  <h4 className="font-semibold">{notif.title}</h4>
-                  <p className="text-sm">{notif.message}</p>
-                  <p className="text-xs opacity-75 mt-1">{notif.time}</p>
+        <div className="w-full mx-auto p-4 sm:p-6">
+          <div className="space-y-4">
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 rounded-xl shadow-sm ${
+                    notification.unread ? "bg-[#FD7F00] text-white" : "bg-gray-200"
+                  } `}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <h2 className="font-semibold text-xl sm:text-[25px]">{notification.title}</h2>
+                    {notification.unread && (
+                      <button
+                        onClick={() => markAsRead(notification.id)}
+                        className="text-sm underline mt-2 sm:mt-0"
+                      >
+                        Mark as read
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm sm:text-base mt-2">{notification.message}</p>
+                  <div className="text-xs sm:text-sm mt-2 opacity-80 flex gap-2">
+                    <CiClock1 className="mt-1" />
+                    <p>{notification.time}</p>
+                  </div>
                 </div>
-                {notif.unread && (
-                  <button
-                    onClick={() => markAsRead(notif.id)}
-                    className="text-sm font-semibold mt-2 sm:mt-0 bg-white text-orange-500 px-3 py-1 rounded-lg hover:bg-orange-700 hover:text-white"
-                  >
-                    Mark as Read
-                  </button>
-                )}
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No notifications available.</p>
+            )}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
             <button
               onClick={deleteAll}
-              className="bg-gray-800 text-white px-4 py-2 rounded-lg"
+              className="w-full sm:w-40 h-12 flex items-center justify-center bg-gray-800 text-white rounded-full"
             >
               Delete All
             </button>
             <button
               onClick={markAllAsRead}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg"
+              className="w-full sm:w-40 h-12 flex items-center justify-center bg-[#FD7F00] rounded-full text-white"
             >
               Mark All As Read
             </button>

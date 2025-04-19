@@ -2,27 +2,38 @@ import React, { useState } from "react";
 import ChatSidebar from "./ChatSidebar";
 import MessageArea from "./MessageArea";
 import Header from "../Header";
-
 import Sidebar from "../Sidebar"; 
 import { FaArrowLeft, FaBars } from "react-icons/fa";
 
-const Chat = () => {
+const ProblemChat = () => {
   const [contacts, setContacts] = useState([
-    { name: "Marvin McKinney", role: "Human Resources", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=3", time: "12h" },
-    { name: "Jacob Jones", role: "Marketing Coordinator", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=2", time: "16h" },
-    { name: "Leslie Alexander", role: "Web Designer", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=1", time: "24h" },
-    { name: "Eleanor Pena", role: "Developer", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=5", time: "Aug 17" },
-    { name: "Kathryn Murphy", role: "Project Manager", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=4", time: "8m" },
-    { name: "Wade Warren", role: "Web Design", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=6", time: "8m" },
+    { 
+      name: "Marvin McKinney", 
+      role: "Technical Support",
+      message: "Lorem ipsum dolor sit amet", 
+      avatar: "https://i.pravatar.cc/100?img=3",
+      time: "12h",
+      problemStatus: "Open",
+      problemId: "PRB-001"
+    },
+    { 
+      name: "Jacob Jones", 
+      role: "IT Specialist",
+      message: "Lorem ipsum dolor sit amet", 
+      avatar: "https://i.pravatar.cc/100?img=2",
+      time: "16h",
+      problemStatus: "In Progress",
+      problemId: "PRB-002"
+    },
+    // ...more problem contacts
   ]);
+
   const [selectedContact, setSelectedContact] = useState(contacts[0]);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // Handle selecting a contact on mobile view
   const handleContactSelect = (contact) => {
     setSelectedContact(contact);
-    // On mobile, hide the sidebar after selecting a contact
     if (window.innerWidth < 768) {
       setShowChatSidebar(false);
     }
@@ -30,13 +41,11 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen">
-      {/* Parent Sidebar - Hidden on mobile by default */}
       <div className={`${showSidebar ? 'block' : 'hidden'} md:block fixed md:relative z-30 h-full`}>
         <Sidebar className="w-[170px] h-full bg-[#1e2a47]" />
       </div>
 
       <div className="flex flex-1 flex-col md:flex-row relative w-full">
-        {/* Mobile header with toggle buttons */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b z-20">
           <button 
             onClick={() => setShowSidebar(!showSidebar)} 
@@ -44,7 +53,9 @@ const Chat = () => {
           >
             <FaBars size={20} />
           </button>
-          <h1 className="text-lg font-bold">{showChatSidebar ? "Messages" : selectedContact?.name}</h1>
+          <h1 className="text-lg font-bold">
+            {showChatSidebar ? "Problem Reports" : `${selectedContact?.problemId} - ${selectedContact?.name}`}
+          </h1>
           {!showChatSidebar && (
             <button 
               onClick={() => setShowChatSidebar(true)}
@@ -55,22 +66,21 @@ const Chat = () => {
           )}
         </div>
 
-        {/* Chat interface container */}
         <div className="flex flex-1 w-full overflow-hidden">
-          {/* Chat Sidebar - Toggle on mobile */}
           <div className={`${showChatSidebar ? 'block' : 'hidden'} md:block z-10 w-full md:w-auto`}>
             <ChatSidebar
               contacts={contacts}
               onSelect={handleContactSelect}
               selectedContact={selectedContact}
+              showProblemStatus={true}
             />
           </div>
 
-          {/* Main Chat Window - Full width on mobile when sidebar is hidden */}
           <div className={`${showChatSidebar ? 'hidden' : 'block'} md:block flex-1 w-full`}>
             <MessageArea 
               selectedContact={selectedContact} 
-              onBackClick={() => setShowChatSidebar(true)} 
+              onBackClick={() => setShowChatSidebar(true)}
+              isProblemChat={true}
             />
           </div>
         </div>
@@ -79,4 +89,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default ProblemChat;
