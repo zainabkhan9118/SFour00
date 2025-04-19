@@ -16,7 +16,7 @@ const CompanySideBar = () => {
 
   const getLinkStyle = (path) => {
     return currentPath === path 
-      ? "flex items-center space-x-3 font-semibold text-black"
+      ? "flex items-center space-x-3 font-semibold text-black "
       : "flex items-center space-x-3";
   };
 

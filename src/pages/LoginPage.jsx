@@ -18,74 +18,83 @@ export default function LoginPage() {
 
     const { BASEURL, setUser } = useContext(AppContext);
 
+    // Check for session validity
+    useEffect(() => {
+        const sessionData = JSON.parse(localStorage.getItem("sessionData"));
+        if (sessionData) {
+            const { token, timestamp } = sessionData;
+            const currentTime = Date.now();
+
+            if (currentTime - timestamp < 3600000) {
+                console.log("Session is valid, redirecting...");
+                navigate(sessionData.role === "Job Seeker" ? "/User-UserProfile" : "/company-profile");
+            } else {
+                // Session expired
+                console.log("Session expired, clearing session data.");
+                localStorage.removeItem("sessionData");
+            }
+        }
+    }, [navigate]);
+
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-        toast.error("Please fill in all fields.");
-        return;
-    }
-
-    // const role = localStorage.getItem("userRole");
-    // if (!role || (role !== "Job Seeker" && role !== "Company")) {
-    //     alert("Invalid or missing user role. Please select a role before logging in.");
-    //     return;
-    // }
-
-    setLoading(true);
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        const idToken = await user.getIdToken();
-
-        const response = await axios.post(`${BASEURL}/auth/login`, {
-            idToken: idToken,
-        });
-
-        console.log("Backend response:", response.data);
-
-        if ((response.status === 200 || response.status === 201) && response.data?.data) {
-            const userData = response.data.data;
-            console.log('user',userData);
-            
-            // console.log("role",role);
-            setUser(userData);
-
-            localStorage.setItem("userEmail", email);
-
-            toast("Login successful!");
-            const role = userData.role;
-            console.log("role", role);
-            
-            if (role === "Job Seeker") {
-                navigate("/User-UserProfile");
-            } else if (role === "Company") {
-                navigate("/company-profile");
-            }
-        } else {
-            alert("No user found in backend.");
-        }
-    } catch (error) {
-        console.error("Error during login:", error);
-        if (error.response) {
-            toast.error("Backend Error: " + (error.response.data?.message || "Unknown error"));
-        } else {
-            toast.error("Login failed: " + error.message);
-        }
-    } finally {
-        setLoading(false);
-    }
-};
-
-    const handleGoogleSignIn = async () => {
-        const role = localStorage.getItem("userRole");
-        if (!role) {
-            alert("User role not found. Please select a role before logging in.");
+    const handleSignIn = async () => {
+        if (!email || !password) {
+            toast.error("Please fill in all fields.");
             return;
         }
 
+        setLoading(true);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            const firebaseId = await user.getIdToken();
+
+            const response = await axios.post(`${BASEURL}/auth/login`, {
+                idToken: firebaseId,
+            });
+
+            // console.log("Backend response:", response.data);
+
+            if ((response.status === 200 || response.status === 201) && response.data?.data) {
+                const userData = response.data.data;
+                setUser(userData);
+
+                const sessionData = {
+                    firebaseId: firebaseId,
+                    role: userData.role,
+                    timestamp: Date.now(), 
+                };
+                console.log("Session data:", sessionData);
+                
+                localStorage.setItem("sessionData", JSON.stringify(sessionData));
+
+                toast("Login successful!");
+                const role = userData.role;
+
+                if (role === "Job Seeker") {
+                    navigate("/User-UserProfile");
+                } else if (role === "Company") {
+                    navigate("/company-profile");
+                }
+            } else {
+                toast.error("No user found in backend.");
+            }
+        } catch (error) {
+            console.error("Error during login:", error);
+            if (error.response) {
+                toast.error("Backend Error: " + (error.response.data?.message || "Unknown error"));
+            } else {
+                toast.error("Login failed: " + error.message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
         setLoading(true);
         try {
             const provider = new GoogleAuthProvider();
@@ -103,16 +112,21 @@ export default function LoginPage() {
                 const userData = response.data.data;
                 setUser(userData);
 
-                localStorage.setItem("userEmail", user.email);
+                // Save session data with timestamp
+                const sessionData = {
+                    token: idToken,
+                    role: userData.role,
+                    timestamp: Date.now(), 
+                };
+                localStorage.setItem("sessionData", JSON.stringify(sessionData));
 
                 toast("Google login successful!");
 
+                const role = userData.role;
                 if (role === "Job Seeker") {
                     navigate("/User-UserProfile");
                 } else if (role === "Company") {
                     navigate("/company-profile");
-                } else {
-                    alert("Invalid role in localStorage. Please contact support.");
                 }
             } else {
                 toast.error("No user found in backend.");

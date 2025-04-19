@@ -53,12 +53,12 @@ const PersonalDetails = () => {
         {/* Header */}
         <Header />
 
-        <main className="flex-3 overflow-auto mt-3">
+        <main className="flex-3  mt-3">
           <div className="flex flex-row flex-1">
-           <div className="min-h-screen">
-           <UserSidebar className='min-h-screen'/>
+           <div className="">
+           <UserSidebar className='overflow-hidden'/>
            </div>
-            <div className="p-4 max-h-screen">
+            <div className="p-4 h-screen overflow-auto">
               <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
                 <div className="flex flex-col md:flex-row">
                   <div className="relative flex-shrink-0">

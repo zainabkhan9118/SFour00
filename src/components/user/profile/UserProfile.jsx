@@ -18,9 +18,7 @@ const UserProfile = () => {
       <main className="flex overflow-auto">
       <div className="flex flex-col flex-1">
       <UserSidebar />
-      </div>
-       
-
+      </div> 
      
       </main>
     </div>
