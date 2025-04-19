@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import vector1 from "../../../assets/images/vector1.png";
 import s4 from "../../../assets/images/s4.png";
 import logout from "../.././../assets/images/logout.png";
@@ -10,58 +11,87 @@ import { FaUser, FaBriefcase, FaKey, FaExclamationTriangle } from "react-icons/f
 import { Link } from "react-router-dom";
 
 const CompanySideBar = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const getLinkStyle = (path) => {
+    return currentPath === path 
+      ? "flex items-center space-x-3 font-semibold text-black"
+      : "flex items-center space-x-3";
+  };
+
+  const getIconStyle = (path) => {
+    return currentPath === path ? "text-gray-600" : "text-orange-500";
+  };
+
   return (
-    <div className="mt-6 space-y-4">
-      <div className="flex items-center gap-2 flex-col xl:flex-row md:gap-8 p-4 rounded-lg">
+    <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
+      <div className="flex items-center space-x-3 pb-4">
         <img
           src={company}
           alt=""
-          className="w-10 h-10 md:w-12 md:h-12 rounded-full"
+          className="w-10 h-10 rounded-full"
         />
-        <p className="font-medium text-sm md:text-lg">Company Name</p>
+        <span className="font-semibold text-lg">Company Name</span>
       </div>
-      <h2 className="text-lg font-semibold flex items-center text-orange-500 hover:text-gray-700">
-        <FaUser className="mr-2" /> Company Details
-      </h2>
 
-      <ul className="space-y-5 text-gray-600">
-        <Link to='/job-posting'>
-          <li className="flex items-center gap-2 text-orange-500 hover:text-gray-700 mb-4">
-            <FaBriefcase /> Jobs
-          </li>
-        </Link>
-
-        <Link to='/ResetPassword'>
-          <li className="flex items-center gap-2 text-orange-500 hover:text-gray-700 mb-4">
-            <FaKey /> Reset Password
-          </li>
-        </Link>
-
-        <Link to='/rota-management'>
-          <li className="flex items-center gap-2 text-orange-500 hover:text-gray-700 mb-4">
-            <img src={vector1} alt="" className="h-5 w-5" /> Rota Management
-          </li>
-        </Link>
-        <Link to='/chat-support'>
-          <li className="flex items-center gap-2 text-orange-500 hover:text-gray-700 mb-4">
-            <img src={s4} alt="" className="h-5 w-5" /> Contact S4 Support
-          </li>
-        </Link>
-
-        <Link to='/faq'>
-          <li className="flex items-center gap-2 text-orange-500 hover:text-gray-700 mb-10">
-            <img src={faq} className="h-5 w-5" alt="" /> FAQ's
-          </li>
-        </Link>
-        <li className="flex items-center gap-2">
-          <img src={logout} alt="" className="h-5 w-5" /> Logout
+      <ul className="mt-4 space-y-8 text-gray-700">
+        <li>
+          <Link to="/company-profile" className={getLinkStyle('/company-details')}>
+            <FaUser className={getIconStyle('/company-details')} />
+            <span>Company Details</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/job-posting" className={getLinkStyle('/job-posting')}>
+            <FaBriefcase className={getIconStyle('/job-posting')} />
+            <span>Jobs</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/ResetPassword" className={getLinkStyle('/ResetPassword')}>
+            <FaKey className={getIconStyle('/ResetPassword')} />
+            <span>Reset Password</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/problems-reported" className={getLinkStyle('/problems-reported')}>
+            <FaExclamationTriangle className={getIconStyle('/problems-reported')} />
+            <span>Problems Reported</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/rota-management" className={getLinkStyle('/rota-management')}>
+            <img src={vector1} alt="" className="h-5 w-5" />
+            <span>Rota Management</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/chat-support" className={getLinkStyle('/chat-support')}>
+            <img src={s4} alt="" className="h-5 w-5" />
+            <span>Contact S4 Support</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/faq" className={getLinkStyle('/faq')}>
+            <img src={faq} className="h-5 w-5" alt="" />
+            <span>FAQ's</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/logout" className={getLinkStyle('/logout')}>
+            <img src={logout} alt="" className="h-5 w-5" />
+            <span>Logout</span>
+          </Link>
         </li>
       </ul>
 
-
-      <div className="mt-6 text-sm text-gray-500">
+      <div className="mt-6 text-xs text-gray-500">
         <p>Terms and conditions of use:</p>
-        <p className="underline">Privacy policy, Cookie policy</p>
+        <p>
+          <a href="#" >Privacy policy</a>,
+          <a href="#" > Cookie policy</a>
+        </p>
       </div>
     </div>
   );

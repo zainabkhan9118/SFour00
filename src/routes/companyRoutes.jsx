@@ -22,11 +22,13 @@ import Completed from "../components/company/profile/jobs/completed/Completed";
 import CompletedJobDetail from "../components/company/profile/jobs/completed/CompletedJobDetail";
 import Notification from "../components/company/Notification/Notification";
 import Qrcode from "../components/common/Qrcode";
+import ProblemChat from "../components/company/problems/problemchat";
 
 const CompanyRoutes = [
   // <Route key="company-login" path="/company-login" element={<CompanyLogin />} />,
   // <Route key="dashboard" path="/dashboard" element={<Dashboard />} />,
   <Route key="company-profile" path="/company-profile" element={<ProfileCompany />} />,
+  <Route key="problems-reported" path="/problems-reported" element={<ProblemChat />} />,
   <Route key="job-posting" path="/job-posting" element={<JobPosting />} />,
   <Route key="recents-jobs" path="/recents-jobs" element={<RecentJob />} />,
   <Route key="job-detail" path="/job-detail" element={<JobDetail />} />,

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import Header from "../Header";
-import Sidebar from "../Sidebar"; 
+import Sidebar from "../Sidebar";
+import CompanySideBar from "./CompanySideBar";
 
 const faqs = [
   {
@@ -34,41 +35,46 @@ const FAQs = () => {
   };
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar takes full height */}
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-
-      {/* Main content area */}
-      <div className="flex flex-col flex-1">
-        {/* Header at the top */}
+      <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-    <div className="p-6 bg-white">
-      <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-      <div className="space-y-3">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className="bg-gray-200 rounded-lg p-4 shadow-md"
-          >
-            <div
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleFAQ(index)}
-            >
-              <p className="text-gray-700 font-medium">{faq.question}</p>
-              {openIndex === index ? (
-                <FaMinus className="text-gray-700" />
-              ) : (
-                <FaPlus className="text-gray-700" />
-              )}
+        <main className="flex-1 overflow-auto">
+          <div className="flex h-full">
+            <div className="w-64 bg-white border-r">
+              <CompanySideBar />
             </div>
-            {openIndex === index && (
-              <p className="mt-3 text-gray-600">{faq.answer}</p>
-            )}
+            <div className="flex-1 p-6 overflow-auto">
+              <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+              <div className="space-y-4">
+                {faqs.map((faq, index) => (
+                  <div
+                    key={index}
+                    className="bg-[#E5E7EB] rounded-lg overflow-hidden"
+                  >
+                    <button
+                      className="w-full flex justify-between items-center p-4 text-left"
+                      onClick={() => toggleFAQ(index)}
+                    >
+                      <span className="text-gray-900">{faq.question}</span>
+                      {openIndex === index ? (
+                        <FaMinus className="text-gray-700" />
+                      ) : (
+                        <FaPlus className="text-gray-700" />
+                      )}
+                    </button>
+                    {openIndex === index && (
+                      <div className="px-4 pb-4 text-gray-700">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
+        </main>
       </div>
-    </div>
-    </div>
     </div>
   );
 };
