@@ -22,7 +22,7 @@ const ContactSupport = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       {/* Sidebar */}
       <Sidebar />
 
@@ -34,7 +34,7 @@ const ContactSupport = () => {
         <main className="flex-1">
           <div className="flex flex-row flex-1">
             <UserSidebar />
-            <div className="w-[60vw] ml-3 mx-auto p-6">
+            <div className="w-full ml-3 mx-auto p-6">
               <div className="bg-white rounded-lg p-6">
                 {/* Support agent info */}
                 <div className="flex items-center mb-6">

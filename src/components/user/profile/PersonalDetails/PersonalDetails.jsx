@@ -44,18 +44,20 @@ const PersonalDetails = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar  />
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
         <Header />
 
-        <main className="flex-3">
+        <main className="flex-3 overflow-auto mt-3">
           <div className="flex flex-row flex-1">
-            <UserSidebar />
+           <div className="min-h-screen">
+           <UserSidebar className='min-h-screen'/>
+           </div>
             <div className="p-4 max-h-screen">
               <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
                 <div className="flex flex-col md:flex-row">

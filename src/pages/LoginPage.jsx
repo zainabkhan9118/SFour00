@@ -7,6 +7,7 @@ import axios from "axios";
 import { AppContext } from "../context/AppContext";
 import logo from "../assets/images/logo.png";
 import JobStatsDisplay from "../components/common/JobStatsDisplay";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function LoginPage() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-        alert("Please fill in all fields.");
+        toast.error("Please fill in all fields.");
         return;
     }
 
@@ -47,13 +48,14 @@ export default function LoginPage() {
 
         if ((response.status === 200 || response.status === 201) && response.data?.data) {
             const userData = response.data.data;
-            // const role = response.data.data.role;
+            console.log('user',userData);
+            
             // console.log("role",role);
             setUser(userData);
 
             localStorage.setItem("userEmail", email);
 
-            alert("Login successful!");
+            toast("Login successful!");
             const role = userData.role;
             console.log("role", role);
             
@@ -68,9 +70,9 @@ export default function LoginPage() {
     } catch (error) {
         console.error("Error during login:", error);
         if (error.response) {
-            alert("Backend Error: " + (error.response.data?.message || "Unknown error"));
+            toast.error("Backend Error: " + (error.response.data?.message || "Unknown error"));
         } else {
-            alert("Login failed: " + error.message);
+            toast.error("Login failed: " + error.message);
         }
     } finally {
         setLoading(false);
@@ -103,7 +105,7 @@ export default function LoginPage() {
 
                 localStorage.setItem("userEmail", user.email);
 
-                alert("Google login successful!");
+                toast("Google login successful!");
 
                 if (role === "Job Seeker") {
                     navigate("/User-UserProfile");
@@ -113,11 +115,11 @@ export default function LoginPage() {
                     alert("Invalid role in localStorage. Please contact support.");
                 }
             } else {
-                alert("No user found in backend.");
+                toast.error("No user found in backend.");
             }
         } catch (error) {
             console.error("Google login error:", error);
-            alert("Google login failed: " + error.message);
+            toast.error("Google login failed: " + error.message);
         } finally {
             setLoading(false);
         }

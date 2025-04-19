@@ -40,9 +40,15 @@
 .read-the-docs {
   color: #888;
 } */
- * {
-  background-color: white;
- }
- .square {
-  aspect-ratio: 1;
+
+/* Custom Toast Style */
+.custom-toast {
+  background: #ea580c; /* Orange gradient */
+   /* White text on gradient background */
+  font-weight: bold;
+}
+
+/* Custom Progress Bar - Orange */
+.Toastify__progress-bar {
+  background: #ea580c; /* Set progress bar color to orange */
 }
