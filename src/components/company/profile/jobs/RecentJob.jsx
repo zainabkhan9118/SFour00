@@ -69,52 +69,52 @@ const RecentJob = () => {
   };
 
   return (
-    <div className="flex flex-row min-h-screen bg-gray-100">
-      <Sidebar className="hidden lg:block w-full lg:w-1/4" />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+      <Sidebar className="lg:block w-full lg:w-1/4" />
 
-      <div className="flex flex-col gap-6 flex-1 p-6">
+      <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
         <Header />
         <Headerjob />
 
-        <div className="w-full bg-white p-6 shadow-md rounded-lg">
+        <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg">
           {jobs.map((job, index) => (
             <div
               key={job.id}
-              className={`flex flex-row flex-wrap items-center justify-between py-4 border-b cursor-pointer ${
+              className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between py-6 border-b cursor-pointer ${
                 index === jobs.length - 1 ? "border-none" : "border-gray-200"
               }`}
               onClick={() => handleJobClick()}
             >
-              <div className="flex items-center space-x-4 w-full md:w-auto mb-4 md:mb-0">
-                <div className="flex items-center justify-center rounded-full">
-                  <img src={job.logo} alt={job.title} className="w-14 h-14 md:w-12 md:h-12" />
+              <div className="flex items-center space-x-4 w-full sm:w-auto mb-4 sm:mb-0">
+                <div className="flex-shrink-0">
+                  <img src={job.logo} alt={job.title} className="w-12 h-12" />
                 </div>
 
-                <div className="w-full md:w-[300px]">
+                <div className="flex-grow sm:w-[300px]">
                   <h2 className="text-lg font-semibold text-gray-900">{job.title}</h2>
-                  <div className="flex items-center text-gray-600 text-sm space-x-2">
-                    <FaMapMarkerAlt className="text-gray-500" />
-                    <span>{job.location}</span>
+                  <div className="flex flex-wrap items-center text-gray-600 text-sm gap-2">
+                    <div className="flex items-center">
+                      <FaMapMarkerAlt className="text-gray-500 mr-1" />
+                      <span>{job.location}</span>
+                    </div>
                     <span>• {job.rate}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Middle Section (Date & Status) */}
-              <div className="flex flex-col md:flex-row items-center w-full md:w-auto justify-between space-y-2 md:space-y-0 md:space-x-6">
-                <div className="text-sm text-gray-500 min-w-[140px] text-left md:text-right">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center w-full sm:w-auto gap-4 sm:gap-6">
+                <div className="text-sm text-gray-500 w-full sm:w-auto">
                   {job.date}
                 </div>
-                <div className="flex items-center text-green-500 font-medium text-sm min-w-[80px] text-left md:text-right">
+                <div className="flex items-center text-green-500 font-medium text-sm">
                   <FaCheck className="mr-1" />
                   {job.status}
                 </div>
               </div>
 
-              {/* Right Section (Bookmark & Applications Button) */}
-              <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-end mt-4 md:mt-0">
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end mt-4 sm:mt-0">
                 <FaRegBookmark className="text-gray-400 cursor-pointer hover:text-gray-600" />
-                <button className="bg-orange-500 text-white px-5 py-2 rounded-full text-sm font-medium">
+                <button className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors">
                   {job.applications}
                 </button>
               </div>

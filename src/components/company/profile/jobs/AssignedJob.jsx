@@ -63,68 +63,71 @@ const jobs = [
     assignedto: "Jorden Mendaz",
   },
 ];
+
 const AssignedJob = () => {
-      const navigate = useNavigate();
-    
-      const handleJobClick = () => {
-        navigate(`/assign-jobDetail`);
-      };
+  const navigate = useNavigate();
+  const handleJobClick = () => {
+    navigate(`/assign-jobDetail`);
+  };
+  
   return (
-    <div className="flex flex-row min-h-screen bg-gray-100">
-    <Sidebar className="hidden lg:block w-full lg:w-1/4" />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+      <Sidebar className="w-full lg:w-1/4" />
 
-    <div className="flex flex-col gap-6 flex-1 p-6">
-      <Header />
-      <Headerjob />
+      <div className="flex flex-col gap-4 md:gap-6 flex-1 p-3 sm:p-4 md:p-6">
+        <Header />
+        <Headerjob />
 
-      <div className="w-full bg-white p-6 shadow-md rounded-lg">
-        {jobs.map((job, index) => (
-          <div
-            key={job.id}
-            className={`flex flex-row flex-wrap items-center justify-between py-4 border-b cursor-pointer ${
-              index === jobs.length - 1 ? "border-none" : "border-gray-200"
-            }`}
-            onClick={() => handleJobClick()}
-          >
-            <div className="flex items-center space-x-4 w-full md:w-auto mb-4 md:mb-0">
-              <div className="flex items-center justify-center rounded-full">
-                <img src={job.logo} alt={job.title} className="w-14 h-14 md:w-14 md:h-14" />
-              </div>
+        <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg">
+          {jobs.map((job, index) => (
+            <div
+              key={job.id}
+              className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                index === jobs.length - 1 ? "border-none" : "border-gray-200"
+              }`}
+              onClick={() => handleJobClick()}
+            >
+              <div className="flex items-center space-x-3 md:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
+                <div className="flex-shrink-0">
+                  <img src={job.logo} alt={job.title} className="w-12 h-12 sm:w-14 sm:h-14" />
+                </div>
 
-              <div className="w-full md:w-[300px]">
-                <h2 className="text-lg font-semibold text-gray-900">{job.title}</h2>
-                <div className="flex items-center text-gray-600 text-sm space-x-2">
-                  <FaMapMarkerAlt className="text-gray-500" />
-                  <span>{job.location}</span>
-                  <span>• {job.rate}</span>
+                <div className="flex-grow sm:w-[200px] md:w-[300px]">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">{job.title}</h2>
+                  <div className="flex flex-wrap items-center text-gray-600 text-xs sm:text-sm gap-2">
+                    <div className="flex items-center gap-1">
+                      <FaMapMarkerAlt className="text-gray-500" />
+                      <span>{job.location}</span>
+                    </div>
+                    <span className="hidden sm:inline">•</span>
+                    <span>{job.rate}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Middle Section (Date & Status) */}
-            <div className="flex flex-col md:flex-row items-center w-full md:w-auto justify-between space-y-2 md:space-y-0 md:space-x-6">
-              <div className="text-sm text-gray-500 min-w-[140px] text-left md:text-right">
-                {job.date}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center w-full sm:w-auto gap-2 sm:gap-6 mb-3 sm:mb-0">
+                <div className="text-xs sm:text-sm text-gray-500 w-full sm:w-auto">
+                  {job.date}
+                </div>
+                <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
+                  <FaCheck className="mr-1" />
+                  {job.status}
+                </div>
               </div>
-              <div className="flex items-center text-green-500 font-medium text-sm min-w-[80px] text-left md:text-right">
-                <FaCheck className="mr-1" />
-                {job.status}
-              </div>
-            </div>
 
-            {/* Right Section (Bookmark & Applications Button) */}
-            <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-end mt-4 md:mt-0">
-              <FaRegBookmark className="text-gray-400 cursor-pointer hover:text-gray-600" />
-              <button className="bg-[#1F2B44] text-white px-7 py-4 rounded-full text-sm font-medium">
-                <span className="text-base font-semibold">Assigned To : </span><span className="text-sm">{job.assignedto}</span>
-              </button>
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
+                <FaRegBookmark className="text-gray-400 cursor-pointer hover:text-gray-600 text-lg sm:text-xl" />
+                <button className="bg-[#1F2B44] text-white px-4 sm:px-7 py-2 sm:py-4 rounded-full text-xs sm:text-sm font-medium w-full sm:w-auto">
+                  <span className="font-semibold">Assigned To: </span>
+                  <span className="text-xs sm:text-sm">{job.assignedto}</span>
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-  )
-}
+  );
+};
 
-export default AssignedJob
+export default AssignedJob;
