@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
-import Sidebar from "../SideBar";
-import Header from "../Header";
-import UserSidebar from "../profile/UserSidebar";
+import Sidebar from "../../SideBar";
+import Header from "../../Header";
+import UserSidebar from "../UserSidebar";
 
 const faqs = [
   {

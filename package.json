@@ -10,7 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+
     "@blackbox-vision/react-qr-reader": "^5.0.0",
+
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
+
     "@fortawesome/fontawesome-free": "^6.7.2",
     "axios": "^1.8.4",
     "firebase": "^11.6.0",

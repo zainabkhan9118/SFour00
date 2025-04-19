@@ -129,11 +129,10 @@ const PersonalDetails = () => {
                         <div className="flex">
                           <FaIdCard className="text-gray-600 mt-1" />
                           <div className="ml-2">
-                            <h4 className="font-bold">License</h4>
-                            <p className="text-green-600 flex items-center gap-1">
-                              Work Reference
-                              <FaCheckCircle className="text-green-500 text-sm" />
-                            </p>
+                            <h4 className="font-bold">
+                              License
+                              <FaCheckCircle className="text-green-500 text-sm inline mr-1" />
+                            </h4>
                           </div>
                         </div>
                         <FaArrowRight className="text-gray-500 mt-2" />
