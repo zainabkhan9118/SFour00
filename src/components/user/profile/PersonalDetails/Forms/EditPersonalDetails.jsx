@@ -11,7 +11,7 @@ const EditPersonalDetails = () => {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
-    location: "",
+    addresses: [{ address: '', duration: '', isCurrent: false }],
     bio: ""
   });
   const [profileImage, setProfileImage] = useState("src/assets/images/profile.jpeg");
@@ -22,6 +22,37 @@ const EditPersonalDetails = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleAddressChange = (index, field, value) => {
+    const newAddresses = [...formData.addresses];
+    newAddresses[index][field] = value;
+    
+    if (field === 'isCurrent' && value === true) {
+      // Uncheck other addresses if this one is marked as current
+      newAddresses.forEach((addr, i) => {
+        if (i !== index) addr.isCurrent = false;
+      });
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      addresses: newAddresses
+    }));
+  };
+
+  const addAddress = () => {
+    setFormData(prev => ({
+      ...prev,
+      addresses: [...prev.addresses, { address: '', duration: '', isCurrent: false }]
+    }));
+  };
+
+  const removeAddress = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      addresses: prev.addresses.filter((_, i) => i !== index)
     }));
   };
   
@@ -57,16 +88,16 @@ const EditPersonalDetails = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
         <Header />
 
-        <main className="flex-3">
+        <main className="flex-3 overflow-auto">
           <div className="flex flex-row flex-1">
             <UserSidebar />
             <div className="p-4 flex-1 bg-gray-50">
@@ -130,14 +161,58 @@ const EditPersonalDetails = () => {
                     placeholder="Full Name"
                   />
                   
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Location"
-                  />
+                  {/* Addresses Section */}
+                  <div className="space-y-4">
+                    {formData.addresses.map((addressItem, index) => (
+                      <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-medium">Address {index + 1}</h3>
+                          {formData.addresses.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeAddress(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={addressItem.address}
+                            onChange={(e) => handleAddressChange(index, 'address', e.target.value)}
+                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                            placeholder="Address"
+                          />
+                          <input
+                            type="text"
+                            value={addressItem.duration}
+                            onChange={(e) => handleAddressChange(index, 'duration', e.target.value)}
+                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                            placeholder="Duration (e.g., 2020-2022)"
+                          />
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={addressItem.isCurrent}
+                              onChange={(e) => handleAddressChange(index, 'isCurrent', e.target.checked)}
+                              className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                            <label className="ml-2 text-sm text-gray-600">Current Address</label>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button
+                      type="button"
+                      onClick={addAddress}
+                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                    >
+                      + Add Another Address
+                    </button>
+                  </div>
                   
                   <textarea
                     name="bio"

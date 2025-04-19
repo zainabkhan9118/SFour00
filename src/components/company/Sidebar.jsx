@@ -48,7 +48,7 @@ export default function Sidebar() {
       <div 
         className={`fixed md:static md:translate-x-0 min-h-screen z-20 bg-[#121D34] text-gray-400 flex flex-col p-5 transition-transform duration-300 ease-in-out ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:min-h-screen md:w-64 w-64`}
+        } md:min-h-screen md:w-64 w-64 rounded-tr-[30px] rounded-br-[30px]`}
       >
         <div className="flex justify-center mb-10">
           <img src={logo} alt="Logo" className="w-24 mb-4" />
