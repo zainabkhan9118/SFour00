@@ -34,7 +34,12 @@ const UserChatPage = () => {
         <Sidebar className="w-[170px] h-full bg-[#1e2a47]" />
       </div>
 
-      <div className="flex flex-1 flex-col md:flex-row relative w-full">
+      <div className="flex flex-1 flex-col w-full">
+        {/* Standard Header - Visible on desktop */}
+        <div className="hidden md:block">
+          <Header />
+        </div>
+
         {/* Mobile header with toggle buttons */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b z-20">
           <button 

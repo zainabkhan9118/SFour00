@@ -10,6 +10,7 @@ const Header = () => {
   // Function to get the title based on current route
   const getPageTitle = () => {
     switch (pathname) {
+
       case "/company-profile":
         return "Company Profile";
       case "/job-posting":
@@ -26,6 +27,14 @@ const Header = () => {
         return "Notifications";
       case "/chat":
         return "Messages";
+
+      case "/notification":
+        return "Notifications";
+      case "/company-profile":
+        return "Company Profile";
+      case "/user-JobDetails":
+        return "Job Posting";
+
       case "/recents-jobs":
         return "Recent Jobs";
       case "/job-assigned":
@@ -34,6 +43,17 @@ const Header = () => {
         return "In-Progress Jobs";
       case "/completed-job":
         return "Completed Jobs";
+
+
+      case "/chat":
+        return "Messages";
+      case "/rota-management":
+        return "Rota Management";
+      case "/chat-support":
+        return "Chat Support";
+      case "/faq":
+        return "FAQ";
+
       default:
         return null; // Don't display a title if route isn't recognized
     }

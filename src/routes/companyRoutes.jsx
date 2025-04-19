@@ -1,9 +1,5 @@
 import React from "react";
 import { Route } from "react-router-dom";
-
-// Company components
-// import CompanyLogin from "../components/company/CompanyLogin";
-// import Dashboard from "../components/company/Dashboard";
 import ProfileCompany from "../components/company/profile/ProfileCompany";
 import JobPosting from "../components/company/profile/JobPosting";
 import RecentJob from "../components/company/profile/jobs/RecentJob";
@@ -22,11 +18,13 @@ import Completed from "../components/company/profile/jobs/completed/Completed";
 import CompletedJobDetail from "../components/company/profile/jobs/completed/CompletedJobDetail";
 import Notification from "../components/company/Notification/Notification";
 import Qrcode from "../components/common/Qrcode";
+
 import ProblemChat from "../components/company/problems/problemchat";
 
+import AlertLog from "../components/user/WorkInprogress/AlertLog";
+
+
 const CompanyRoutes = [
-  // <Route key="company-login" path="/company-login" element={<CompanyLogin />} />,
-  // <Route key="dashboard" path="/dashboard" element={<Dashboard />} />,
   <Route key="company-profile" path="/company-profile" element={<ProfileCompany />} />,
   <Route key="problems-reported" path="/problems-reported" element={<ProblemChat />} />,
   <Route key="job-posting" path="/job-posting" element={<JobPosting />} />,
@@ -45,7 +43,9 @@ const CompanyRoutes = [
   <Route key="completed-jobDetail" path="/completed-jobDetail" element={<CompletedJobDetail />} />,
   <Route key="faq" path="/faq" element={<FAQ />} />,
   <Route key="notification" path="/notification" element={<Notification />} />,
-  <Route key="qrcode" path="/qrcode" element={<Qrcode/>} />
+  <Route key="qrcode" path="/qr-code" element={<Qrcode/>} />,
+  <Route key="alert-log" path="/alert-log" element={<AlertLog/>} />
+
 
 
 ];

@@ -1,175 +1,176 @@
-// Simple icon components
-import { useNavigate } from "react-router-dom"
-import Sidebar from "../SideBar"
-import Header from "../Header"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../SideBar";
+import Header from "../Header";
+import HeaderWork from "../HeaderWork";
+import { Bookmark } from "lucide-react";
+import { FaCheck} from "react-icons/fa";
+
 
 const CheckIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  )
-  
-  const BookmarkIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-    </svg>
-  )
-  
-  // Microsoft logo placeholder
-  const MicrosoftLogo = () => (
-    <div className="flex items-center justify-center w-full h-full">
-      <div className="grid grid-cols-2 gap-0.5">
-        <div className="w-2 h-2 bg-red-500"></div>
-        <div className="w-2 h-2 bg-green-500"></div>
-        <div className="w-2 h-2 bg-blue-500"></div>
-        <div className="w-2 h-2 bg-yellow-500"></div>
-      </div>
-    </div>
-  )
-  
-  const WorkApplied = () => {
-    const jobs = [
-      {
-        id: 1,
-        title: "Networking Engineer",
-        location: "Washington",
-        salary: "$120/hr",
-        date: "Feb 2, 2023 10:20",
-        status: "Active",
-        icon: { type: "initials", value: "NE", color: "bg-green-500" },
-      },
-      {
-        id: 2,
-        title: "Product Designer",
-        location: "Chicago",
-        salary: "$92/hr",
-        date: "Dec 7, 2022 23:26",
-        status: "Active",
-        icon: { type: "initials", value: "PD", color: "bg-pink-500" },
-      },
-      {
-        id: 3,
-        title: "Junior Graphic Designer",
-        location: "Berlin",
-        salary: "$120/hr",
-        date: "Aug 5, 2023 16:34",
-        status: "Active",
-        icon: { type: "initials", value: "JG", color: "bg-gray-900" },
-      },
-      {
-        id: 4,
-        title: "Visual Designer",
-        location: "Mountain View",
-        salary: "$127/hr",
-        date: "Dec 3, 2022 23:26",
-        status: "Active",
-        icon: { type: "logo", value: "microsoft" },
-      },
-      {
-        id: 5,
-        title: "Marketing Officer",
-        location: "United States",
-        salary: "$110/hr",
-        date: "Dec 6, 2022 21:42",
-        status: "Active",
-        icon: { type: "initials", value: "MO", color: "bg-blue-400" },
-      },
-    ]
-    const navigate = useNavigate();
-  
-    return (
-        <div className="flex h-screen">
-        {/* Sidebar */}
-        <Sidebar />
-  
-        {/* Main Content */}
-        <div className="flex flex-col flex-1">
-          {/* Header */}
-          <Header />
-      <div className="max-w-6xl   p-6">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+const BookmarkIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
+const jobs = [
+  {
+    id: 1,
+    title: "Networking Engineer",
+    location: "Washington",
+    salary: "$12/hr",
+    date: "Feb 2, 2019 19:28",
+    status: "Active",
+    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111646.png",
+  },
+  {
+    id: 2,
+    title: "Product Designer",
+    location: "Dhaka",
+    salary: "$12/hr",
+    date: "Dec 7, 2019 23:26",
+    status: "Active",
+    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111632.png",
+  },
+  {
+    id: 3,
+    title: "Junior Graphic Designer",
+    location: "Brazil",
+    salary: "$12/hr",
+    date: "Feb 2, 2019 19:28",
+    status: "Active",
+    icon: "https://cdn-icons-png.flaticon.com/512/733/733609.png",
+  },
+  {
+    id: 4,
+    title: "Visual Designer",
+    location: "Wisconsin",
+    salary: "$12/hr",
+    date: "Dec 7, 2019 23:26",
+    status: "Active",
+    icon: "https://cdn-icons-png.flaticon.com/512/732/732221.png",
+  },
+  {
+    id: 5,
+    title: "Marketing Officer",
+    location: "United States",
+    salary: "$12/hr",
+    date: "Dec 4, 2019 21:42",
+    status: "Active",
+    icon: "https://cdn-icons-png.flaticon.com/512/733/733579.png",
+  },
+];
+
+const WorkApplied = () => {
+  const navigate = useNavigate();
+  const [activeJobs, setActiveJobs] = useState(jobs); // Define activeJobs state
+  const [hoveredButton, setHoveredButton] = useState(null); // Define hoveredButton state
+
+  const handleNavigate = () => {
+    navigate("/User-AppliedAndAssignedDetail"); // Navigate to the desired route
+  }
+  // Function to toggle bookmark
+  const toggleBookmark = (id) => {
+    setActiveJobs((prevJobs) =>
+      prevJobs.map((job) =>
+        job.id === id ? { ...job, bookMarked: !job.bookMarked } : job
+      )
+    );
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen">
+    {/* Sidebar */}
+    <Sidebar />
+
+    {/* Main Content */}
+    <div className="flex flex-col flex-1">
+      {/* Header */}
+      <Header />
+      <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
         {/* Tabs */}
-        <div className="flex border-b mb-6">
-          <div className="mr-8 border-b-2 border-orange-500 pb-2">
-            <span className="font-medium text-orange-500">Applied</span>
-          </div>
-          <div className="mr-8 pb-2">
-            <button className="font-medium text-gray-500" onClick={()=> navigate("/User-MyWorkAssignedPage")}>Assigned</button>
-          </div>
-          <div className="mr-8 pb-2">
-            <span className="font-medium text-gray-500">In Progress</span>
-          </div>
-          <div className="pb-2">
-            <span className="font-medium text-gray-500">Completed</span>
-          </div>
-        </div>
-  
+        <HeaderWork />
+
         {/* Job List */}
-        <div className="space-y-5 p-8">
+        <div className="">
           {jobs.map((job) => (
-            <div key={job.id} className="flex items-center border-b   justify-between">
-              <div className="flex items-center">
-                {job.icon.type === "initials" ? (
-                  <div
-                    className={`w-10 h-10 rounded-full ${job.icon.color} flex items-center justify-center text-white text-xs mr-4`}
-                  >
-                    {job.icon.value}
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center mr-4">
-                    <MicrosoftLogo />
-                  </div>
-                )}
+            <div
+              key={job.id}
+              className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
+            >
+              {/* Job Icon and Details */}
+              <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
+                <img
+                  src={job.icon}
+                  alt={job.title}
+                  className="w-12 h-12 rounded-full border border-gray-300"
+                />
                 <div>
-                  <h3 className="font-medium">{job.title}</h3>
-                  <div className="text-sm text-gray-500 flex">
+                  <h3 className="font-medium text-lg">{job.title}</h3>
+                  <div className="text-sm text-gray-500 flex items-center flex-wrap">
                     <span>{job.location}</span>
-                    <span className="mx-2">•</span>
+                    <span className="mx-2 hidden sm:inline">•</span>
                     <span>{job.salary}</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center">
-                <div className="text-xs text-gray-500 mr-4">{job.date}</div>
-                <div className="flex items-center text-green-500 mr-4">
-                  <span className="mr-1">
-                    <CheckIcon />
-                  </span>
-                  <span className="text-xs">{job.status}</span>
+
+              {/* Job Date and Status */}
+              <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
+                <div className="text-sm font-medium text-gray-400">{job.date}</div>
+                <div className="flex items-center text-green-500">
+                  <CheckIcon />
+                  <span className="ml-1 text-sm font-medium">{job.status}</span>
                 </div>
-                <button className="mr-4 text-gray-300">
-                  <BookmarkIcon />
+                
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex  justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
+              <button className="text-gray-400 hover:text-gray-600">
+                  <BookmarkIcon  />
                 </button>
-                <button className="bg-orange-500 text-white text-xs py-2 px-3 rounded-full">Applied</button>
+                <button
+                  onClick={handleNavigate}
+                  className="bg-orange-500 text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
+                >
+                  Applied
+                </button>
+               
               </div>
             </div>
           ))}
         </div>
       </div>
-      </div>
-      </div>
-    )
-  }
-  
-  export default WorkApplied
-  
-  
+    </div>
+  </div>
+  );
+};
+
+export default WorkApplied;

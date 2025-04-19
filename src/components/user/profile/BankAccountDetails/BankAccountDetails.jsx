@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Sidebar from "../SideBar";
-import Header from "../Header";
-import UserSidebar from "../profile/UserSidebar";
+import Sidebar from "../../SideBar";
+import Header from "../../Header";
+import UserSidebar from "../UserSidebar";
 
 const BankAccountDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -87,7 +87,7 @@ const BankAccountDetails = () => {
           >
             {isEditing ? "Cancel" : "Edit"}
           </button>
-          {isEditing && (
+          { (
             <button className="bg-orange-500 text-white px-8 py-2 rounded-2xl">
               Save
             </button>
