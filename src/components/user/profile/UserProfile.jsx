@@ -6,21 +6,19 @@ import Header from "../Header";
 
 const UserProfile = () => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
     {/* Sidebar */}
     <Sidebar />
 
     {/* Main Content */}
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 overflow-auto">
       {/* Header */}
       <Header />
 
-      <main className="flex-  ">
+      <main className="flex overflow-auto">
       <div className="flex flex-col flex-1">
       <UserSidebar />
-      </div>
-       
-
+      </div> 
      
       </main>
     </div>

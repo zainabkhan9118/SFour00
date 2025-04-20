@@ -1,10 +1,26 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
 import { FaUser, FaLock, FaFileInvoice, FaHeadset, FaQuestionCircle, FaSignOutAlt, FaUniversity } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { auth } from "../../../config/firebaseConfig";
 
 const UserSidebar = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+
+  const handleLogout = async () => {
+    try {
+        localStorage.removeItem("sessionData");
+        await signOut(auth);
+        toast.success("Logged out successfully!");
+        navigate("/login");
+    } catch (error) {
+        console.error("Error during logout:", error);
+        toast.error("Failed to log out. Please try again.");
+    }
+};
 
   // Function to check if the link is active
   const isActive = (path) => {
@@ -80,9 +96,8 @@ const UserSidebar = () => {
             <span>FAQ's</span>
           </Link>
         </li>
-        <li>
+        <li onClick={handleLogout}>
           <Link 
-            to="/logout" 
             className={`flex items-center space-x-3 text-red-500 ${isActive("/logout") ? "bg-orange-100 p-2 rounded-md font-semibold" : ""}`}
           >
             <FaSignOutAlt className="text-orange-500" />

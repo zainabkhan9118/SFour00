@@ -57,7 +57,7 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
-    <div className="flex justify-between items-center bg-white px-3 sm:px-6 py-3 sm:py-4 md:mb-4 lg:mb-0 shadow-sm">
+    <div className="flex justify-between  items-center bg-white px-3 sm:px-6 py-3 sm:py-4 md:mb-4 lg:mb-0 shadow-sm">
       {/* Mobile menu button - only visible on small screens */}
       <div className="block sm:hidden">
         <button 

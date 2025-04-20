@@ -8,6 +8,9 @@ import logo from "../assets/images/logo.png";
 import JobStatsDisplay from "../components/common/JobStatsDisplay";
 import { AppContext } from "../context/AppContext";
 import { auth } from "../config/firebaseConfig";
+import { doc, setDoc } from "firebase/firestore"; // Import Firestore functions
+import { db } from "../config/firebaseConfig"; // Import Firestore configuration
+import { toast } from "react-toastify"; 
 
 export default function CreateAccount() {
   const { BASEURL, setUser, setRole } = useContext(AppContext);
@@ -31,83 +34,82 @@ export default function CreateAccount() {
     }
   }, [location.state]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!email || !password || !confirmPassword || !phone) {
-      alert("Please fill in all required fields.");
-      return;
+  if (!email || !password || !confirmPassword || !phone) {
+    toast.warn("Please fill in all required fields.", { autoClose: 3000 });
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    toast.error("Passwords do not match.", { autoClose: 3000 });
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // 1. Create user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const firebaseUser = userCredential.user;
+    const firebaseId = firebaseUser.uid;
+
+    const userData =
+      userType === "jobseeker"
+        ? {
+            email,
+            phone,
+            role: "Job Seeker",
+            firebaseId,
+            fullName, 
+          }
+        : {
+            email,
+            phone,
+            role: "Company",
+            firebaseId,
+            companyName, 
+          };
+
+    
+
+    const userDoc = doc(db, "Users", firebaseId); 
+    await setDoc(userDoc, userData); 
+
+    const response = await axios.post(`${BASEURL}/user`, userData);
+
+    if (response.data && response.status === 201) {
+      setUser(response.data);
+
+      localStorage.setItem("userEmail", email);
+      toast.success("Account created successfully!", { autoClose: 3000 });
+      navigate("/login");
+    } else {
+      throw new Error("Backend user creation failed");
     }
-
-    if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 1. Create user in Firebase
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const firebaseUser = userCredential.user;
-      const firebaseId = firebaseUser.uid;
-
-      const userData =
-        userType === "jobseeker"
-          ? {
-              email,
-              phone,
-              role: "Job Seeker",
-              firebaseId,
-            }
-          : {
-              email,
-              phone,
-              role: "Company",
-              firebaseId,
-            };
-
-      // 2. Send to backend
-      const response = await axios.post(`${BASEURL}/user`, userData);
-
-      // 3. If backend is successful
-      if (response.data && response.status === 201) {
-        setUser(response.data);
-        console.log(response.data);
-        const userData = response.data.data;
-        // console.log(userData.role);
-        
-        // Store role in localStorage
-        setRole(userData.role)
-        // localStorage.setItem("userRole", userData.role);
-        localStorage.setItem("userEmail", email);
-        alert("Account created successfully!");
-        navigate("/login");
-      } else {
-        throw new Error("Backend user creation failed");
+  } catch (error) {
+    console.error("Error during sign-up:", error);
+    
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        await currentUser.delete();
+        console.error("Firebase user deleted due to backend failure.");
+      } catch (deleteError) {
+        console.error("Failed to delete Firebase user:", deleteError);
       }
-    } catch (error) {
-      console.error("Error during sign-up:", error);
-
-      // If Firebase user was created but backend failed, delete Firebase user
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        try {
-          await currentUser.delete();
-          console.error("Firebase user deleted due to backend failure.");
-        } catch (deleteError) {
-          console.error("Failed to delete Firebase user:", deleteError);
-        }
-      }
-
-      alert("Signup failed. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  };
+
+    toast.error("Signup failed. Please try again.", { autoClose: 3000 });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex h-screen">

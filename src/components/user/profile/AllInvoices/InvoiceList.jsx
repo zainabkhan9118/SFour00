@@ -103,7 +103,7 @@ const InvoiceList = () => {
   };
 
   return (
-      <div className="flex h-screen">
+      <div className="flex min-h-screen">
         {/* Sidebar */}
         <Sidebar />
     
@@ -112,7 +112,7 @@ const InvoiceList = () => {
           {/* Header */}
           <Header />
        
-          <main className="flex-3"> 
+          <main className="flex-3 mt-4"> 
           <div className="flex flex-row flex-1">
           <UserSidebar />
           <div className="w-[60vw] ml-4 p-6">
