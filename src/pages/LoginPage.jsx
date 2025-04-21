@@ -80,7 +80,7 @@ export default function LoginPage() {
                 const role = userData.role;
 
                 if (role === "Job Seeker") {
-                    navigate("/User-UserProfile");
+                    navigate("/User-PersonalDetails");
                 } else if (role === "Company") {
                     navigate("/company-profile");
                 }
@@ -129,7 +129,7 @@ export default function LoginPage() {
 
                 const role = userData.role;
                 if (role === "Job Seeker") {
-                    navigate("/User-UserProfile");
+                    navigate("/User-PersonalDetails");
                 } else if (role === "Company") {
                     navigate("/company-profile");
                 }
