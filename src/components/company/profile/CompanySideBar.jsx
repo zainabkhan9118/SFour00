@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import vector1 from "../../../assets/images/vector1.png";
 import s4 from "../../../assets/images/s4.png";
 import logout from "../.././../assets/images/logout.png";
@@ -9,8 +9,23 @@ import company from "../../../assets/images/company.png";
 
 import { FaUser, FaBriefcase, FaKey, FaExclamationTriangle } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../config/firebaseConfig";
 
 const CompanySideBar = () => {
+  const navigate = useNavigate();
+   const handleLogout = async () => {
+      try {
+          localStorage.removeItem("sessionData");
+          await signOut(auth);
+          toast.success("Logged out successfully!");
+          navigate("/login");
+      } catch (error) {
+          console.error("Error during logout:", error);
+          toast.error("Failed to log out. Please try again.");
+      }
+  };
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -79,7 +94,7 @@ const CompanySideBar = () => {
           </Link>
         </li>
         <li>
-          <Link to="/logout" className={getLinkStyle('/logout')}>
+          <Link onClick={handleLogout} className={getLinkStyle('/logout')}>
             <img src={logout} alt="" className="h-5 w-5" />
             <span>Logout</span>
           </Link>

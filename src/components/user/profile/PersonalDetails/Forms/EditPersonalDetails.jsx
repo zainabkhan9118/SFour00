@@ -9,7 +9,6 @@ import { getAuth } from "firebase/auth"; // Import Firebase Auth
 import axios from "axios";
 
 // Define your API base URL
-const BASEURL = "https://your-api-url.com";
 
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
@@ -87,19 +86,17 @@ const EditPersonalDetails = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Set loading to true when saving starts
-
-    // Get Firebase ID from the authenticated user
+    setIsLoading(true); 
     const auth = getAuth();
     const currentUser = auth.currentUser;
     if (!currentUser) {
       console.error("User not authenticated");
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false); 
       return;
     }
     const firebaseId = currentUser.uid;
-
-    // Prepare the data to send
+    console.log('firebase id', firebaseId);
+    
     const dataToSend = {
       fullname: formData.name,
       address: formData.addresses.map((addr) => ({
@@ -110,21 +107,31 @@ const EditPersonalDetails = () => {
       shortBio: formData.bio,
       profilePic: previewImage || profileImage,
     };
-    console.log('fahd', dataToSend);
 
+    // console.log('fahd', dataToSend);
+  
     try {
       const response = await axios.post(
-        `api/job-seeker`, // API endpoint
+        `api/job-seeker`,
         dataToSend,
         {
           headers: {
-            Authorization: `Bearer ${firebaseId}`,
+            "firebase-id": `${firebaseId}`,
             "Content-Type": "multipart/form-data",
-
           },
         }
       );
-      console.log("Profile data saved successfully", response.data);
+  
+      // console.log("Profile data saved successfully", response.data);
+
+      // console.log("job seeker id :", response.data.data._id);
+      
+      // Save the _id in local storage
+      if (response.data && response.data._id) {
+        localStorage.setItem("jobSeekerId", response.data._id);
+        console.log("User ID saved to local storage:", response.data._id);
+      }
+  
       navigate("/User-PersonalDetails");
     } catch (error) {
       console.error("Error saving profile data:", error);

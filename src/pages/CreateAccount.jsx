@@ -66,23 +66,25 @@ const handleSubmit = async (e) => {
             phone,
             role: "Job Seeker",
             firebaseId,
-            fullName, 
           }
         : {
             email,
             phone,
             role: "Company",
             firebaseId,
-            companyName, 
           };
 
     
+  
 
     const userDoc = doc(db, "Users", firebaseId); 
     await setDoc(userDoc, userData); 
 
+    // 3. Send to backend
     const response = await axios.post(`${BASEURL}/user`, userData);
-
+    console.log(response.data);
+    
+    // 4. If backend is successful
     if (response.data && response.status === 201) {
       setUser(response.data);
 
@@ -94,7 +96,8 @@ const handleSubmit = async (e) => {
     }
   } catch (error) {
     console.error("Error during sign-up:", error);
-    
+
+    // If Firebase user was created but backend failed, delete Firebase user
     const currentUser = auth.currentUser;
     if (currentUser) {
       try {

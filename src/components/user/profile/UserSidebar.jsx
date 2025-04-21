@@ -22,9 +22,7 @@ const UserSidebar = () => {
     }
 };
 
-  // Function to check if the link is active
   const isActive = (path) => {
-    // For personal details, highlight for both the main page and edit page
     if (path === "/User-PersonalDetails") {
       return currentPath === "/User-PersonalDetails" || currentPath === "/edit-personal-details " || currentPath === "/edit-experience" || currentPath === "/edit-education" || currentPath === "/edit-certificate" || currentPath === "/edit-license" || currentPath === "/edit-utr-number";
     }
@@ -35,7 +33,7 @@ const UserSidebar = () => {
     <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
       <div className="flex items-center space-x-3 pb-4">
         <img
-          src="src\assets\images\profile.jpeg" // Replace with actual image URL
+          src="src\assets\images\profile.jpeg"
           alt="profile"
           className="w-10 h-10 rounded-full"
         />

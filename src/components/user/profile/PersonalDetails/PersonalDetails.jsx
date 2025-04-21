@@ -16,6 +16,9 @@ import Header from "../../Header";
 import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
 
+
+
+
 const PersonalDetails = () => {
   const navigate = useNavigate();
 
@@ -52,7 +55,6 @@ const PersonalDetails = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
         <Header />
-
         <main className="flex-3  mt-3">
           <div className="flex flex-row flex-1">
            <div className="">

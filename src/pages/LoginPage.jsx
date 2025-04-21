@@ -32,6 +32,7 @@ export default function LoginPage() {
                 // Session expired
                 console.log("Session expired, clearing session data.");
                 localStorage.removeItem("sessionData");
+                navigate("/login");
             }
         }
     }, [navigate]);
@@ -50,13 +51,14 @@ export default function LoginPage() {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            const firebaseId = await user.getIdToken();
-
+            const firebaseId = await user.getIdToken(true);
+            console.log("Firebase ID Token:", firebaseId);
+            
             const response = await axios.post(`${BASEURL}/auth/login`, {
                 idToken: firebaseId,
             });
 
-            // console.log("Backend response:", response.data);
+            console.log("Backend response : ", response.data);
 
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 const userData = response.data.data;
@@ -67,6 +69,9 @@ export default function LoginPage() {
                     role: userData.role,
                     timestamp: Date.now(), 
                 };
+                console.log("Token length:", firebaseId.length);
+                console.log("User data:", firebaseId);
+                
                 console.log("Session data:", sessionData);
                 
                 localStorage.setItem("sessionData", JSON.stringify(sessionData));
