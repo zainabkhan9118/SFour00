@@ -73,10 +73,6 @@ const handleSubmit = async (e) => {
             role: "Company",
             firebaseId,
           };
-
-    
-  
-
     const userDoc = doc(db, "Users", firebaseId); 
     await setDoc(userDoc, userData); 
 

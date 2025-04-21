@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaMapMarkerAlt,
@@ -15,12 +15,25 @@ import {
 import Header from "../../Header";
 import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
-
-
-
+import { getAuth } from "firebase/auth";
+import axios from "axios";
 
 const PersonalDetails = () => {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({
+    fullname: "",
+    shortBio: "",
+    profilePic: "/assets/images/profile.jpeg",
+    address: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    fullname: "",
+    shortBio: "",
+    profilePic: "",
+    address: "",
+  });
 
   const handleEditProfile = () => {
     navigate("/edit-personal-details");
@@ -46,59 +59,108 @@ const PersonalDetails = () => {
     navigate("/edit-license");
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.error("User not authenticated");
+        setIsLoading(false);
+        return;
+      }
+
+      const firebaseId = currentUser.uid;
+      console.log("firebaseId", firebaseId);
+
+      try {
+        const response = await axios.get(`api/job-seeker`, {
+          headers: {
+            "firebase-id": `${firebaseId}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("response", response.data);
+
+        const data = response.data.data;
+        setUserData({
+          fullname: data.fullname || "",
+          shortBio: data.shortBio || "",
+          profilePic: data.profilePic || "/assets/images/profile.jpeg",
+          address: data.address || [],
+        });
+        setFormData({
+          fullname: data.fullname || "",
+          shortBio: data.shortBio || "",
+          profilePic: data.profilePic || "/assets/images/profile.jpeg",
+          address: data.address || [],
+        });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <Sidebar  />
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
         <Header />
-        <main className="flex-3  mt-3">
+        <main className="flex-3 mt-3">
           <div className="flex flex-row flex-1">
-           <div className="">
-           <UserSidebar className='overflow-hidden'/>
-           </div>
+            <div>
+              <UserSidebar  />
+            </div>
             <div className="p-4 h-screen overflow-auto">
               <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+                {/* Profile Section */}
                 <div className="flex flex-col md:flex-row">
                   <div className="relative flex-shrink-0">
                     <img
-                      src="src/assets/images/profile.jpeg"
-                      alt="Portrait of Dany Danial"
+                      src={userData.profilePic}
+                      alt="Profile"
                       className="rounded-xl w-32 h-32 md:w-48 md:h-48"
                     />
                   </div>
-
                   <div className="mt-4 md:mt-0 md:ml-6 flex-1">
                     <div className="flex justify-between items-start">
-                      <h2 className="text-2xl font-bold">About Dany</h2>
+                      <h2 className="text-2xl font-bold">About {userData.fullname}</h2>
                       <FaEdit
                         className="text-gray-500 cursor-pointer"
                         onClick={handleEditProfile}
                       />
                     </div>
-                    <p className="mt-2 text-gray-600">
-                      Lorem Ipsum is simply dummy text of the printing and typesetting
-                      industry. Lorem Ipsum has been the industry's standard dummy text
-                      ever since the 1500s, when an unknown printer took a galley of type
-                      and scrambled.
-                    </p>
+                    <p className="mt-2 text-gray-600 w-[600px]">{userData.shortBio}</p>
                   </div>
                 </div>
 
+                {/* Address Section */}
                 <div className="mt-6">
-                  <h3 className="text-xl font-bold">Dany Danial</h3>
-                  <p className="text-gray-600">23 years | Australia</p>
-                  <div className="flex items-center mt-2 gap-2">
-                    <FaMapMarkerAlt className="text-gray-500" />
-                    <p className="bg-slate-400 px-2 py-1 rounded-xl text-sm text-white">
-                      1789 North Street, San Antonio, TX 78201
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-bold">{userData.fullname}</h3>
+                  <p className="text-gray-600">
+                    {userData.address.map((addr, index) => (
+                      <span key={index}>
+                        {addr.address} {addr.isCurrent && "(Current)"}
+                        {index < userData.address.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </p>
                 </div>
 
+                {/* Experience and Other Sections */}
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Experience */}
                   <div>
@@ -151,7 +213,10 @@ const PersonalDetails = () => {
                             <p className="text-gray-600">Oct 2017 - Nov 7 2021</p>
                           </div>
                         </div>
-                        <FaArrowRight className="text-gray-500 mt-2" onClick={handleEditEducation}/>
+                        <FaArrowRight
+                          className="text-gray-500 mt-2"
+                          onClick={handleEditEducation}
+                        />
                       </div>
 
                       <div className="flex justify-between items-start">
@@ -162,8 +227,8 @@ const PersonalDetails = () => {
                             <p className="text-gray-600">Work Reference</p>
                           </div>
                         </div>
-                        <FaArrowRight 
-                          className="text-gray-500 mt-2 cursor-pointer" 
+                        <FaArrowRight
+                          className="text-gray-500 mt-2 cursor-pointer"
                           onClick={handleEditCertificate}
                         />
                       </div>
@@ -178,8 +243,8 @@ const PersonalDetails = () => {
                             </h4>
                           </div>
                         </div>
-                        <FaArrowRight 
-                          className="text-gray-500 mt-2 cursor-pointer" 
+                        <FaArrowRight
+                          className="text-gray-500 mt-2 cursor-pointer"
                           onClick={handleEditLicense}
                         />
                       </div>
@@ -191,8 +256,8 @@ const PersonalDetails = () => {
                             <h4 className="font-bold">UTR Number</h4>
                           </div>
                         </div>
-                        <FaArrowRight 
-                          className="text-gray-500 mt-2 cursor-pointer" 
+                        <FaArrowRight
+                          className="text-gray-500 mt-2 cursor-pointer"
                           onClick={handleEditUTRNumber}
                         />
                       </div>
