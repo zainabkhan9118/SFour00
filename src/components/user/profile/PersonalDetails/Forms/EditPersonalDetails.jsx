@@ -1,14 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
-import { getAuth } from "firebase/auth"; // Import Firebase Auth
+import { getAuth } from "firebase/auth";
 import axios from "axios";
-
-// Define your API base URL
 
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
@@ -21,6 +19,49 @@ const EditPersonalDetails = () => {
   const [profileImage, setProfileImage] = useState("src/assets/images/profile.jpeg");
   const [previewImage, setPreviewImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Loading state added
+  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false); // To check if data exists
+
+  // Fetch existing user data on component mount
+  useEffect(() => {
+    const fetchExistingData = async () => {
+      setIsLoading(true);
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.error("User not authenticated");
+        setIsLoading(false);
+        return;
+      }
+
+      const firebaseId = currentUser.uid;
+
+      try {
+        const response = await axios.get(`api/job-seeker`, {
+          headers: {
+            "firebase-id": `${firebaseId}`,
+          },
+        });
+
+        if (response.data && response.data.data) {
+          const data = response.data.data;
+          setFormData({
+            name: data.fullname || "",
+            addresses: data.address || [{ address: "", duration: "", isCurrent: false }],
+            bio: data.shortBio || "",
+          });
+          setProfileImage(data.profilePic || "src/assets/images/profile.jpeg");
+          setIsDataAlreadyPosted(true); // Mark that data already exists
+        }
+      } catch (error) {
+        console.error("Error fetching existing data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExistingData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,17 +119,16 @@ const EditPersonalDetails = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setIsLoading(true); 
+    setIsLoading(true);
     const auth = getAuth();
     const currentUser = auth.currentUser;
     if (!currentUser) {
       console.error("User not authenticated");
-      setIsLoading(false); 
+      setIsLoading(false);
       return;
     }
     const firebaseId = currentUser.uid;
-    console.log('firebase id', firebaseId);
-    
+
     const dataToSend = {
       fullname: formData.name,
       address: formData.addresses.map((addr) => ({
@@ -100,35 +140,37 @@ const EditPersonalDetails = () => {
       profilePic: previewImage || profileImage,
     };
 
-    // console.log('fahd', dataToSend);
-  
     try {
-      const response = await axios.post(
-        `api/job-seeker`,
-        dataToSend,
-        {
+      if (isDataAlreadyPosted) {
+        // If data already exists, use PATCH to update it
+        await axios.patch(`api/job-seeker`, dataToSend, {
           headers: {
-            "firebase-id": `${firebaseId}`,
-            "Content-Type": "multipart/form-data",
+            "firebase-id": firebaseId,
+            "Content-Type": "application/json",
           },
-        }
-      );
-  
-      // console.log("Profile data saved successfully", response.data);
+        });
+        console.log("Profile data updated successfully.");
+      } else {
+        // Otherwise, use POST to create new data
+        const response = await axios.post(`api/job-seeker`, dataToSend, {
+          headers: {
+            "firebase-id": firebaseId,
+            "Content-Type": "application/json",
+          },
+        });
 
-      // console.log("job seeker id :", response.data.data._id);
-      
-      // Save the _id in local storage
-      if (response.data && response.data._id) {
-        localStorage.setItem("jobSeekerId", response.data._id);
-        console.log("User ID saved to local storage:", response.data._id);
+        if (response.data && response.data._id) {
+          localStorage.setItem("jobSeekerId", response.data._id);
+          console.log("User ID saved to local storage:", response.data._id);
+        }
+        console.log("Profile data saved successfully.");
       }
-  
+
       navigate("/User-PersonalDetails");
     } catch (error) {
       console.error("Error saving profile data:", error);
     } finally {
-      setIsLoading(false); // Reset loading state after request completes
+      setIsLoading(false); 
     }
   };
 
@@ -170,26 +212,6 @@ const EditPersonalDetails = () => {
                         className="w-24 h-24 rounded-full object-cover cursor-pointer"
                         onClick={handleImageClick}
                       />
-                      <button
-                        type="button"
-                        onClick={handleImageClick}
-                        className="absolute bottom-0 right-0 bg-white p-1 rounded-full border border-gray-300 hover:bg-gray-100"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-4 h-4 text-blue-500"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                          />
-                        </svg>
-                      </button>
                       <input
                         type="file"
                         ref={fileInputRef}
