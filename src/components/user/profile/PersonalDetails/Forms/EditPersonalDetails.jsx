@@ -9,7 +9,6 @@ import { getAuth } from "firebase/auth"; // Import Firebase Auth
 import axios from "axios";
 
 // Define your API base URL
-const BASEURL = "https://your-api-url.com";
 
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
@@ -90,7 +89,8 @@ const EditPersonalDetails = () => {
       return;
     }
     const firebaseId = currentUser.uid;
-
+    console.log('firebase id',firebaseId);
+    
     // Prepare the data to send
     const dataToSend = {
       fullname: formData.name,
@@ -110,8 +110,8 @@ const EditPersonalDetails = () => {
         dataToSend,
         {
           headers: {
-            Authorization: `Bearer ${firebaseId}`,
-            "Content-Type": "multipart/form-data",
+            "firebase-id": `${firebaseId}`,
+           "Content-Type": "multipart/form-data",
 
           },
         }
