@@ -75,6 +75,7 @@ const handleSubmit = async (e) => {
           };
 
     
+  
 
     const userDoc = doc(db, "Users", firebaseId); 
     await setDoc(userDoc, userData); 
