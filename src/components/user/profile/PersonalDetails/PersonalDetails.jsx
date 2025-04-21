@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import imageCompression from "browser-image-compression";
+
 import {
   FaMapMarkerAlt,
   FaEdit,
@@ -34,6 +36,24 @@ const PersonalDetails = () => {
     profilePic: "",
     address: "",
   });
+  async function compressImage(profilePic) {
+    try {
+      const options = {
+        maxSizeMB: 1, // Maximum size in MB
+        maxWidthOrHeight: 1920, // Maximum width or height
+        useWebWorker: true, // Use web workers for better performance
+      };
+  
+      const compressedFile = await imageCompression(profilePic, options);
+      console.log("Original File Size:", (profilePic.size / 1024 / 1024).toFixed(2), "MB");
+      console.log("Compressed File Size:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+      
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing the image:", error);
+    }
+  }
+  
 
   const handleEditProfile = () => {
     navigate("/edit-personal-details");

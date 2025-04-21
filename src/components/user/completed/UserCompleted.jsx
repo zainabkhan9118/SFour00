@@ -143,7 +143,7 @@ const UserCompleted = () => {
                 </button>
                 <button
                 onClick={() => setShowPopup(true)}
-                  className="bg-[#FD7F00] text-white w-full sm:w-[110px] h-[40px] text-sm font-normal rounded-full"
+                  className="bg-[#FD7F00] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full"
                 >
                   Completed
                 </button>

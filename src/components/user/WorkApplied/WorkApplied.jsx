@@ -158,7 +158,7 @@ const WorkApplied = () => {
                 </button>
                 <button
                   onClick={handleNavigate}
-                  className="bg-orange-500 text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
+                  className="bg-orange-500 font-semibold text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
                 >
                   Applied
                 </button>

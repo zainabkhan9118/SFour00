@@ -143,12 +143,12 @@ export default function MyWorkAssignedPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap sm:flx-col items-center justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-                  <button className="bg-gray-800 text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-gray-700">
+                  <button className="bg-gray-800 text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-gray-700">
                     Decline
                   </button>
                   <button
                     onClick={() => setShowButton1(true)}
-                    className="bg-orange-500 text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
+                    className="bg-orange-500 text-white w-full font-semibold sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
                   >
                     Accept
                   </button>

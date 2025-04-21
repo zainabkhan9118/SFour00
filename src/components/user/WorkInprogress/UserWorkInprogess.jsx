@@ -148,7 +148,7 @@ const UserWorkInprogess = () => {
                 </button>
                 <button
                   onClick={handleNavigate}
-                  className="bg-[#1F2B44] text-white w-full sm:w-[110px] h-[40px] text-sm font-normal rounded-full"
+                  className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm  rounded-full"
                 >
                   Book Off
                 </button>
