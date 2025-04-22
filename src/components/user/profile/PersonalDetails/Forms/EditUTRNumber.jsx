@@ -5,10 +5,12 @@ import { FiArrowRight } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditUTRNumber = () => {
   const navigate = useNavigate();
   const [utrNumber, setUtrNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleChange = (e) => {
     setUtrNumber(e.target.value);
@@ -16,9 +18,17 @@ const EditUTRNumber = () => {
   
   const handleSave = (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     console.log("Saving UTR Number:", utrNumber);
     // Here you would typically save the data to your backend
-    navigate("/User-PersonalDetails");
+    
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
   };
   
   const handleBack = () => {
@@ -27,6 +37,9 @@ const EditUTRNumber = () => {
 
   return (
     <div className="flex h-screen">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
       {/* Sidebar */}
       <Sidebar />
 

@@ -5,6 +5,7 @@ import { FiArrowRight, FiUpload } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditCertificate = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const EditCertificate = () => {
   const [issueDate, setIssueDate] = useState("");
   const [organization, setOrganization] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleIssueDate = (e) => {
     setIssueDate(e.target.value);
@@ -23,6 +25,7 @@ const EditCertificate = () => {
   
   const handleSave = (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
     // Here you would typically save the data to your backend
     console.log("Saving Certificate Data:", {
@@ -31,8 +34,12 @@ const EditCertificate = () => {
       certificate: selectedFile
     });
     
-    // Navigate back to the profile page
-    navigate("/User-PersonalDetails");
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
   };
   
   const handleBack = () => {
@@ -75,6 +82,9 @@ const EditCertificate = () => {
 
   return (
     <div className="flex h-screen">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
       {/* Sidebar */}
       <Sidebar />
 

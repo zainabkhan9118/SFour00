@@ -5,6 +5,7 @@ import { FiArrowRight } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+
 import { useContext} from "react";
 import { AppContext } from "../../../../../context/AppContext";
 
@@ -13,6 +14,9 @@ import { getAuth } from "firebase/auth";
 const auth = getAuth();
 const currentUser = auth.currentUser;
 
+
+
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 
 const EditEducation = () => {
@@ -30,6 +34,7 @@ const EditEducation = () => {
     },
   ]);
 
+
   const handleChange = (id, e) => {
     const { name, value, type, checked } = e.target;
 
@@ -42,6 +47,44 @@ const EditEducation = () => {
         : edu
     );
     setEducations(updated);
+
+  const [currentEducationId, setCurrentEducationId] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  const handleSave = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    // Update the current education in the educations array
+    const updatedEducations = educations.map(edu => 
+      edu.id === currentEducationId 
+        ? { ...formData, id: currentEducationId, certificate: selectedFile } 
+        : edu
+    );
+    
+    setEducations(updatedEducations);
+    console.log("Saving education data:", formData);
+    console.log("Updated educations array:", updatedEducations);
+    
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
+  };
+  
+  const handleBack = () => {
+    navigate("/User-PersonalDetails");
+
   };
 
   const handleAddNew = () => {
@@ -116,6 +159,12 @@ const EditEducation = () => {
 
   return (
     <div className="flex h-screen">
+
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
+      {/* Sidebar */}
+
       <Sidebar />
       <div className="flex flex-col flex-1">
         <Header />
