@@ -6,7 +6,7 @@ import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
 
-import { useContext} from "react";
+import { useContext } from "react";
 import { AppContext } from "../../../../../context/AppContext";
 
 import { getAuth } from "firebase/auth";
@@ -14,13 +14,10 @@ import { getAuth } from "firebase/auth";
 const auth = getAuth();
 const currentUser = auth.currentUser;
 
-
-
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 
-
 const EditEducation = () => {
-  const { BASEURL} = useContext(AppContext);
+  const { BASEURL } = useContext(AppContext);
   const navigate = useNavigate();
 
   const [educations, setEducations] = useState([
@@ -34,6 +31,8 @@ const EditEducation = () => {
     },
   ]);
 
+  const [currentEducationId, setCurrentEducationId] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (id, e) => {
     const { name, value, type, checked } = e.target;
@@ -47,44 +46,74 @@ const EditEducation = () => {
         : edu
     );
     setEducations(updated);
+  };
 
-  const [currentEducationId, setCurrentEducationId] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const handleChange = (e) => {
+  const handleFormDataChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
-  
-  const handleSave = (e) => {
+
+  const handleSave = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Update the current education in the educations array
-    const updatedEducations = educations.map(edu => 
-      edu.id === currentEducationId 
-        ? { ...formData, id: currentEducationId, certificate: selectedFile } 
-        : edu
-    );
-    
-    setEducations(updatedEducations);
-    console.log("Saving education data:", formData);
-    console.log("Updated educations array:", updatedEducations);
-    
-    // Simulate API call with a timeout
-    setTimeout(() => {
+
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      const firebaseId = currentUser?.uid;
+      if (!firebaseId) {
+        alert("User not authenticated. Please log in.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Update the current education in the educations array if formData exists
+      if (typeof formData !== 'undefined' && currentEducationId) {
+        const updatedEducations = educations.map((edu) =>
+          edu.id === currentEducationId
+            ? { ...formData, id: currentEducationId, certificate: selectedFile }
+            : edu
+        );
+        setEducations(updatedEducations);
+      }
+
+      const response = await fetch(`${BASEURL}/education`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${firebaseId}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          educations.map(({ id, ...edu }) => edu)
+        ),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to save education records:", errorData);
+        alert(`Error: ${errorData.message || "Failed to save education records"}`);
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Education records saved successfully:", data);
+      alert("Education records saved successfully!");
       setIsLoading(false);
-      // Navigate back to the profile page
       navigate("/User-PersonalDetails");
-    }, 1000);
+    } catch (error) {
+      console.error("Error saving education records:", error);
+      alert("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
-  
+
   const handleBack = () => {
     navigate("/User-PersonalDetails");
-
   };
 
   const handleAddNew = () => {
@@ -112,59 +141,12 @@ const EditEducation = () => {
     setEducations(updated);
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-  
-    try {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-  
-      const firebaseId = currentUser?.uid;
-      if (!firebaseId) {
-        alert("User not authenticated. Please log in.");
-        return;
-      }
-  
-      const response = await fetch(`${BASEURL}/education`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${firebaseId}`, 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          educations.map(({ id, ...edu }) => edu)
-        ),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to save education records:", errorData);
-        alert(`Error: ${errorData.message || "Failed to save education records"}`);
-        return;
-      }
-   
-      const data = await response.json();
-      console.log("Education records saved successfully:", data);
-      alert("Education records saved successfully!");
-      navigate("/User-PersonalDetails");
-    } catch (error) {
-      console.error("Error saving education records:", error);
-      alert("An unexpected error occurred. Please try again.");
-    }
-  };
-
-  const handleBack = () => {
-    navigate("/User-PersonalDetails");
-  };
-
   return (
     <div className="flex h-screen">
-
       {/* Show loading spinner when loading */}
       {isLoading && <LoadingSpinner />}
-      
-      {/* Sidebar */}
 
+      {/* Sidebar */}
       <Sidebar />
       <div className="flex flex-col flex-1">
         <Header />
