@@ -66,14 +66,14 @@ const handleSubmit = async (e) => {
             phone,
             role: "Job Seeker",
             firebaseId,
-            fullName, 
+           
           }
         : {
             email,
             phone,
             role: "Company",
             firebaseId,
-            companyName, 
+           
           };
 
     
@@ -85,6 +85,7 @@ const handleSubmit = async (e) => {
 
     if (response.data && response.status === 201) {
       setUser(response.data);
+      console.log("User created in backend:", response.data);
 
       localStorage.setItem("userEmail", email);
       toast.success("Account created successfully!", { autoClose: 3000 });
