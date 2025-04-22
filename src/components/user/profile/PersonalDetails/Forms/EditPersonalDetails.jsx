@@ -152,10 +152,11 @@ const EditPersonalDetails = () => {
         });
         const data = response.data.data;
         if (setProfileName && setProfileDp) {
+          
           setProfileName(data.fullname || "");
           setProfileDp(previewImage || profileImage);
         }
-        console.log("Profile data updated successfully.");
+        // console.log("Profile data updated successfully.");
       } else {
         // Otherwise, use POST to create new data
         const response = await axios.post(`api/job-seeker`, dataToSend, {
@@ -165,9 +166,9 @@ const EditPersonalDetails = () => {
           },
         });
 
-        if (response.data && response.data._id) {
-          localStorage.setItem("jobSeekerId", response.data._id);
-          console.log("User ID saved to local storage:", response.data._id);
+        if (response.data.data && response.data.data._id) {
+          localStorage.setItem("jobSeekerId", response.data.data._id);
+          console.log("saved to local storage:", response.data.data._id);
           if (setProfileName && setProfileDp) {
             setProfileName(formData.name);
             setProfileDp(previewImage || profileImage);
