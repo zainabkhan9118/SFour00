@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import imageCompression from "browser-image-compression";
-
 import {
   FaMapMarkerAlt,
   FaEdit,
@@ -17,15 +15,18 @@ import {
 import Header from "../../Header";
 import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import axios from "axios";
+import { AppContext } from "../../../../context/AppContext";
+import profilePic from "../../../../assets/images/profile.jpeg";
 
 const PersonalDetails = () => {
   const navigate = useNavigate();
+  const { setProfileName, setProfileDp } = useContext(AppContext);
   const [userData, setUserData] = useState({
     fullname: "",
     shortBio: "",
-    profilePic: "/assets/images/profile.jpeg",
+    profilePic:profilePic,
     address: [],
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -36,24 +37,7 @@ const PersonalDetails = () => {
     profilePic: "",
     address: "",
   });
-  async function compressImage(profilePic) {
-    try {
-      const options = {
-        maxSizeMB: 1, // Maximum size in MB
-        maxWidthOrHeight: 1920, // Maximum width or height
-        useWebWorker: true, // Use web workers for better performance
-      };
-  
-      const compressedFile = await imageCompression(profilePic, options);
-      console.log("Original File Size:", (profilePic.size / 1024 / 1024).toFixed(2), "MB");
-      console.log("Compressed File Size:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
-      
-      return compressedFile;
-    } catch (error) {
-      console.error("Error compressing the image:", error);
-    }
-  }
-  
+  const [error, setError] = useState(null);
 
   const handleEditProfile = () => {
     navigate("/edit-personal-details");
@@ -80,17 +64,8 @@ const PersonalDetails = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        console.error("User not authenticated");
-        setIsLoading(false);
-        return;
-      }
-
-      const firebaseId = currentUser.uid;
+    const fetchData = async (user) => {
+      const firebaseId = user.uid;
       console.log("firebaseId", firebaseId);
 
       try {
@@ -104,34 +79,78 @@ const PersonalDetails = () => {
         console.log("response", response.data);
 
         const data = response.data.data;
-        setUserData({
-          fullname: data.fullname || "",
-          shortBio: data.shortBio || "",
-          profilePic: data.profilePic || "/assets/images/profile.jpeg",
-          address: data.address || [],
-        });
-        setFormData({
-          fullname: data.fullname || "",
-          shortBio: data.shortBio || "",
-          profilePic: data.profilePic || "/assets/images/profile.jpeg",
-          address: data.address || [],
-        });
+
+        // Check if user is logging in for the first time and data is empty
+        if (!data || Object.keys(data).length === 0) {
+          console.log("First-time login detected. Showing dummy data profilePic.");
+          // Set dummy data for first-time login
+          setUserData({
+            fullname: "John Doe",
+            shortBio: "A passionate job seeker looking for exciting opportunities. passionate job seeker looking for exciting opportunities. loremgit",
+            profilePic:profilePic, 
+            address: [{ address: "123 Main St, Springfield", isCurrent: true }],
+          });
+          setFormData({
+            fullname: "John Doe",
+            shortBio: "A passionate job seeker looking for exciting opportunities.",
+            profilePic: profilePic, 
+            address: "123 Main St, Springfield",
+          });
+        } else {
+          setUserData({
+            fullname: data.fullname || "",
+            shortBio: data.shortBio || "",
+            profilePic: data.profilePic ||profilePic, // Use default image if profilePic is missing
+            address: data.address || [],
+          });
+          setFormData({
+            fullname: data.fullname || "",
+            shortBio: data.shortBio || "",
+            profilePic: data.profilePic ||profilePic, 
+            address: data.address || [],
+          });
+
+          // Set profile data in AppContext
+          if (setProfileName && setProfileDp) {
+            setProfileName(data.fullname || "");
+            setProfileDp(data.profilePic || profilePic);
+          }
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        setError("Failed to fetch user data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    const auth = getAuth();
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+    // Listen for Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          console.log("User authenticated:", currentUser);
+          await fetchData(currentUser);
+        } catch (error) {
+          console.error("Error during user authentication:", error);
+        }
+      } else {
+        console.error("User not authenticated");
+        setIsLoading(false);
+        setError("User not authenticated. Please log in.");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [setProfileName, setProfileDp, formData.shortBio, formData.address]);
+
+  // if (isLoading) {
+  //   return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  // }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
 
@@ -142,7 +161,7 @@ const PersonalDetails = () => {
         <main className="flex-3 mt-3">
           <div className="flex flex-row flex-1">
             <div>
-              <UserSidebar  />
+              <UserSidebar />
             </div>
             <div className="p-4 h-screen overflow-auto">
               <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
@@ -150,7 +169,7 @@ const PersonalDetails = () => {
                 <div className="flex flex-col md:flex-row">
                   <div className="relative flex-shrink-0">
                     <img
-                      src={userData.profilePic}
+                      src={userData.profilePic || "/assets/images/profile.jpeg"}
                       alt="Profile"
                       className="rounded-xl w-32 h-32 md:w-48 md:h-48"
                     />

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -7,10 +7,12 @@ import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
+import { AppContext } from "../../../../../context/AppContext";
 
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { setProfileName,setProfileDp} = useContext(AppContext)
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
     addresses: [{ address: "", duration: "", isCurrent: false }],
@@ -18,10 +20,8 @@ const EditPersonalDetails = () => {
   });
   const [profileImage, setProfileImage] = useState("src/assets/images/profile.jpeg");
   const [previewImage, setPreviewImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Loading state added
-  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false); // To check if data exists
-
-  // Fetch existing user data on component mount
+  const [isLoading, setIsLoading] = useState(false); 
+  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false); 
   useEffect(() => {
     const fetchExistingData = async () => {
       setIsLoading(true);
@@ -51,7 +51,7 @@ const EditPersonalDetails = () => {
             bio: data.shortBio || "",
           });
           setProfileImage(data.profilePic || "src/assets/images/profile.jpeg");
-          setIsDataAlreadyPosted(true); // Mark that data already exists
+          setIsDataAlreadyPosted(true);
         }
       } catch (error) {
         console.error("Error fetching existing data:", error);
@@ -76,7 +76,6 @@ const EditPersonalDetails = () => {
     newAddresses[index][field] = value;
 
     if (field === "isCurrent" && value === true) {
-      // Uncheck other addresses if this one is marked as current
       newAddresses.forEach((addr, i) => {
         if (i !== index) addr.isCurrent = false;
       });
@@ -142,13 +141,18 @@ const EditPersonalDetails = () => {
 
     try {
       if (isDataAlreadyPosted) {
-        // If data already exists, use PATCH to update it
-        await axios.patch(`api/job-seeker`, dataToSend, {
+       const response =await axios.patch(`api/job-seeker`, dataToSend, {
           headers: {
             "firebase-id": firebaseId,
             "Content-Type": "application/json",
           },
         });
+        const data = response.data.data
+        // console.log('fahad',data.name);
+        if (setProfileName && setProfileDp) {
+          setProfileName(data.fullname || ""); 
+          setProfileDp(previewImage || profileImage); 
+        }
         console.log("Profile data updated successfully.");
       } else {
         // Otherwise, use POST to create new data
@@ -162,6 +166,10 @@ const EditPersonalDetails = () => {
         if (response.data && response.data._id) {
           localStorage.setItem("jobSeekerId", response.data._id);
           console.log("User ID saved to local storage:", response.data._id);
+          if(setProfileName && setProfileDp) {
+            setProfileName(formData.name); 
+            setProfileDp(previewImage || profileImage);
+          }
         }
         console.log("Profile data saved successfully.");
       }
@@ -179,7 +187,7 @@ const EditPersonalDetails = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
 
@@ -188,10 +196,13 @@ const EditPersonalDetails = () => {
         {/* Header */}
         <Header />
 
-        <main className="flex-3 overflow-auto">
+        <main className="flex-3">
           <div className="flex flex-row flex-1">
+            <div>
             <UserSidebar />
-            <div className="p-4 flex-1 bg-gray-50">
+            </div>
+            
+            <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
               {/* Header with back button */}
               <div className="flex items-center p-4">
                 <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
