@@ -15,8 +15,10 @@ const EditPersonalDetails = () => {
   const { setProfileName,setProfileDp} = useContext(AppContext)
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
-    addresses: [{ address: "", duration: "", isCurrent: false }],
-    bio: "",
+
+    addresses: [{ address: '', duration: '', isCurrent: false }],
+    bio: ""
+
   });
   const [profileImage, setProfileImage] = useState("src/assets/images/profile.jpeg");
   const [previewImage, setPreviewImage] = useState(null);
@@ -75,31 +77,39 @@ const EditPersonalDetails = () => {
     const newAddresses = [...formData.addresses];
     newAddresses[index][field] = value;
 
-    if (field === "isCurrent" && value === true) {
+    if (field === 'isCurrent' && value === true) {
+
+      // Uncheck other addresses if this one is marked as current
+
       newAddresses.forEach((addr, i) => {
         if (i !== index) addr.isCurrent = false;
       });
     }
 
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      addresses: newAddresses,
+      addresses: newAddresses
+
     }));
   };
 
   const addAddress = () => {
-    setFormData((prev) => ({
+
+    setFormData(prev => ({
       ...prev,
-      addresses: [...prev.addresses, { address: "", duration: "", isCurrent: false }],
+      addresses: [...prev.addresses, { address: '', duration: '', isCurrent: false }]
+
     }));
   };
 
   const removeAddress = (index) => {
-    setFormData((prev) => ({
+
+    setFormData(prev => ({
       ...prev,
-      addresses: prev.addresses.filter((_, i) => i !== index),
+      addresses: prev.addresses.filter((_, i) => i !== index)
     }));
   };
+  
 
   const handleImageClick = () => {
     fileInputRef.current.click();
@@ -263,14 +273,19 @@ const EditPersonalDetails = () => {
                           <input
                             type="text"
                             value={addressItem.address}
-                            onChange={(e) => handleAddressChange(index, "address", e.target.value)}
+
+
+                            onChange={(e) => handleAddressChange(index, 'address', e.target.value)}
+
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                             placeholder="Address"
                           />
                           <input
                             type="text"
                             value={addressItem.duration}
-                            onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
+
+                            onChange={(e) => handleAddressChange(index, 'duration', e.target.value)}
+
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                             placeholder="Duration (e.g., 2020-2022)"
                           />
@@ -278,7 +293,9 @@ const EditPersonalDetails = () => {
                             <input
                               type="checkbox"
                               checked={addressItem.isCurrent}
-                              onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
+
+                              onChange={(e) => handleAddressChange(index, 'isCurrent', e.target.checked)}
+
                               className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                             />
                             <label className="ml-2 text-sm text-gray-600">Current Address</label>
