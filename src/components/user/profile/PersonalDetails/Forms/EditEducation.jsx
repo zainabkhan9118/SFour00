@@ -5,6 +5,7 @@ import { FiArrowRight } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditEducation = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const EditEducation = () => {
     }
   ]);
   const [currentEducationId, setCurrentEducationId] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -42,6 +44,8 @@ const EditEducation = () => {
   
   const handleSave = (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     // Update the current education in the educations array
     const updatedEducations = educations.map(edu => 
       edu.id === currentEducationId 
@@ -52,8 +56,13 @@ const EditEducation = () => {
     setEducations(updatedEducations);
     console.log("Saving education data:", formData);
     console.log("Updated educations array:", updatedEducations);
-    // Navigate back to the profile page
-    navigate("/User-PersonalDetails");
+    
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
   };
   
   const handleBack = () => {
@@ -118,6 +127,9 @@ const EditEducation = () => {
 
   return (
     <div className="flex h-screen">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
       {/* Sidebar */}
       <Sidebar />
 

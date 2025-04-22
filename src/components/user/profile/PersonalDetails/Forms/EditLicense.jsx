@@ -5,6 +5,7 @@ import { FiUpload } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditLicense = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const EditLicense = () => {
     expiryDate: ""
   });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,6 +27,7 @@ const EditLicense = () => {
   
   const handleSave = (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
     // Here you would typically save the data to your backend
     console.log("Saving License Data:", {
@@ -32,8 +35,12 @@ const EditLicense = () => {
       license: selectedFile
     });
     
-    // Navigate back to the profile page
-    navigate("/User-PersonalDetails");
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
   };
   
   const handleBack = () => {
@@ -76,6 +83,9 @@ const EditLicense = () => {
 
   return (
     <div className="flex h-screen">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
       {/* Sidebar */}
       <Sidebar />
 

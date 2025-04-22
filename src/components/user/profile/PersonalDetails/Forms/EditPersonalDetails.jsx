@@ -8,22 +8,22 @@ import UserSidebar from "../../UserSidebar";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import { AppContext } from "../../../../../context/AppContext";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { setProfileName,setProfileDp} = useContext(AppContext)
+  const { setProfileName, setProfileDp } = useContext(AppContext);
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
-
-    addresses: [{ address: '', duration: '', isCurrent: false }],
-    bio: ""
-
+    addresses: [{ address: "", duration: "", isCurrent: false }],
+    bio: "",
   });
   const [profileImage, setProfileImage] = useState("src/assets/images/profile.jpeg");
   const [previewImage, setPreviewImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); 
-  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
+
   useEffect(() => {
     const fetchExistingData = async () => {
       setIsLoading(true);
@@ -77,39 +77,32 @@ const EditPersonalDetails = () => {
     const newAddresses = [...formData.addresses];
     newAddresses[index][field] = value;
 
-    if (field === 'isCurrent' && value === true) {
-
+    if (field === "isCurrent" && value === true) {
       // Uncheck other addresses if this one is marked as current
-
       newAddresses.forEach((addr, i) => {
         if (i !== index) addr.isCurrent = false;
       });
     }
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      addresses: newAddresses
-
+      addresses: newAddresses,
     }));
   };
 
   const addAddress = () => {
-
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      addresses: [...prev.addresses, { address: '', duration: '', isCurrent: false }]
-
+      addresses: [...prev.addresses, { address: "", duration: "", isCurrent: false }],
     }));
   };
 
   const removeAddress = (index) => {
-
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      addresses: prev.addresses.filter((_, i) => i !== index)
+      addresses: prev.addresses.filter((_, i) => i !== index),
     }));
   };
-  
 
   const handleImageClick = () => {
     fileInputRef.current.click();
@@ -151,17 +144,16 @@ const EditPersonalDetails = () => {
 
     try {
       if (isDataAlreadyPosted) {
-       const response =await axios.patch(`api/job-seeker`, dataToSend, {
+        const response = await axios.patch(`api/job-seeker`, dataToSend, {
           headers: {
             "firebase-id": firebaseId,
             "Content-Type": "application/json",
           },
         });
-        const data = response.data.data
-        // console.log('fahad',data.name);
+        const data = response.data.data;
         if (setProfileName && setProfileDp) {
-          setProfileName(data.fullname || ""); 
-          setProfileDp(previewImage || profileImage); 
+          setProfileName(data.fullname || "");
+          setProfileDp(previewImage || profileImage);
         }
         console.log("Profile data updated successfully.");
       } else {
@@ -176,8 +168,8 @@ const EditPersonalDetails = () => {
         if (response.data && response.data._id) {
           localStorage.setItem("jobSeekerId", response.data._id);
           console.log("User ID saved to local storage:", response.data._id);
-          if(setProfileName && setProfileDp) {
-            setProfileName(formData.name); 
+          if (setProfileName && setProfileDp) {
+            setProfileName(formData.name);
             setProfileDp(previewImage || profileImage);
           }
         }
@@ -188,7 +180,7 @@ const EditPersonalDetails = () => {
     } catch (error) {
       console.error("Error saving profile data:", error);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -198,6 +190,9 @@ const EditPersonalDetails = () => {
 
   return (
     <div className="flex min-h-screen overflow-hidden">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+
       {/* Sidebar */}
       <Sidebar />
 
@@ -209,9 +204,9 @@ const EditPersonalDetails = () => {
         <main className="flex-3">
           <div className="flex flex-row flex-1">
             <div>
-            <UserSidebar />
+              <UserSidebar />
             </div>
-            
+
             <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
               {/* Header with back button */}
               <div className="flex items-center p-4">
@@ -273,19 +268,14 @@ const EditPersonalDetails = () => {
                           <input
                             type="text"
                             value={addressItem.address}
-
-
-                            onChange={(e) => handleAddressChange(index, 'address', e.target.value)}
-
+                            onChange={(e) => handleAddressChange(index, "address", e.target.value)}
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                             placeholder="Address"
                           />
                           <input
                             type="text"
                             value={addressItem.duration}
-
-                            onChange={(e) => handleAddressChange(index, 'duration', e.target.value)}
-
+                            onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                             placeholder="Duration (e.g., 2020-2022)"
                           />
@@ -293,9 +283,7 @@ const EditPersonalDetails = () => {
                             <input
                               type="checkbox"
                               checked={addressItem.isCurrent}
-
-                              onChange={(e) => handleAddressChange(index, 'isCurrent', e.target.checked)}
-
+                              onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
                               className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                             />
                             <label className="ml-2 text-sm text-gray-600">Current Address</label>

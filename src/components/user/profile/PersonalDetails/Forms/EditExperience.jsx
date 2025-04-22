@@ -5,6 +5,7 @@ import { FiArrowRight } from "react-icons/fi";
 import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const EditExperience = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const EditExperience = () => {
     }
   ]);
   const [currentExperienceId, setCurrentExperienceId] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -42,6 +44,8 @@ const EditExperience = () => {
   
   const handleSave = (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     // Update the current experience in the experiences array
     const updatedExperiences = experiences.map(exp => 
       exp.id === currentExperienceId 
@@ -52,8 +56,13 @@ const EditExperience = () => {
     setExperiences(updatedExperiences);
     console.log("Saving experience data:", formData);
     console.log("Updated experiences array:", updatedExperiences);
-    // Navigate back to the profile page
-    navigate("/User-PersonalDetails");
+    
+    // Simulate API call with a timeout
+    setTimeout(() => {
+      setIsLoading(false);
+      // Navigate back to the profile page
+      navigate("/User-PersonalDetails");
+    }, 1000);
   };
   
   const handleBack = () => {
@@ -118,6 +127,9 @@ const EditExperience = () => {
 
   return (
     <div className="flex h-screen">
+      {/* Show loading spinner when loading */}
+      {isLoading && <LoadingSpinner />}
+      
       {/* Sidebar */}
       <Sidebar />
 

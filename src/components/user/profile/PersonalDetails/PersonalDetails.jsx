@@ -19,6 +19,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import axios from "axios";
 import { AppContext } from "../../../../context/AppContext";
 import profilePic from "../../../../assets/images/profile.jpeg";
+import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 
 const PersonalDetails = () => {
   const navigate = useNavigate();
@@ -26,11 +27,12 @@ const PersonalDetails = () => {
   const [userData, setUserData] = useState({
     fullname: "",
     shortBio: "",
-    profilePic:profilePic,
+    profilePic: profilePic,
     address: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     fullname: "",
     shortBio: "",
@@ -87,26 +89,26 @@ const PersonalDetails = () => {
           setUserData({
             fullname: "John Doe",
             shortBio: "A passionate job seeker looking for exciting opportunities. passionate job seeker looking for exciting opportunities. loremgit",
-            profilePic:profilePic, 
+            profilePic: profilePic,
             address: [{ address: "123 Main St, Springfield", isCurrent: true }],
           });
           setFormData({
             fullname: "John Doe",
             shortBio: "A passionate job seeker looking for exciting opportunities.",
-            profilePic: profilePic, 
+            profilePic: profilePic,
             address: "123 Main St, Springfield",
           });
         } else {
           setUserData({
             fullname: data.fullname || "",
             shortBio: data.shortBio || "",
-            profilePic: data.profilePic ||profilePic, // Use default image if profilePic is missing
+            profilePic: data.profilePic || profilePic, // Use default image if profilePic is missing
             address: data.address || [],
           });
           setFormData({
             fullname: data.fullname || "",
             shortBio: data.shortBio || "",
-            profilePic: data.profilePic ||profilePic, 
+            profilePic: data.profilePic || profilePic,
             address: data.address || [],
           });
 
@@ -145,12 +147,11 @@ const PersonalDetails = () => {
     return () => unsubscribe();
   }, [setProfileName, setProfileDp, formData.shortBio, formData.address]);
 
-  // if (isLoading) {
-  //   return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  // }
-
   return (
     <div className="flex min-h-screen overflow-hidden">
+      {/* Show loading spinner when loading or saving */}
+      {(isLoading || isSaving) && <LoadingSpinner />}
+
       {/* Sidebar */}
       <Sidebar />
 
