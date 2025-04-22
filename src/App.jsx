@@ -4,12 +4,15 @@ import AppRoutes from "./routes/AppRoutes.jsx";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css'
+import SessionWrapper from "./components/session/SessionWrapper.jsx";
 
 const App = () => {
   return (
     <Router>
-      <AppRoutes />
-      <ToastContainer position="bottom-right" autoClose={5000} />
+      <SessionWrapper>
+        <AppRoutes />
+        <ToastContainer position="bottom-right" autoClose={5000} />
+      </SessionWrapper>
     </Router>
   );
 };

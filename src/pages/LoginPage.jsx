@@ -16,7 +16,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const { BASEURL, setUser } = useContext(AppContext);
+    const { BASEURL, setRole,setUser,setSessionData } = useContext(AppContext);
 
     // Check for session validity
     useEffect(() => {
@@ -71,6 +71,7 @@ export default function LoginPage() {
                 };
                 console.log("Token length:", firebaseId.length);
                 console.log("User data:", firebaseId);
+                setSessionData(sessionData)
                 
                 console.log("Session data:", sessionData);
                 
@@ -78,7 +79,7 @@ export default function LoginPage() {
 
                 toast("Login successful!");
                 const role = userData.role;
-
+                setRole(role);
                 if (role === "Job Seeker") {
                     navigate("/User-PersonalDetails");
                 } else if (role === "Company") {

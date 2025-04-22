@@ -1,0 +1,33 @@
+// src/components/common/SessionWrapper.jsx
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
+
+const SessionWrapper = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const sessionData = JSON.parse(localStorage.getItem("sessionData"));
+    if (sessionData) {
+      const { timestamp } = sessionData;
+      const currentTime = Date.now();
+      const sessionDuration = 3600000; 
+
+      if (currentTime - timestamp > sessionDuration) {
+        toast.error("Your session has expired. Please log in again.");
+        localStorage.removeItem("sessionData");
+        navigate("/login");
+      }
+    } else {
+      if (location.pathname !== "/login" && location.pathname !== "/CreateAccount") {
+        toast.error("You are not logged in.");
+        navigate("/login");
+      }
+    }
+  }, [navigate, location]);
+
+  return <>{children}</>;
+};
+
+export default SessionWrapper;
