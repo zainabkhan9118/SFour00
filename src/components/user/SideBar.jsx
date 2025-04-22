@@ -36,6 +36,12 @@ const Sidebar = () => {
              currentPath.startsWith("/User-Bank") ||
              currentPath.startsWith("/User-FAQSection");
     }
+    // For jobs route, also check if on job details page
+    if (path === routes.jobs) {
+      return currentPath === path || 
+             currentPath.toLowerCase().startsWith("/user-jobdetails/") ||
+             currentPath.startsWith("/User-JobDetails/");
+    }
     // For other routes, exact match
     return currentPath === path;
   };
