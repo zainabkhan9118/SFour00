@@ -1,10 +1,12 @@
 import { ArrowRight, X, Upload, Bookmark } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
+import { applyForJobWithParams } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import { AppContext } from "../../../context/AppContext";
 
 export default function JobDetails() {
   const navigate = useNavigate();
@@ -14,6 +16,36 @@ export default function JobDetails() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [applying, setApplying] = useState(false);
+  const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Handle applying for the job
+  const handleApplyForJob = async (e) => {
+    e.preventDefault();
+    const jobId = id;
+    
+    setApplying(true);
+    try {
+      // Use the new function that doesn't require a jobSeekerId parameter
+      const response = await applyForJobWithParams(jobId);
+      console.log("API response:", response); // Add logging to help debug
+      setApplySuccess(true);
+      // Optional: Add a timeout to navigate after success message is shown
+      setTimeout(() => {
+        setIsModalOpen(false);
+        navigate("/User-WorkApplied");
+      }, 2000);
+    } catch (error) {
+      console.error('Error applying for job:', error);
+      setApplyError(error.response?.data?.message || "Failed to apply for job. Please try again.");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   useEffect(() => {
     const getJobDetails = async () => {
@@ -387,7 +419,7 @@ export default function JobDetails() {
                 </div>
 
                 {/* Modal Body */}
-                <form className="space-y-5">
+                <form className="space-y-5" onSubmit={handleApplyForJob}>
                   {/* Resume Upload */}
                   <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50">
                     <div className="flex items-center gap-2 text-gray-500">
@@ -490,10 +522,6 @@ export default function JobDetails() {
                       Cancel
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/User-CompanyDetails");
-                      }}
                       type="submit"
                       className="px-6 py-3 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors flex items-center gap-2"
                     >
@@ -502,6 +530,16 @@ export default function JobDetails() {
                     </button>
                   </div>
                 </form>
+                {applyError && (
+                  <div className="mt-4 text-sm text-red-600">
+                    {applyError}
+                  </div>
+                )}
+                {applySuccess && (
+                  <div className="mt-4 text-sm text-green-600">
+                    Successfully applied for the job!
+                  </div>
+                )}
               </div>
             </div>
           </div>
