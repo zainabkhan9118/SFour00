@@ -17,11 +17,11 @@ const AssignJobButton = ({ onClose }) => {
   };
 
   return (
-    <div ref={buttonRef} onClick={closeModel} className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 p-4">
-      <div className="bg-white rounded-lg flex flex-col justify-center items-center p-4 sm:p-6 w-full max-w-[95%] sm:max-w-md h-auto md:w-[561px] md:h-[333px] relative">
+    <div ref={buttonRef} onClick={closeModel} className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 p-4 ">
+      <div className="bg-white flex flex-col justify-center items-center p-4 sm:p-6 w-full max-w-[95%] sm:max-w-md h-auto md:w-[561px] md:h-[333px] relative rounded-xl">
         {/* Close Button */}
-        <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#E7F0FA] absolute top-[-15px] sm:top-[-20px] right-[-10px] sm:right-[-3px]'>
-          <button className="absolute top-1 right-1 sm:top-1.5 sm:right-1 text-gray-500">
+        <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#E7F0FA] absolute top-[-15px] sm:top-[-20px] right-[-10px] sm:right-[-3px] '>
+          <button className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 text-gray-500">
             <IoCloseCircleOutline onClick={onClose} className='text-3xl sm:text-4xl text-orange-400' />
           </button>
         </div>

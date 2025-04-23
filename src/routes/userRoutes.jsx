@@ -33,7 +33,7 @@ import ContactSupport from "../components/user/profile/ContactSupport/ContactSup
 
 const UserRoutes = [
   <Route key="User-Job" path="/User-Job" element={<Job />} />,
-  <Route key="User-JobDetails" path="/User-JobDetails" element={<JobDetails />} />,
+  <Route key="User-JobDetails" path="/User-JobDetails/:id" element={<JobDetails />} />,
   <Route key="User-CompanyDetails" path="/User-CompanyDetails" element={<CompanyDetails />} />,
   <Route key="User-WorkApplied" path="/User-WorkApplied" element={<WorkApplied />} />,
   <Route key="User-MyWorkAssignedPage" path="/User-MyWorkAssignedPage" element={<MyWorkAssignedPage />} />,

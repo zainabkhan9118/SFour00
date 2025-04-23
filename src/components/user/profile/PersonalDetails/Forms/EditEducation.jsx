@@ -177,7 +177,6 @@ const EditEducation = () => {
 
       alert("Education details saved successfully!");
 
-      // Refresh the education data
       try {
         const getResponse = await axios.get('api/education', {
           headers: {

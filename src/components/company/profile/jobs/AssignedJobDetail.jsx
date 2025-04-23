@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "../../Sidebar";
 import Header from "../../Header";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
 import qr from "../../../../assets/images/qr-code.png";
+import QRCodeModal from "./popupsButtons/QRCodeModal";
+
+
 
 const AssignedJobDetail = () => {
+      const [showButton, setShowButton] = useState(false);
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
@@ -111,7 +115,9 @@ const AssignedJobDetail = () => {
               neque sit amet orci interdum tincidunt.
             </p>
             <div className="flex flex-col sm:flex-row mt-4 gap-3">
-              <button className="bg-[#FD7F00] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 transition">
+              <button
+                onClick={() => setShowButton(true)}
+              className="bg-[#FD7F00] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 transition">
                 Track Worker
               </button>
               <button className="bg-[#1F2B44] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-gray-800 transition">
@@ -120,6 +126,7 @@ const AssignedJobDetail = () => {
             </div>
           </div>
         </div>
+        {showButton && <QRCodeModal onClose={() => setShowButton(false)} />}
       </div>
     </div>
   );
