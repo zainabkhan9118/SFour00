@@ -30,6 +30,8 @@ const PersonalDetails = () => {
     profilePic: profilePic,
     address: [],
   });
+  const [experienceData, setExperienceData] = useState([]);
+  const [educationData, setEducationData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -68,19 +70,50 @@ const PersonalDetails = () => {
   useEffect(() => {
     const fetchData = async (user) => {
       const firebaseId = user.uid;
-      console.log("firebaseId", firebaseId);
+      const jobSeekerId = localStorage.getItem("jobSeekerId");
 
       try {
-        const response = await axios.get(`api/job-seeker`, {
-          headers: {
-            "firebase-id": `${firebaseId}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const [userResponse, experienceResponse, educationResponse] = await Promise.all([
+          axios.get(`api/job-seeker`, {
+            headers: {
+              "firebase-id": `${firebaseId}`,
+              "Content-Type": "application/json",
+            },
+          }),
+          axios.get(`api/experience`, {
+            headers: {
+              "firebase-id": firebaseId,
+              "jobseekerid": jobSeekerId,
+            },
+          }),
+          axios.get(`api/education`, {
+            headers: {
+              "firebase-id": firebaseId,
+              "jobseekerid": jobSeekerId,
+            },
+          })
+        ]);
 
-        console.log("response", response.data);
+        const data = userResponse.data.data;
+        const experiences = experienceResponse.data.data || [];
+        const educations = educationResponse.data.data || [];
 
-        const data = response.data.data;
+        console.log("Education data:", educations);
+
+        // Map education data to match the API response structure
+        const mappedEducations = educations.map(edu => ({
+          _id: edu._id,
+          degree: edu.degreeName,
+          institution: edu.institute,
+          startDate: edu.startDate,
+          endDate: edu.endDate,
+          currentlyStudying: edu.currentlyEnrolled,
+          jobSeeker_id: edu.jobSeeker_id,
+          __v: edu.__v
+        }));
+
+        setEducationData(mappedEducations);
+        setExperienceData(experiences);
 
         // Check if user is logging in for the first time and data is empty
         if (!data || Object.keys(data).length === 0) {
@@ -102,7 +135,7 @@ const PersonalDetails = () => {
           setUserData({
             fullname: data.fullname || "",
             shortBio: data.shortBio || "",
-            profilePic: data.profilePic || profilePic, // Use default image if profilePic is missing
+            profilePic: data.profilePic || profilePic, 
             address: data.address || [],
           });
           setFormData({
@@ -119,8 +152,8 @@ const PersonalDetails = () => {
           }
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
-        setError("Failed to fetch user data.");
+        console.error("Error fetching data:", error);
+        setError("Failed to fetch data.");
       } finally {
         setIsLoading(false);
       }
@@ -132,7 +165,7 @@ const PersonalDetails = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
-          console.log("User authenticated:", currentUser);
+          // console.log("User authenticated:", currentUser);
           await fetchData(currentUser);
         } catch (error) {
           console.error("Error during user authentication:", error);
@@ -145,7 +178,14 @@ const PersonalDetails = () => {
     });
 
     return () => unsubscribe();
-  }, [setProfileName, setProfileDp, formData.shortBio, formData.address]);
+  }, []);
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Present';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   return (
     <div className="flex min-h-screen overflow-hidden">
@@ -199,7 +239,6 @@ const PersonalDetails = () => {
                     ))}
                   </p>
                 </div>
-
                 {/* Experience and Other Sections */}
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Experience */}
@@ -212,25 +251,40 @@ const PersonalDetails = () => {
                       />
                     </div>
                     <div className="mt-4 space-y-4">
-                      {[0, 1, 2].map((i) => (
-                        <div className="flex justify-between" key={i}>
-                          <div className="flex items-start">
-                            {i === 0 ? (
-                              <FaBriefcase className="text-gray-600 mt-1" />
-                            ) : (
-                              <FaRegSquare className="text-gray-600 mt-1" />
-                            )}
-                            <div className="ml-2">
-                              <h4 className="font-bold">Security Supervisor</h4>
-                              <p className="text-gray-600">SoftShift</p>
-                              <p className="text-gray-600">June 2020 - Present</p>
-                              {i === 2 && (
-                                <p className="text-orange-500 text-sm">Work Reference</p>
+                      {experienceData.length > 0 ? (
+                        experienceData.map((exp, i) => (
+                          <div className="flex justify-between" key={exp._id || i}>
+                            <div className="flex items-start">
+                              {i === 0 ? (
+                                <FaBriefcase className="text-gray-600 mt-1" />
+                              ) : (
+                                <FaRegSquare className="text-gray-600 mt-1" />
                               )}
+                              <div className="ml-2">
+                                <h4 className="font-bold">{exp.position}</h4>
+                                <p className="text-gray-600">{exp.companyName}</p>
+                                <p className="text-gray-600">
+                                  {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
+                                </p>
+                                {exp.experienceCertificate && (
+                                  <p className="text-orange-500 text-sm">Work Reference</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        // Fallback for no experience data
+                        <div className="flex justify-between">
+                          <div className="flex items-start">
+                            <FaBriefcase className="text-gray-600 mt-1" />
+                            <div className="ml-2">
+                              <h4 className="font-bold">No experience added yet</h4>
+                              <p className="text-gray-600">Click edit to add your work experience</p>
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
 
@@ -244,21 +298,40 @@ const PersonalDetails = () => {
                       />
                     </div>
                     <div className="mt-4 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex">
-                          <FaGraduationCap className="text-gray-600 mt-1" />
-                          <div className="ml-2">
-                            <h4 className="font-bold">BS Social Science</h4>
-                            <p className="text-gray-600">ABC University</p>
-                            <p className="text-gray-600">Oct 2017 - Nov 7 2021</p>
+                      {educationData.length > 0 ? (
+                        educationData.map((edu, i) => (
+                          <div className="flex justify-between items-start" key={edu._id || i}>
+                            <div className="flex">
+                              {i === 0 ? (
+                                <FaGraduationCap className="text-gray-600 mt-1" />
+                              ) : (
+                                <FaRegSquare className="text-gray-600 mt-1" />
+                              )}
+                              <div className="ml-2">
+                                <h4 className="font-bold">{edu.degree}</h4>
+                                <p className="text-gray-600">{edu.institution}</p>
+                                <p className="text-gray-600">
+                                  {formatDate(edu.startDate)} - {edu.currentlyStudying ? 'Present' : formatDate(edu.endDate)}
+                                </p>
+                                {edu.currentlyStudying && <p className="text-orange-500 text-sm">Currently Enrolled</p>}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        // Fallback for no education data
+                        <div className="flex justify-between items-start">
+                          <div className="flex">
+                            <FaGraduationCap className="text-gray-600 mt-1" />
+                            <div className="ml-2">
+                              <h4 className="font-bold">No education added yet</h4>
+                              <p className="text-gray-600">Click edit to add your education details</p>
+                            </div>
                           </div>
                         </div>
-                        <FaArrowRight
-                          className="text-gray-500 mt-2"
-                          onClick={handleEditEducation}
-                        />
-                      </div>
+                      )}
 
+                      {/* Certificate Section */}
                       <div className="flex justify-between items-start">
                         <div className="flex">
                           <FaCertificate className="text-gray-600 mt-1" />
@@ -273,6 +346,7 @@ const PersonalDetails = () => {
                         />
                       </div>
 
+                      {/* Rest of the sections (License, UTR Number) remain unchanged */}
                       <div className="flex justify-between items-start">
                         <div className="flex">
                           <FaIdCard className="text-gray-600 mt-1" />
