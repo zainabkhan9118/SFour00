@@ -160,9 +160,11 @@ const EditEducation = () => {
       // Update existing education entries (if any)
       for (const education of updateEducations) {
         try {
+          console.log('base url', BASEURL);
+          
           console.log('Updating education:', education._id);
           const updateResponse = await axios.patch(
-            `${BASEURL}}/education/${education._id}`,
+            `${BASEURL}/education/${education._id}`,
             {
               degreeName: education.degreeName,
               institute: education.institute,

@@ -68,7 +68,6 @@ const PersonalDetails = () => {
   const handleEditLicense = () => {
     navigate("/edit-license");
   };
-
   useEffect(() => {
     const fetchData = async (user) => {
       const firebaseId = user.uid;
