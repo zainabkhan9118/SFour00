@@ -9,6 +9,8 @@ import { getAuth } from "firebase/auth";
 import axios from "axios";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 
+const BASEURL = import.meta.env.VITE_BASE_URL;
+
 const EditExperience = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -39,7 +41,7 @@ const EditExperience = () => {
       }
 
       try {
-        const response = await axios.get('api/experience', {
+        const response = await axios.get(`${BASEURL}/experience`, {
           headers: {
             'jobseekerId': jobSeekerId
           }
@@ -141,7 +143,7 @@ const EditExperience = () => {
           
           if (experience._id) {
             console.log('Updating existing experience:', experience._id);
-            response = await axios.patch(`api/experience/${experience._id}`, 
+            response = await axios.patch(`${BASEURL}/experience/${experience._id}`, 
               formDataToSend,
               { 
                 headers: {
@@ -151,7 +153,7 @@ const EditExperience = () => {
             );
           } else {
             console.log('Creating new experience');
-            response = await axios.post('api/experience', 
+            response = await axios.post(`${BASEURL}/experience`, 
               formDataToSend,
               { 
                 headers: {
@@ -200,7 +202,7 @@ const EditExperience = () => {
 
     try {
       if (experience._id) {
-        await axios.delete(`api/experience/${experience._id}`, {
+        await axios.delete(`${BASEURL}/experience/${experience._id}`, {
           headers: {
             'jobseekerId': jobSeekerId,
           }

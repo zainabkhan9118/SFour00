@@ -10,6 +10,8 @@ import axios from "axios";
 import { AppContext } from "../../../../../context/AppContext";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 
+const BASEURL = import.meta.env.VITE_BASE_URL;
+
 const EditPersonalDetails = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -39,7 +41,7 @@ const EditPersonalDetails = () => {
       const firebaseId = currentUser.uid;
 
       try {
-        const response = await axios.get(`api/job-seeker`, {
+        const response = await axios.get(`${BASEURL}/job-seeker`, {
           headers: {
             "firebase-id": `${firebaseId}`,
           },
@@ -144,7 +146,7 @@ const EditPersonalDetails = () => {
 
     try {
       if (isDataAlreadyPosted) {
-        const response = await axios.patch(`api/job-seeker`, dataToSend, {
+        const response = await axios.patch(`${BASEURL}/job-seeker`, dataToSend, {
           headers: {
             "firebase-id": firebaseId,
             "Content-Type": "application/json",
@@ -159,7 +161,7 @@ const EditPersonalDetails = () => {
         // console.log("Profile data updated successfully.");
       } else {
         // Otherwise, use POST to create new data
-        const response = await axios.post(`api/job-seeker`, dataToSend, {
+        const response = await axios.post(`${BASEURL}/job-seeker`, dataToSend, {
           headers: {
             "firebase-id": firebaseId,
             "Content-Type": "application/json",
