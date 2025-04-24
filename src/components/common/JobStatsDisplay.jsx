@@ -1,6 +1,7 @@
 import React from "react";
 import StatsDisplay from "./StatsDisplay";
-import signinPic from "../../assets/images/signinPic.png";
+import signinPic from '../../assets/images/signinpic.png';
+
 
 const JobStatsDisplay = ({ role = "user" }) => {
   const statsData = [
