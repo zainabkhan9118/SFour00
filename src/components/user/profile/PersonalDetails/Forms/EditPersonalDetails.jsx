@@ -161,6 +161,8 @@ const EditPersonalDetails = () => {
         // console.log("Profile data updated successfully.");
       } else {
         // Otherwise, use POST to create new data
+        console.log("Creating new profile data:", BASEURL);
+        
         const response = await axios.post(`${BASEURL}/job-seeker`, dataToSend, {
           headers: {
             "firebase-id": firebaseId,
