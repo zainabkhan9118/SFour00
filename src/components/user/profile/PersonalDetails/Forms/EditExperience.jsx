@@ -31,11 +31,9 @@ const EditExperience = () => {
   useEffect(() => {
     const fetchExperiences = async () => {
       setIsLoading(true);
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
       const jobSeekerId = localStorage.getItem("jobSeekerId");
 
-      if (!currentUser || !jobSeekerId) {
+      if (!jobSeekerId) {
         setIsLoading(false);
         return;
       }
@@ -43,8 +41,7 @@ const EditExperience = () => {
       try {
         const response = await axios.get('api/experience', {
           headers: {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
+            'jobseekerId': jobSeekerId
           }
         });
 
@@ -102,12 +99,10 @@ const EditExperience = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
     const jobSeekerId = localStorage.getItem("jobSeekerId");
 
-    if (!currentUser || !jobSeekerId) {
-      console.error("User not authenticated or jobSeekerId not found");
+    if (!jobSeekerId) {
+      console.error("JobSeekerId not found");
       alert("Please ensure you are logged in and try again");
       setIsLoading(false);
       return;
@@ -123,7 +118,7 @@ const EditExperience = () => {
             companyName: experience.companyName,
             startDate: new Date(experience.startDate).toISOString(),
             currentlyWorking: experience.currentlyWorking,
-            // Only send endDate if not currently working
+            jobSeekerId: jobSeekerId,
             ...(experience.currentlyWorking ? {} : { 
               endDate: experience.endDate ? new Date(experience.endDate).toISOString() : null 
             })
@@ -143,17 +138,27 @@ const EditExperience = () => {
           }
 
           let response;
-          const headers = {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
-          };
           
           if (experience._id) {
             console.log('Updating existing experience:', experience._id);
-            response = await axios.patch(`api/experience/${experience._id}`, formDataToSend, { headers });
+            response = await axios.patch(`api/experience/${experience._id}`, 
+              formDataToSend,
+              { 
+                headers: {
+                  'jobseekerId': jobSeekerId,
+                }
+              }
+            );
           } else {
             console.log('Creating new experience');
-            response = await axios.post('api/experience', formDataToSend, { headers });
+            response = await axios.post('api/experience', 
+              formDataToSend,
+              { 
+                headers: {
+                  'jobseekerId': jobSeekerId
+                }
+              }
+            );
           }
 
           console.log('Experience saved successfully:', response.data);
@@ -190,8 +195,6 @@ const EditExperience = () => {
     }
 
     setIsLoading(true);
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     const experience = formData.experiences[index];
 
@@ -199,8 +202,7 @@ const EditExperience = () => {
       if (experience._id) {
         await axios.delete(`api/experience/${experience._id}`, {
           headers: {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
+            'jobseekerId': jobSeekerId,
           }
         });
         console.log('Experience deleted successfully');

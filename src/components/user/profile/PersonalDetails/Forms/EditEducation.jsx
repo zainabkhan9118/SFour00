@@ -16,15 +16,12 @@ const EditEducation = () => {
   const [formData, setFormData] = useState({
     educations: [
       { 
-        id: 1,
+        id: null,
         degree: "",
         institution: "",
         startDate: "",
         endDate: "",
         currentlyStudying: false,
-        certificate: null,
-        _id: null,
-        jobSeeker_id: null,
         __v: 0
       }
     ]
@@ -33,20 +30,18 @@ const EditEducation = () => {
   useEffect(() => {
     const fetchEducations = async () => {
       setIsLoading(true);
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
       const jobSeekerId = localStorage.getItem("jobSeekerId");
 
-      if (!currentUser || !jobSeekerId) {
+      if (!jobSeekerId) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get('api/education', {
+        const response = await axios.get('/api/education', {
           headers: {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
+            'jobseekerid': jobSeekerId,
+            'Content-Type': 'application/json'
           }
         });
 
@@ -55,14 +50,12 @@ const EditEducation = () => {
         if (response.data && response.data.data) {
           const educations = response.data.data.map(edu => ({
             id: edu._id,
-            _id: edu._id,
             degree: edu.degreeName,
             institution: edu.institute,
             startDate: edu.startDate.split('T')[0],
             endDate: edu.endDate ? edu.endDate.split('T')[0] : '',
             currentlyStudying: edu.currentlyEnrolled,
             certificate: edu.certificate,
-            jobSeeker_id: edu.jobSeeker_id,
             __v: edu.__v
           }));
 
@@ -107,32 +100,25 @@ const EditEducation = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
     const jobSeekerId = localStorage.getItem("jobSeekerId");
 
-    if (!currentUser || !jobSeekerId) {
-      console.error("Authentication missing:", { currentUser: !!currentUser, jobSeekerId: !!jobSeekerId });
+    if (!jobSeekerId) {
+      console.error("JobSeekerId missing");
       alert("Authentication required. Please login again.");
       setIsLoading(false);
       return;
     }
 
     try {
-      const headers = {
-        'firebase-id': currentUser.uid,
-        'jobseekerid': jobSeekerId,
-        'Content-Type': 'application/json'
-      };
+      const newEducations = [];
+      const updateEducations = [];
 
-      // Handle each education entry separately
-      for (const education of formData.educations) {
+      // Separate new and existing education entries
+      formData.educations.forEach(education => {
         if (!education.degree || !education.institution) {
-          console.log("Skipping invalid education entry");
-          continue;
+          return;
         }
 
-        // Only include required fields in the request data
         const educationData = {
           degreeName: education.degree,
           institute: education.institution,
@@ -141,54 +127,76 @@ const EditEducation = () => {
           currentlyEnrolled: education.currentlyStudying || false
         };
 
-        try {
-          let response;
-          if (education._id) {
-            // For existing education, use PATCH
-            console.log('Updating existing education:', education._id);
-            response = await axios.patch(
-              `api/education/${education._id}`,
-              educationData,
-              { headers }
-            );
-          } else {
-            // For new education, use POST
-            console.log('Creating new education');
-            response = await axios.post(
-              'api/education',
-              educationData,
-              { headers }
-            );
-          }
+        if (education.id) {
+          updateEducations.push({ ...educationData, _id: education.id });
+        } else {
+          newEducations.push(educationData);
+        }
+      });
 
-          console.log('Save response:', {
-            type: education._id ? 'PATCH' : 'POST',
-            status: response.status,
-            data: response.data
-          });
+      // Create new education entries (if any)
+      if (newEducations.length > 0) {
+        try {
+          console.log('Creating new educations:', newEducations);
+          const createResponse = await axios.post(
+            '/api/education',
+            newEducations,
+            { 
+              headers: {
+                'jobseekerId': jobSeekerId,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          console.log('New educations created:', createResponse.data);
         } catch (error) {
-          console.error('Error saving education:', {
-            id: education._id,
-            error: error.response?.data || error.message
-          });
+          console.error('Error creating new educations:', error);
+          throw error;
+        }
+      }
+
+      // Update existing education entries (if any)
+      for (const education of updateEducations) {
+        try {
+          console.log('Updating education:', education._id);
+          const updateResponse = await axios.patch(
+            `/api/education/${education._id}`,
+            {
+              degreeName: education.degreeName,
+              institute: education.institute,
+              startDate: education.startDate,
+              endDate: education.endDate,
+              currentlyEnrolled: education.currentlyEnrolled
+            },
+            {
+              headers: {
+                'jobseekerId': jobSeekerId,
+                'id': education._id,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          console.log('Education updated: ................', updateResponse.data);
+        } catch (error) {
+          console.error('Error updating education:', error);
           throw error;
         }
       }
 
       alert("Education details saved successfully!");
 
+      // Refresh education data
       try {
-        const getResponse = await axios.get('api/education', {
+        const getResponse = await axios.get('/api/education', {
           headers: {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
+            'jobseekerId': jobSeekerId,
+            'Content-Type': 'application/json'
           }
         });
 
         if (getResponse.data && getResponse.data.data) {
           const educations = getResponse.data.data.map(edu => ({
             id: edu._id,
-            _id: edu._id,
             degree: edu.degreeName,
             institution: edu.institute,
             startDate: edu.startDate.split('T')[0],
@@ -225,24 +233,22 @@ const EditEducation = () => {
     }
 
     setIsLoading(true);
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     const education = formData.educations[index];
 
     try {
       console.log("Attempting to delete education:", {
         index,
-        educationId: education._id,
-        hasCurrentUser: !!currentUser,
+        educationId: education.id,
         hasJobSeekerId: !!jobSeekerId
       });
 
-      if (education._id) {
-        const response = await axios.delete(`api/education/${education._id}`, {
+      if (education.id) {
+        const response = await axios.delete(`/api/education/${education.id}`, {
           headers: {
-            'firebase-id': currentUser.uid,
-            'jobseekerid': jobSeekerId
+            'jobseekerId': jobSeekerId,
+            'id': education.id,
+            'Content-Type': 'application/json'
           }
         });
         console.log('Education deleted successfully:', {
@@ -273,19 +279,13 @@ const EditEducation = () => {
   };
 
   const handleAddNew = () => {
-    const newId = Math.max(...formData.educations.map(edu => edu.id)) + 1;
-    const jobSeekerId = localStorage.getItem("jobSeekerId");
-    
     const newEducation = {
-      id: newId,
+      id: null,
       degree: "",
       institution: "",
       startDate: "",
       endDate: "",
       currentlyStudying: false,
-      certificate: null,
-      _id: null,
-      jobSeeker_id: jobSeekerId,
       __v: 0
     };
     
@@ -385,33 +385,7 @@ const EditEducation = () => {
                             <label className="ml-2 text-sm text-gray-600">Currently Studying</label>
                           </div>
 
-                          <div className="relative">
-                            <label className="text-sm text-gray-600 mb-1">Education Certificate</label>
-                            <div 
-                              className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 cursor-pointer"
-                              onClick={() => document.getElementById(`certificate-${index}`).click()}
-                            >
-                              <div className="flex items-center">
-                                <svg className="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span className="text-sm text-gray-700">
-                                  {education.certificate instanceof File 
-                                    ? education.certificate.name 
-                                    : education.certificate
-                                    ? education.certificate.split('/').pop()
-                                    : "Upload Education Certificate (Optional)"}
-                                </span>
-                              </div>
-                            </div>
-                            <input
-                              type="file"
-                              id={`certificate-${index}`}
-                              accept="image/*,.pdf"
-                              className="hidden"
-                              onChange={(e) => handleFileChange(e, index)}
-                            />
-                          </div>
+                          
                         </div>
                       </div>
                     ))}

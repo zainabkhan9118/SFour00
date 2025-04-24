@@ -188,7 +188,7 @@ const PersonalDetails = () => {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex min-h-screen ">
       {/* Show loading spinner when loading or saving */}
       {(isLoading || isSaving) && <LoadingSpinner />}
 
@@ -196,15 +196,15 @@ const PersonalDetails = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1">
         {/* Header */}
         <Header />
         <main className="flex-3 mt-3">
           <div className="flex flex-row flex-1">
-            <div>
+            <div className="min-h-screen">
               <UserSidebar />
             </div>
-            <div className="p-4 h-screen overflow-auto">
+            <div className="p-4 min-h-screen">
               <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
                 {/* Profile Section */}
                 <div className="flex flex-col md:flex-row">
