@@ -1,6 +1,6 @@
 import React from "react";
 import StatsDisplay from "./StatsDisplay";
-import signinPic from '../../assets/images/signinpic.png';
+import signinpic from '../../assets/images/signinpic.png';
 
 
 const JobStatsDisplay = ({ role = "user" }) => {
@@ -17,7 +17,7 @@ const JobStatsDisplay = ({ role = "user" }) => {
 
   return (
     <StatsDisplay 
-      backgroundImage={signinPic}
+      backgroundImage={signinpic}
       // title={title}
       title="Over 1,75,324 candidates waiting for good employers."
       stats={statsData}
