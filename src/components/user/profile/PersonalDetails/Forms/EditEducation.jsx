@@ -140,6 +140,7 @@ const EditEducation = () => {
       if (newEducations.length > 0) {
         try {
           console.log('Creating new educations:', newEducations);
+          console.log('base url :',BASEURL);
           const createResponse = await axios.post(
             `${BASEURL}/education`,
             newEducations,
@@ -150,6 +151,8 @@ const EditEducation = () => {
               }
             }
           );
+          console.log('base url :',BASEURL);
+          
           console.log('New educations created:', createResponse.data);
         } catch (error) {
           console.error('Error creating new educations:', error);
