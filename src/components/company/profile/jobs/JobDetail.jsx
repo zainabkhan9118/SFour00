@@ -81,6 +81,7 @@ const JobDetail = () => {
         fetchJobDetails();
     }, [jobId]);
 
+    
     // Display loading state
     if (loading) {
         return (
