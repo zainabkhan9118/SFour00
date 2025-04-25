@@ -7,6 +7,7 @@ import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
 import { applyForJobWithSeekerId } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { AppContext } from "../../../context/AppContext";
+import { toast } from "react-toastify";
 
 export default function JobDetails() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function JobDetails() {
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     
     if (!jobSeekerId) {
-      setApplyError("Please login first to apply for this job");
+      toast.error("Please login first to apply for this job");
       return;
     }
     
@@ -38,14 +39,19 @@ export default function JobDetails() {
     try {
       const response = await applyForJobWithSeekerId(jobId, jobSeekerId);
       console.log("API response:", response);
-      setApplySuccess(true);
-      setTimeout(() => {
-        setIsModalOpen(false);
-        navigate("/User-WorkApplied");
-      }, 2000);
+
+      if (response.statusCode === 201) {
+        toast.success("Successfully applied for the job!", { autoClose: 3000 });
+        setTimeout(() => {
+          setIsModalOpen(false);
+          navigate("/User-WorkApplied");
+        }, 2000);
+      } else {
+        toast.error("Already applied for this job.");
+      }
     } catch (error) {
       console.error('Error applying for job:', error);
-      setApplyError(error.response?.data?.message || "Failed to apply for job. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to apply for job. Please try again.");
     } finally {
       setApplying(false);
     }

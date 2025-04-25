@@ -53,6 +53,7 @@ const WorkApplied = () => {
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { BASEURL } = useContext(AppContext);
 
   useEffect(() => {
     const fetchAppliedJobs = async () => {
@@ -65,7 +66,7 @@ const WorkApplied = () => {
           if (currentUser) {
             const firebaseId = currentUser.uid;
             try {
-              const userResponse = await axios.get(`https://s4backend-c7f27664aa4d.herokuapp.com/job-seeker`, {
+              const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
                 headers: {
                   "firebase-id": firebaseId,
                 },

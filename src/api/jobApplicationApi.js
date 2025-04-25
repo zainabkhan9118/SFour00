@@ -112,7 +112,7 @@ export const withdrawApplication = async (jobId, jobSeekerId) => {
 };
 
 export const getAppliedJobs = async (jobSeekerId) => {
-  return axios.get(`https://s4backend-c7f27664aa4d.herokuapp.com/apply/${jobSeekerId}`, {
+  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
     params: { status: "applied" },
     headers: {
       'accept': '*/*',
