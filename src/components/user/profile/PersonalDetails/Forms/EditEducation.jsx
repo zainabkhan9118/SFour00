@@ -40,7 +40,9 @@ const EditEducation = () => {
       }
 
       try {
+
         const response = await axios.get(`${BASEURL}/education`, {
+
           headers: {
             'jobseekerid': jobSeekerId,
             'Content-Type': 'application/json'
@@ -58,7 +60,9 @@ const EditEducation = () => {
             endDate: edu.endDate ? edu.endDate.split('T')[0] : '',
             currentlyStudying: edu.currentlyEnrolled,
             certificate: edu.certificate,
+
             __v: edu.__v
+
           }));
 
           setFormData({ educations: educations.length > 0 ? educations : formData.educations });
@@ -140,9 +144,11 @@ const EditEducation = () => {
       if (newEducations.length > 0) {
         try {
           console.log('Creating new educations:', newEducations);
+
           console.log('base url :',BASEURL);
           const createResponse = await axios.post(
             `${BASEURL}/education`,
+
             newEducations,
             { 
               headers: {
@@ -151,8 +157,7 @@ const EditEducation = () => {
               }
             }
           );
-          console.log('base url :',BASEURL);
-          
+
           console.log('New educations created:', createResponse.data);
         } catch (error) {
           console.error('Error creating new educations:', error);
@@ -163,11 +168,13 @@ const EditEducation = () => {
       // Update existing education entries (if any)
       for (const education of updateEducations) {
         try {
+
           console.log('base url', BASEURL);
           
           console.log('Updating education:', education._id);
           const updateResponse = await axios.patch(
             `${BASEURL}/education/${education._id}`,
+
             {
               degreeName: education.degreeName,
               institute: education.institute,
@@ -194,7 +201,9 @@ const EditEducation = () => {
 
       // Refresh education data
       try {
+
         const getResponse = await axios.get(`${BASEURL}/education`, {
+
           headers: {
             'jobseekerId': jobSeekerId,
             'Content-Type': 'application/json'
@@ -211,7 +220,7 @@ const EditEducation = () => {
             currentlyStudying: edu.currentlyEnrolled,
             certificate: edu.certificate,
             jobSeeker_id: edu.jobSeeker_id,
-            __v: edu.__v
+            _v: edu._v
           }));
 
           setFormData({ educations: educations.length > 0 ? educations : formData.educations });
@@ -251,7 +260,9 @@ const EditEducation = () => {
       });
 
       if (education.id) {
+
         const response = await axios.delete(`${BASEURL}/education/${education.id}`, {
+
           headers: {
             'jobseekerId': jobSeekerId,
             'id': education.id,
