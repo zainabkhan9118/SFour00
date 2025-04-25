@@ -116,6 +116,7 @@ const EditPersonalDetails = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
+        setProfileImage(file);
       };
       reader.readAsDataURL(file);
     }
@@ -133,40 +134,43 @@ const EditPersonalDetails = () => {
     }
     const firebaseId = currentUser.uid;
 
-    const dataToSend = {
-      fullname: formData.name,
-      address: formData.addresses.map((addr) => ({
+    try {
+      // Create FormData to handle file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('fullname', formData.name);
+      formDataToSend.append('shortBio', formData.bio);
+      
+      // Append addresses as JSON string
+      formDataToSend.append('address', JSON.stringify(formData.addresses.map((addr) => ({
         address: addr.address,
         duration: addr.duration,
         isCurrent: addr.isCurrent,
-      })),
-      shortBio: formData.bio,
-      profilePic: previewImage || profileImage,
-    };
+      }))));
 
-    try {
+      // Handle profile picture
+      if (profileImage instanceof File) {
+        formDataToSend.append('profilePic', profileImage);
+      }
+
       if (isDataAlreadyPosted) {
-        const response = await axios.patch(`${BASEURL}/job-seeker`, dataToSend, {
+        const response = await axios.patch(`${BASEURL}/job-seeker`, formDataToSend, {
           headers: {
             "firebase-id": firebaseId,
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
         });
         const data = response.data.data;
         if (setProfileName && setProfileDp) {
-          
           setProfileName(data.fullname || "");
           setProfileDp(previewImage || profileImage);
         }
-        // console.log("Profile data updated successfully.");
       } else {
-        // Otherwise, use POST to create new data
         console.log("Creating new profile data:", BASEURL);
         
-        const response = await axios.post(`${BASEURL}/job-seeker`, dataToSend, {
+        const response = await axios.post(`${BASEURL}/job-seeker`, formDataToSend, {
           headers: {
             "firebase-id": firebaseId,
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
         });
 
@@ -178,7 +182,6 @@ const EditPersonalDetails = () => {
             setProfileDp(previewImage || profileImage);
           }
         }
-        console.log("Profile data saved successfully.");
       }
 
       navigate("/User-PersonalDetails");
