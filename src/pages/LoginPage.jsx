@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { FaFacebook, FaGoogle, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
@@ -42,6 +42,63 @@ export default function LoginPage() {
         setShowPassword(!showPassword);
     };
 
+    const storeUserData = async (firebaseId, userData) => {
+        console.log("Storing user data, role:", userData.role);
+        console.log("Full user data:", userData);
+        
+        // Store the basic user data
+        setUser(userData);
+        setRole(userData.role);
+        
+        // The backend returns userId instead of _id in the login response
+        const jobSeekerId = userData.userId || userData._id;
+        
+        // If there's a userId in the userData, directly store it as jobSeekerId for Job Seekers
+        if (userData.role === "Job Seeker" && jobSeekerId) {
+            localStorage.setItem("jobSeekerId", jobSeekerId);
+            console.log("✅ Job seeker ID stored directly from login response:", jobSeekerId);
+        }
+        
+        // Create session data
+        const sessionData = {
+            firebaseId: firebaseId,
+            role: userData.role,
+            timestamp: Date.now(),
+            userId: jobSeekerId
+        };
+        
+        setSessionData(sessionData);
+        localStorage.setItem("sessionData", JSON.stringify(sessionData));
+        
+        // As a fallback, try to get job seeker details - but only if we didn't already store the ID
+        if (userData.role === "Job Seeker" && !jobSeekerId) {
+            try {
+                console.log("No jobSeekerId found in login response, attempting fallback fetch...");
+                
+                // Make a direct API call to get job seeker details
+                const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
+                    headers: {
+                        "firebase-id": firebaseId,
+                    },
+                });
+                
+                console.log("Job seeker API response:", userResponse.data);
+                
+                if (userResponse.data?.data?._id) {
+                    const apiJobSeekerId = userResponse.data.data._id;
+                    localStorage.setItem("jobSeekerId", apiJobSeekerId);
+                    console.log("✅ Job seeker ID stored successfully from API:", apiJobSeekerId);
+                } else {
+                    console.warn("⚠️ Job seeker ID not found in API response");
+                }
+            } catch (error) {
+                console.error("Error in fallback job seeker ID fetch:", error.response?.data || error);
+            }
+        }
+        
+        return userData.role;
+    };
+
     const handleSignIn = async () => {
         if (!email || !password) {
             toast.error("Please fill in all fields.");
@@ -55,37 +112,22 @@ export default function LoginPage() {
             const firebaseId = await user.getIdToken(true);
             console.log("Firebase ID Token:", firebaseId);
             
+            // Login with backend
             const response = await axios.post(`${BASEURL}/auth/login`, {
                 idToken: firebaseId,
             });
 
-            console.log("Backend response : ", response.data);
+            console.log("Backend login response:", response.data);
 
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 const userData = response.data.data;
-                setUser(userData);
-
-                // Store jobSeekerId if user is a Job Seeker
-                if (userData.role === "Job Seeker" && userData._id) {
-                    localStorage.setItem("jobSeekerId", userData._id);
-                }
-
-                const sessionData = {
-                    firebaseId: firebaseId,
-                    role: userData.role,
-                    timestamp: Date.now(), 
-                };
-                console.log("Token length:", firebaseId.length);
-                console.log("User data:", firebaseId);
-                setSessionData(sessionData)
                 
-                console.log("Session data:", sessionData);
+                // Store user data and get role
+                const role = await storeUserData(firebaseId, userData);
                 
-                localStorage.setItem("sessionData", JSON.stringify(sessionData));
-
                 toast("Login successful!");
-                const role = userData.role;
-                setRole(role);
+                
+                // Navigate based on role
                 if (role === "Job Seeker") {
                     navigate("/User-PersonalDetails");
                 } else if (role === "Company") {
@@ -113,7 +155,8 @@ export default function LoginPage() {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             const idToken = await user.getIdToken();
-
+            
+            // Login with backend
             const response = await axios.post(`${BASEURL}/auth/login`, {
                 idToken: idToken,
             });
@@ -122,24 +165,13 @@ export default function LoginPage() {
 
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 const userData = response.data.data;
-                setUser(userData);
-
-                // Store jobSeekerId if user is a Job Seeker
-                if (userData.role === "Job Seeker" && userData._id) {
-                    localStorage.setItem("jobSeekerId", userData._id);
-                }
-
-                // Save session data with timestamp
-                const sessionData = {
-                    token: idToken,
-                    role: userData.role,
-                    timestamp: Date.now(), 
-                };
-                localStorage.setItem("sessionData", JSON.stringify(sessionData));
-
+                
+                // Store user data and get role
+                const role = await storeUserData(idToken, userData);
+                
                 toast("Google login successful!");
-
-                const role = userData.role;
+                
+                // Navigate based on role
                 if (role === "Job Seeker") {
                     navigate("/User-PersonalDetails");
                 } else if (role === "Company") {

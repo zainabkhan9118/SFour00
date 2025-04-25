@@ -121,7 +121,10 @@ const Sidebar = () => {
           </Link>
         </nav>
 
-        <Link to="/login" onClick={() => { /* Optional: Add logout logic here */ }}>
+        <Link to="/login" onClick={() => {
+          // Clear local storage on logout
+          localStorage.clear();
+        }}>
           <div className="flex items-center space-x-3 text-[#395080] hover:text-white ml-8 mt-8">
             <p className="text-3xl"> →</p>
             <span>Logout</span>
