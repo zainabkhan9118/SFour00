@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import { getAuth } from "firebase/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import vector1 from "../../../assets/images/vector1.png";
 import s4 from "../../../assets/images/s4.png";
@@ -14,6 +16,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../../../config/firebaseConfig";
 
 const CompanySideBar = () => {
+  const [companyData, setCompanyData] = useState(null);
   const navigate = useNavigate();
    const handleLogout = async () => {
       try {
@@ -39,15 +42,42 @@ const CompanySideBar = () => {
     return currentPath === path ? "text-gray-600" : "text-orange-500";
   };
 
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.error("User not authenticated");
+        return;
+      }
+
+      try {
+        const response = await axios.get('api/company', {
+          headers: {
+            "firebase-id": currentUser.uid
+          }
+        });
+        if (response.data && response.data.data) {
+          setCompanyData(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching company data:", error);
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
+
   return (
     <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
       <div className="flex items-center space-x-3 pb-4">
         <img
-          src={company}
-          alt=""
+          src={companyData?.companyLogo || company}
+          alt="Company Logo"
           className="w-10 h-10 rounded-full"
         />
-        <span className="font-semibold text-lg">Company Name</span>
+        <span className="font-semibold text-lg">{companyData?.companyName || "Company Name"}</span>
       </div>
 
       <ul className="mt-4 space-y-8 text-gray-700">
@@ -58,7 +88,7 @@ const CompanySideBar = () => {
           </Link>
         </li>
         <li>
-          <Link to="/job-posting" className={getLinkStyle('/job-posting')}>
+          <Link to="/recents-jobs" className={getLinkStyle('/job-posting')}>
             <FaBriefcase className={getIconStyle('/job-posting')} />
             <span>Jobs</span>
           </Link>

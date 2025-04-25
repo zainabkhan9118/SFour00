@@ -70,3 +70,12 @@ button:focus-visible {
 @tailwind components;
 @tailwind utilities;
 
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-control-container {
+  position: relative;
+  z-index: 1000;
+}

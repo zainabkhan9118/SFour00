@@ -22,10 +22,18 @@ import Qrcode from "../components/common/Qrcode";
 import ProblemChat from "../components/company/problems/problemchat";
 
 import AlertLog from "../components/user/WorkInprogress/AlertLog";
+import EditCompanyForm from "../components/company/profile/EditCompanyForm";
+import EditContactForm from "../components/company/profile/EditContactForm";
+import EditEmailForm from "../components/company/profile/EditEmailForm";
+import MapExample from "../components/company/profile/test";
 
 
 const CompanyRoutes = [
   <Route key="company-profile" path="/company-profile" element={<ProfileCompany />} />,
+  <Route key="map-example" path="/test" element={<MapExample />} />,
+  <Route key="edit-company-profile" path="/edit-company-profile" element={<EditCompanyForm />} />,
+  <Route key="edit-company-contact" path="/edit-company-contact" element={<EditContactForm />} />,
+  <Route key="edit-company-email" path="/edit-company-email" element={<EditEmailForm />} />,
   <Route key="problems-reported" path="/problems-reported" element={<ProblemChat />} />,
   <Route key="job-posting" path="/job-posting" element={<JobPosting />} />,
   <Route key="recents-jobs" path="/recents-jobs" element={<RecentJob />} />,
