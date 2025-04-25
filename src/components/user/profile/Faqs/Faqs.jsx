@@ -6,23 +6,33 @@ import UserSidebar from "../UserSidebar";
 
 const faqs = [
   {
-    question: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    question: "What is the S4 App?",
     answer:
-      "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+      "S4 is a dedicated platform for the security industry, connecting job seekers with companies hiring for security roles. Whether you're looking to start or advance your career or find qualified candidates, S4 streamlines the entire process.",
   },
   {
-    question: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    answer:       "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+    question: "How do I sign up on the S4 App?",
+    answer:       "Simply download the app, choose whether you’re a job seeker or a company, and follow the easy registration process to get started.",
 
   },
   {
-    question: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    answer:       "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+    question: "Is the app only for security jobs?",
+    answer:       "Yes, S4 focuses specifically on jobs within the security sector, including positions like security guards, supervisors, CCTV operators, and more.",
 
   },
   {
-    question: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    answer:       "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+    question: "Can companies post multiple job listings?",
+    answer:       "Absolutely. Companies can post as many job listings as they need and manage applications directly through the app dashboard.",
+
+  },
+  {
+    question: "Is S4 available in all cities?",
+    answer:       "The app currently supports select cities but is continuously expanding. You’ll be notified as soon as new locations become available.",
+
+  },
+  {
+    question: "Is there a fee to use the S4 App?",
+    answer:    "Job seekers can use the app for free. Companies may be charged based on the number of job posts or premium features they use.",
 
   },
 ];
@@ -63,7 +73,7 @@ const FAQSection = () => {
               {openIndex === index ? <FaMinus /> : <FaPlus />}
             </button>
             {openIndex === index && (
-              <div className="p-4 text-blue-500  border-gray-300">
+              <div className="p-4 text-blue-900  border-gray-300">
                 {faq.answer}
               </div>
             )}
