@@ -17,7 +17,7 @@ const EditCertificate = () => {
   const [organization, setOrganization] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [certificateId, setCertificateId] = useState(localStorage.getItem("certificateId") || null);
+  const [certificateId, setCertificateId] = useState(localStorage.getItem("certificateId") || null); 
   const [originalValues, setOriginalValues] = useState({
     issueDate: "",
     organizationName: "",
@@ -25,58 +25,59 @@ const EditCertificate = () => {
   });
 
   useEffect(() => {
-    const fetchCertificate = async () => {
-      const jobSeekerId = localStorage.getItem("jobSeekerId");
-      const storedCertId = certificateId;
+    const storedCertId = localStorage.getItem("certificateId");
+    if (storedCertId) {
+      const fetchCertificate = async () => {
+        const jobSeekerId = localStorage.getItem("jobSeekerId");
+        if (!jobSeekerId) return;
 
-      if (!jobSeekerId || !storedCertId) {
-        // console.log("Debug: Missing jobSeekerId or certificateId");
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // console.log("Debug: Fetching certificate with ID:", storedCertId);
-        const response = await axios.get(`${BASEURL}/certificate/${storedCertId}`, {
-          headers: {
-            'jobseekerid': jobSeekerId
-          }
-        });
-
-        // console.log("Debug: GET certificate response:", response.data);
-
-        if (response.data && response.data.data) {
-          const certificate = response.data.data;
-          const issueDateValue = new Date(certificate.issueDate).toISOString().split('T')[0];
-          
-          setIssueDate(issueDateValue);
-          setOrganization(certificate.organizationName);
-          
-          setOriginalValues({
-            issueDate: issueDateValue,
-            organizationName: certificate.organizationName,
-            certificatePicPdf: certificate.certificatePicPdf
+        setIsLoading(true);
+        try {
+          const response = await axios.get(`${BASEURL}/certificate/${storedCertId}`, {
+            headers: {
+              'jobseekerid': jobSeekerId
+            }
           });
-          
-          if (certificate.certificatePicPdf) {
-            setSelectedFile({
-              name: certificate.certificatePicPdf.split('/').pop(),
-              url: certificate.certificatePicPdf,
-              isExisting: true
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Debug: Error fetching certificate:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    if (certificateId) {
+          if (response.data && response.data.data) {
+            const certificate = response.data.data;
+            const issueDateValue = new Date(certificate.issueDate).toISOString().split('T')[0];
+            
+            setIssueDate(issueDateValue);
+            setOrganization(certificate.organizationName);
+            setCertificateId(storedCertId);
+            
+            setOriginalValues({
+              issueDate: issueDateValue,
+              organizationName: certificate.organizationName,
+              certificatePicPdf: certificate.certificatePicPdf
+            });
+            
+            if (certificate.certificatePicPdf) {
+              setSelectedFile({
+                name: certificate.certificatePicPdf.split('/').pop(),
+                url: certificate.certificatePicPdf,
+                isExisting: true
+              });
+            }
+          }
+        } catch (error) {
+          // If certificate not found, clear storage and state
+          if (error.response?.status === 404) {
+            localStorage.removeItem("certificateId");
+            setCertificateId(null);
+            console.log("Certificate not found, treating as new certificate creation");
+          } else {
+            console.error("Error fetching certificate:", error.response?.data?.message || error.message);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       fetchCertificate();
     }
-  }, [certificateId]);
+  }, []); 
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -91,38 +92,17 @@ const EditCertificate = () => {
 
     try {
       const formData = new FormData();
+      formData.append('issueDate', new Date(issueDate).toISOString());
+      formData.append('organizationName', organization);
+      if (selectedFile instanceof File) {
+        formData.append('certificatePicPdf', selectedFile);
+      }
+
+      let response;
       
       if (certificateId) {
-        // console.log("Debug: Checking changed fields");
-        
-        if (issueDate !== originalValues.issueDate) {
-          // console.log("Debug: Issue date changed");
-          formData.append('issueDate', new Date(issueDate).toISOString());
-        }
-        
-        if (organization !== originalValues.organizationName) {
-          // console.log("Debug: Organization name changed");
-          formData.append('organizationName', organization);
-        }
-        
-        if (selectedFile instanceof File) {
-          // console.log("Debug: New file selected");
-          formData.append('certificatePicPdf', selectedFile);
-        }
-
-        let hasChanges = false;
-        for (let pair of formData.entries()) {
-          hasChanges = true;
-          break;
-        }
-
-        if (!hasChanges) {
-          navigate("/User-PersonalDetails");
-          return;
-        }
-
-        // console.log("Debug: Updating certificate with changed fields:", certificateId);
-        const response = await axios.patch(
+        // Update existing certificate
+        response = await axios.patch(
           `${BASEURL}/certificate/${certificateId}`,
           formData,
           {
@@ -132,16 +112,9 @@ const EditCertificate = () => {
             }
           }
         );
-        // console.log("Debug: Update response:", response.data);
       } else {
-        formData.append('issueDate', new Date(issueDate).toISOString());
-        formData.append('organizationName', organization);
-        if (selectedFile instanceof File) {
-          formData.append('certificatePicPdf', selectedFile);
-        }
-
-        // console.log("Debug: Creating new certificate");
-        const response = await axios.post(
+        // Create new certificate
+        response = await axios.post(
           `${BASEURL}/certificate`,
           formData,
           {
@@ -151,19 +124,65 @@ const EditCertificate = () => {
             }
           }
         );
-        // console.log("Debug: Creation response:", response.data);
-
-        if (response.data && response.data.data && response.data.data._id) {
-          const newCertId = response.data.data._id;
-          setCertificateId(newCertId);
-          localStorage.setItem("certificateId", newCertId);
-          // console.log("Debug: Saved new certificate ID:", newCertId);
-        }
       }
 
-      navigate("/User-PersonalDetails");
+      console.log("Certificate response:", response.data);
+
+      // Handle the response
+      if (response.data) {
+        const certificate = response.data.data || response.data;
+        const certId = certificate.id || certificate._id || (certificate.certificate && (certificate.certificate.id || certificate.certificate._id));
+
+        if (certId) {
+          localStorage.setItem("certificateId", certId);
+          setCertificateId(certId);
+          console.log("Certificate operation successful:", certId);
+          navigate("/User-PersonalDetails");
+        } else {
+          console.error("Response structure:", response.data);
+          throw new Error("Could not find certificate ID in response");
+        }
+      } else {
+        throw new Error("No data received from server");
+      }
     } catch (error) {
-      // console.error("Debug: Save operation failed:", error);
+      if (error.response && error.response.status === 404) {
+        // If certificate not found during update, clear the ID and try creating a new one
+        localStorage.removeItem("certificateId");
+        setCertificateId(null);
+        
+        try {
+          // Attempt to create a new certificate
+          const response = await axios.post(
+            `${BASEURL}/certificate`,
+            formData,
+            {
+              headers: {
+                'jobseekerid': jobSeekerId,
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+
+          if (response.data) {
+            const certificate = response.data.data || response.data;
+            const certId = certificate.id || certificate._id || (certificate.certificate && (certificate.certificate.id || certificate.certificate._id));
+
+            if (certId) {
+              localStorage.setItem("certificateId", certId);
+              setCertificateId(certId);
+              console.log("New certificate created successfully:", certId);
+              navigate("/User-PersonalDetails");
+              return;
+            }
+          }
+        } catch (createError) {
+          console.error("Failed to create new certificate:", createError);
+          throw createError;
+        }
+      }
+      
+      console.error("Failed to save certificate:", error.response?.data || error.message);
       alert(error.response?.data?.message || "Failed to save certificate");
     } finally {
       setIsLoading(false);
@@ -173,7 +192,6 @@ const EditCertificate = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // console.log("Debug: New file selected:", file.name);
       setSelectedFile(file);
     }
   };

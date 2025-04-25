@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -6,29 +6,48 @@ import Header from "../../../Header";
 import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { updateUtrData, getUtrData } from "../../../../../api/utr";
 
 const EditUTRNumber = () => {
   const navigate = useNavigate();
   const [utrNumber, setUtrNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
+  useEffect(() => {
+    const fetchUtrNumber = async () => {
+      setIsLoading(true);
+      try {
+        const currentUtr = await getUtrData();
+        if (currentUtr) {
+          setUtrNumber(currentUtr);
+        }
+      } catch (error) {
+        console.error("Failed to fetch UTR number:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUtrNumber();
+  }, []);
+  
   const handleChange = (e) => {
     setUtrNumber(e.target.value);
   };
   
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    console.log("Saving UTR Number:", utrNumber);
-    // Here you would typically save the data to your backend
-    
-    // Simulate API call with a timeout
-    setTimeout(() => {
-      setIsLoading(false);
-      // Navigate back to the profile page
+    try {
+      await updateUtrData(utrNumber);
       navigate("/User-PersonalDetails");
-    }, 1000);
+    } catch (error) {
+      console.error("Failed to update UTR number:", error);
+      alert(error.message || "Failed to update UTR number");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleBack = () => {
@@ -36,7 +55,7 @@ const EditUTRNumber = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       {/* Show loading spinner when loading */}
       {isLoading && <LoadingSpinner />}
       
