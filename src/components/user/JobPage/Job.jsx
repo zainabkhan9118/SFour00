@@ -84,7 +84,7 @@ const Job = () => {
         <div className="flex-1 py-2 px-3 md:px-5 bg-gray-50">
           {/* Hero Banner */}
           <div className="bg-gradient-to-r from-blue-900 to-orange-500 p-4 md:p-6 text-white rounded-xl">
-            <h1 className="text-xl md:text-2xl mt-4 md:mt-8">Hello Dani Danial, Good Day 👋</h1>
+            <h1 className="text-xl md:text-2xl mt-4 md:mt-8">Hello John Doe, Good Day 👋</h1>
             <h2 className="text-2xl md:text-3xl font-bold mt-1">Search & Land on your dream job</h2>
 
             {/* Search Bar - Responsive layout */}

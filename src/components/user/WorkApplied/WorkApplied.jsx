@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAuth } from "firebase/auth";
+import axios from "axios";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import { Bookmark } from "lucide-react";
-import { FaCheck} from "react-icons/fa";
-
+import { FaCheck } from "react-icons/fa";
+import { getAppliedJobs } from "../../../api/jobApplicationApi";
+import { AppContext } from "../../../context/AppContext";
+import companyImage from "../../../assets/images/company.png";
 
 const CheckIcon = () => (
   <svg
@@ -39,137 +43,172 @@ const BookmarkIcon = () => (
   </svg>
 );
 
-const jobs = [
-  {
-    id: 1,
-    title: "Networking Engineer",
-    location: "Washington",
-    salary: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111646.png",
-  },
-  {
-    id: 2,
-    title: "Product Designer",
-    location: "Dhaka",
-    salary: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111632.png",
-  },
-  {
-    id: 3,
-    title: "Junior Graphic Designer",
-    location: "Brazil",
-    salary: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/733/733609.png",
-  },
-  {
-    id: 4,
-    title: "Visual Designer",
-    location: "Wisconsin",
-    salary: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/732/732221.png",
-  },
-  {
-    id: 5,
-    title: "Marketing Officer",
-    location: "United States",
-    salary: "$12/hr",
-    date: "Dec 4, 2019 21:42",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/733/733579.png",
-  },
-];
+const formatLocation = (lat, lng) => {
+  if (!lat || !lng) return "Location not specified";
+  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+};
 
 const WorkApplied = () => {
   const navigate = useNavigate();
-  const [activeJobs, setActiveJobs] = useState(jobs); // Define activeJobs state
-  const [hoveredButton, setHoveredButton] = useState(null); // Define hoveredButton state
+  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleNavigate = () => {
-    navigate("/User-AppliedAndAssignedDetail"); // Navigate to the desired route
-  }
-  // Function to toggle bookmark
-  const toggleBookmark = (id) => {
-    setActiveJobs((prevJobs) =>
-      prevJobs.map((job) =>
-        job.id === id ? { ...job, bookMarked: !job.bookMarked } : job
-      )
-    );
+  useEffect(() => {
+    const fetchAppliedJobs = async () => {
+      try {
+        let jobSeekerId = localStorage.getItem("jobSeekerId");
+
+        if (!jobSeekerId) {
+          const auth = getAuth();
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            const firebaseId = currentUser.uid;
+            try {
+              const userResponse = await axios.get(`https://s4backend-c7f27664aa4d.herokuapp.com/job-seeker`, {
+                headers: {
+                  "firebase-id": firebaseId,
+                },
+              });
+              if (userResponse.data?.data?._id) {
+                jobSeekerId = userResponse.data.data._id;
+                localStorage.setItem("jobSeekerId", jobSeekerId);
+              }
+            } catch (err) {
+              console.error("Error fetching user data:", err);
+              throw new Error("Unable to fetch user data. Please try logging in again.");
+            }
+          }
+        }
+
+        if (!jobSeekerId) {
+          throw new Error("Unable to fetch your applied jobs. Please try logging out and back in.");
+        }
+
+        console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
+        const response = await getAppliedJobs(jobSeekerId);
+        console.log('API Response:', response);
+
+        if (!response?.data?.data) {
+          throw new Error("Invalid response format from server");
+        }
+
+        const jobsData = response.data.data;
+        console.log('Jobs data:', jobsData);
+        setAppliedJobs(Array.isArray(jobsData) ? jobsData : []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching applied jobs:", err);
+        setError(err.message || "Failed to load applied jobs. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchAppliedJobs();
+  }, []);
+
+  const handleNavigate = (jobId) => {
+    navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col md:flex-row min-h-screen">
+        <Sidebar />
+        <div className="flex flex-col flex-1">
+          <Header />
+          <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
+            <HeaderWork />
+            <div className="text-center py-4">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col md:flex-row min-h-screen">
+        <Sidebar />
+        <div className="flex flex-col flex-1">
+          <Header />
+          <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
+            <HeaderWork />
+            <div className="text-center text-red-500 py-4">{error}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-    {/* Sidebar */}
-    <Sidebar />
+      <Sidebar />
+      <div className="flex flex-col flex-1">
+        <Header />
+        <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
+          <HeaderWork />
+          <div className="">
+            {appliedJobs.length === 0 ? (
+              <div className="text-center py-4">No applied jobs found</div>
+            ) : (
+              appliedJobs.map((application, index) => {
+                console.log("Application data:", application); // Debug log
+                const job = application.jobId || {};
+                return (
+                  <div
+                    key={application._id || `job-${index}`}
+                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
+                  >
+                    <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
+                      <div className="w-12 h-12 rounded-full border border-gray-300 overflow-hidden bg-gray-100">
+                        <img
+                          src={companyImage}
+                          alt={job.jobTitle || "Company"}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>
+                        <div className="text-sm text-gray-500 flex items-center flex-wrap">
+                          <span>{formatLocation(job.latitude, job.longitude)}</span>
+                          <span className="mx-2 hidden sm:inline">•</span>
+                          <span>£{job.pricePerHour || "Rate not specified"} per hour</span>
+                        </div>
+                      </div>
+                    </div>
 
-    {/* Main Content */}
-    <div className="flex flex-col flex-1">
-      {/* Header */}
-      <Header />
-      <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
-        {/* Tabs */}
-        <HeaderWork />
+                    <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
+                      <div className="text-sm font-medium text-gray-400">
+                        {job.workDate ? new Date(job.workDate).toLocaleDateString() : "Date not available"}
+                      </div>
+                      <div className="flex items-center text-green-500">
+                        <CheckIcon />
+                        <span className="ml-1 text-sm font-medium">
+                          {application.status || "Applied"}
+                        </span>
+                      </div>
+                    </div>
 
-        {/* Job List */}
-        <div className="">
-          {jobs.map((job) => (
-            <div
-              key={job.id}
-              className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
-            >
-              {/* Job Icon and Details */}
-              <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                <img
-                  src={job.icon}
-                  alt={job.title}
-                  className="w-12 h-12 rounded-full border border-gray-300"
-                />
-                <div>
-                  <h3 className="font-medium text-lg">{job.title}</h3>
-                  <div className="text-sm text-gray-500 flex items-center flex-wrap">
-                    <span>{job.location}</span>
-                    <span className="mx-2 hidden sm:inline">•</span>
-                    <span>{job.salary}</span>
+                    <div className="flex justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <BookmarkIcon />
+                      </button>
+                      <button
+                        onClick={() => handleNavigate(job._id)}
+                        className="bg-orange-500 font-semibold text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
+                      >
+                        Applied
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Job Date and Status */}
-              <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                <div className="text-sm font-medium text-gray-400">{job.date}</div>
-                <div className="flex items-center text-green-500">
-                  <CheckIcon />
-                  <span className="ml-1 text-sm font-medium">{job.status}</span>
-                </div>
-                
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex  justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-              <button className="text-gray-400 hover:text-gray-600">
-                  <BookmarkIcon  />
-                </button>
-                <button
-                  onClick={handleNavigate}
-                  className="bg-orange-500 font-semibold text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
-                >
-                  Applied
-                </button>
-               
-              </div>
-            </div>
-          ))}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 };
 

@@ -16,7 +16,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const { BASEURL, setRole,setUser,setSessionData } = useContext(AppContext);
+    const { BASEURL, setRole, setUser, setSessionData } = useContext(AppContext);
 
     // Check for session validity
     useEffect(() => {
@@ -32,6 +32,7 @@ export default function LoginPage() {
                 // Session expired
                 console.log("Session expired, clearing session data.");
                 localStorage.removeItem("sessionData");
+                localStorage.removeItem("jobSeekerId");
                 navigate("/login");
             }
         }
@@ -63,6 +64,11 @@ export default function LoginPage() {
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 const userData = response.data.data;
                 setUser(userData);
+
+                // Store jobSeekerId if user is a Job Seeker
+                if (userData.role === "Job Seeker" && userData._id) {
+                    localStorage.setItem("jobSeekerId", userData._id);
+                }
 
                 const sessionData = {
                     firebaseId: firebaseId,
@@ -117,6 +123,11 @@ export default function LoginPage() {
             if ((response.status === 200 || response.status === 201) && response.data?.data) {
                 const userData = response.data.data;
                 setUser(userData);
+
+                // Store jobSeekerId if user is a Job Seeker
+                if (userData.role === "Job Seeker" && userData._id) {
+                    localStorage.setItem("jobSeekerId", userData._id);
+                }
 
                 // Save session data with timestamp
                 const sessionData = {

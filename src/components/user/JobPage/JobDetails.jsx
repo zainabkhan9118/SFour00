@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
-import { applyForJobWithParams } from "../../../api/jobApplicationApi";
+import { applyForJobWithSeekerId } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { AppContext } from "../../../context/AppContext";
 
@@ -27,14 +27,18 @@ export default function JobDetails() {
   const handleApplyForJob = async (e) => {
     e.preventDefault();
     const jobId = id;
+    const jobSeekerId = localStorage.getItem("jobSeekerId");
+    
+    if (!jobSeekerId) {
+      setApplyError("Please login first to apply for this job");
+      return;
+    }
     
     setApplying(true);
     try {
-      // Use the new function that doesn't require a jobSeekerId parameter
-      const response = await applyForJobWithParams(jobId);
-      console.log("API response:", response); // Add logging to help debug
+      const response = await applyForJobWithSeekerId(jobId, jobSeekerId);
+      console.log("API response:", response);
       setApplySuccess(true);
-      // Optional: Add a timeout to navigate after success message is shown
       setTimeout(() => {
         setIsModalOpen(false);
         navigate("/User-WorkApplied");
@@ -233,7 +237,7 @@ export default function JobDetails() {
                     <Bookmark className="w-5 h-5 text-orange-500" />
                   </button>
                   <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={(e) => handleApplyForJob(e)}
                     className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-medium hover:bg-orange-600 transition-colors flex-grow md:flex-grow-0"
                   >
                     Apply Now
