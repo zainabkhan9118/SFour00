@@ -9,6 +9,8 @@ import { getAuth } from "firebase/auth";
 import axios from "axios";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 
+const BASEURL = import.meta.env.VITE_BASE_URL;
+
 const EditEducation = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -38,7 +40,7 @@ const EditEducation = () => {
       }
 
       try {
-        const response = await axios.get('/api/education', {
+        const response = await axios.get(`${BASEURL}/education`, {
           headers: {
             'jobseekerid': jobSeekerId,
             'Content-Type': 'application/json'
@@ -138,8 +140,9 @@ const EditEducation = () => {
       if (newEducations.length > 0) {
         try {
           console.log('Creating new educations:', newEducations);
+          console.log('base url :',BASEURL);
           const createResponse = await axios.post(
-            '/api/education',
+            `${BASEURL}/education`,
             newEducations,
             { 
               headers: {
@@ -148,6 +151,8 @@ const EditEducation = () => {
               }
             }
           );
+          console.log('base url :',BASEURL);
+          
           console.log('New educations created:', createResponse.data);
         } catch (error) {
           console.error('Error creating new educations:', error);
@@ -158,9 +163,11 @@ const EditEducation = () => {
       // Update existing education entries (if any)
       for (const education of updateEducations) {
         try {
+          console.log('base url', BASEURL);
+          
           console.log('Updating education:', education._id);
           const updateResponse = await axios.patch(
-            `/api/education/${education._id}`,
+            `${BASEURL}/education/${education._id}`,
             {
               degreeName: education.degreeName,
               institute: education.institute,
@@ -187,7 +194,7 @@ const EditEducation = () => {
 
       // Refresh education data
       try {
-        const getResponse = await axios.get('/api/education', {
+        const getResponse = await axios.get(`${BASEURL}/education`, {
           headers: {
             'jobseekerId': jobSeekerId,
             'Content-Type': 'application/json'
@@ -244,7 +251,7 @@ const EditEducation = () => {
       });
 
       if (education.id) {
-        const response = await axios.delete(`/api/education/${education.id}`, {
+        const response = await axios.delete(`${BASEURL}/education/${education.id}`, {
           headers: {
             'jobseekerId': jobSeekerId,
             'id': education.id,

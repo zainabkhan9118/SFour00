@@ -21,6 +21,8 @@ import { AppContext } from "../../../../context/AppContext";
 import profilePic from "../../../../assets/images/profile.jpeg";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 
+const BASEURL = import.meta.env.VITE_BASE_URL;
+
 const PersonalDetails = () => {
   const navigate = useNavigate();
   const { setProfileName, setProfileDp } = useContext(AppContext);
@@ -66,7 +68,6 @@ const PersonalDetails = () => {
   const handleEditLicense = () => {
     navigate("/edit-license");
   };
-
   useEffect(() => {
     const fetchData = async (user) => {
       const firebaseId = user.uid;
@@ -74,19 +75,19 @@ const PersonalDetails = () => {
 
       try {
         const [userResponse, experienceResponse, educationResponse] = await Promise.all([
-          axios.get(`api/job-seeker`, {
+          axios.get(`${BASEURL}/job-seeker`, {
             headers: {
               "firebase-id": `${firebaseId}`,
               "Content-Type": "application/json",
             },
           }),
-          axios.get(`api/experience`, {
+          axios.get(`${BASEURL}/experience`, {
             headers: {
               "firebase-id": firebaseId,
               "jobseekerid": jobSeekerId,
             },
           }),
-          axios.get(`api/education`, {
+          axios.get(`${BASEURL}/education`, {
             headers: {
               "firebase-id": firebaseId,
               "jobseekerid": jobSeekerId,
