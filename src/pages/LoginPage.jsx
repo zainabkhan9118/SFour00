@@ -46,7 +46,6 @@ export default function LoginPage() {
     const fetchAndStoreJobSeekerId = async (firebaseId) => {
         console.log("🔍 Using EXACT WorkApplied approach to fetch job seeker ID...");
         try {
-            // CRITICAL: Use the current user's UID, not the token
             const auth = getAuth();
             const currentUser = auth.currentUser;
             
@@ -55,11 +54,10 @@ export default function LoginPage() {
                 return null;
             }
             
-            // This is the critical part: we need to use the UID from Firebase auth
             const uid = currentUser.uid;
             console.log("🔑 Using Firebase UID instead of token:", uid);
             
-            // This is the EXACT same API call used in WorkApplied.jsx
+            // Fetch job seeker data
             const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
                 headers: {
                     "firebase-id": uid,
@@ -70,8 +68,33 @@ export default function LoginPage() {
             
             if (userResponse.data?.data?._id) {
                 const jobSeekerId = userResponse.data.data._id;
+                const certificateId = userResponse.data.data.certificates[0]?._id || null;
+                const lisence = userResponse.data.data.licenses[0]?._id || null;
+                // console.log("certificateId",certificateId);
                 localStorage.setItem("jobSeekerId", jobSeekerId);
-                console.log("✅ DO OR DIE SUCCESS! Job seeker ID stored:", jobSeekerId);
+                localStorage.setItem("certificateId",(certificateId));
+                localStorage.setItem("licenseId", lisence);
+
+                // After getting jobSeekerId, fetch bank details
+                try {
+                    const bankResponse = await axios.get(`${BASEURL}/bank-details`, {
+                        headers: {
+                            'jobseekerid': jobSeekerId
+                        }
+                    });
+
+                    if (bankResponse.data?.data?.length > 0) {
+                        // Get the bank detail ID
+                        const bankDetailId = bankResponse.data.data[0]._id;
+                        localStorage.setItem("bankDetailId", bankDetailId);
+                        console.log("✅ Bank detail ID restored:", bankDetailId);
+                    } else {
+                        console.log("ℹ️ No existing bank details found for the user");
+                    }
+                } catch (bankError) {
+                    console.error("❌ Error fetching bank details:", bankError);
+                }
+
                 return jobSeekerId;
             } else {
                 console.warn("⚠️ No job seeker document ID found in API response");
