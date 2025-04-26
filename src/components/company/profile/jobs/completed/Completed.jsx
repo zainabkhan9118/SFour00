@@ -7,55 +7,7 @@ import Sidebar from "../../../Sidebar";
 import Header from "../../../Header";
 import Headerjob from "../Headerjob";
 import { JobStatus } from "../../../../../constants/enums";
-
-// Sample data as fallback
-const sampleJobs = [
-  {
-    id: 1,
-    logo: logo1,
-    title: "Networking Engineer",
-    location: "Washington",
-    rate: "$12/hr",
-    status: "completed 1 hour ago",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 2,
-    logo: logo2,
-    title: "Product Designer",
-    location: "Dhaka",
-    rate: "$12/hr",
-    status: "completed 1 hour ago",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 3,
-    logo: logo1,
-    title: "Junior Graphic Designer",
-    location: "Brazil",
-    rate: "$12/hr",
-    status: "completed 1 hour ago",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 4,
-    logo: logo2,
-    title: "Visual Designer",
-    location: "Wisconsin",
-    rate: "$12/hr",
-    status: "completed 1 hour ago",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 5,
-    logo: logo2,
-    title: "Marketing Officer",
-    location: "United States",
-    rate: "$12/hr",
-    status: "completed 1 hour ago",
-    assignedto: "Jorden Mendaz",
-  },
-];
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 
 const Completed = () => {
   const navigate = useNavigate();
@@ -115,6 +67,41 @@ const Completed = () => {
       minute: '2-digit'
     });
   };
+
+  // Calculate completion time relative to now
+  const getCompletionTimeAgo = (dateString) => {
+    if (!dateString) return "completed recently";
+    
+    const completedDate = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - completedDate;
+    
+    // Convert to appropriate units
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHrs / 24);
+    
+    if (diffDays > 0) {
+      return `completed ${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } else if (diffHrs > 0) {
+      return `completed ${diffHrs} hour${diffHrs > 1 ? 's' : ''} ago`;
+    } else if (diffMins > 0) {
+      return `completed ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    } else {
+      return "completed just now";
+    }
+  };
+  
+  // Get the assigned user's name from the job
+  const getAssignedUserName = (job) => {
+    if (!job || !job.jobId || !job.jobId.applicantsList) return "Not assigned";
+    
+    const assignedUser = job.jobId.applicantsList.find(
+      user => user._id === job.jobSeekerId
+    );
+    
+    return assignedUser ? assignedUser.fullname : "Not assigned";
+  };
   
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
@@ -126,7 +113,8 @@ const Completed = () => {
 
         {loading ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-gray-500">Loading completed jobs...</p>
+            <LoadingSpinner />
+            <p className="ml-3 text-xl text-gray-500">Loading completed jobs...</p>
           </div>
         ) : error ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
@@ -150,21 +138,27 @@ const Completed = () => {
                   <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
                     <div className="flex-shrink-0">
                       <img 
-                        src={job.companyId?.companyLogo || (index % 2 === 0 ? logo1 : logo2)} 
-                        alt={job.jobTitle} 
+                        src={index % 2 === 0 ? logo1 : logo2} 
+                        alt={job.jobId?.jobTitle || "Job"} 
                         className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded" 
                       />
                     </div>
 
                     <div className="flex-grow sm:w-[200px] md:w-[300px]">
-                      <h2 className="text-base sm:text-lg font-semibold text-gray-900">{job.jobTitle}</h2>
+                      <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                        {job.jobId?.jobTitle || "Untitled Job"}
+                      </h2>
                       <div className="flex flex-wrap items-center text-gray-600 text-xs sm:text-sm gap-2">
                         <div className="flex items-center">
                           <FaMapMarkerAlt className="text-gray-500 mr-1" />
-                          <span>{job.companyId?.address || "Location not specified"}</span>
+                          <span>
+                            {(job.jobId?.latitude && job.jobId?.longitude) 
+                              ? `${job.latitude}, ${job.longitude}` 
+                              : "Location not specified"}
+                          </span>
                         </div>
                         <span className="hidden sm:inline">•</span>
-                        <span>${job.pricePerHour || 0}/hr</span>
+                        <span>${job.jobId?.pricePerHour || 0}/hr</span>
                       </div>
                     </div>
                   </div>
@@ -172,7 +166,9 @@ const Completed = () => {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full sm:w-auto gap-3">
                     <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
                       <FaCheck className="mr-1" />
-                      <span className="whitespace-nowrap">Completed {formatDate(job.completedDate || job.updatedAt)}</span>
+                      <span className="whitespace-nowrap">
+                        {getCompletionTimeAgo(job.updatedAt)}
+                      </span>
                     </div>
 
                     <button 
@@ -183,11 +179,7 @@ const Completed = () => {
                       className="w-full sm:w-auto bg-[#1F2B44] text-white px-4 sm:px-7 py-2 sm:py-4 rounded-full text-xs sm:text-sm font-medium"
                     >
                       <span className="font-semibold">Completed By: </span>
-                      <span>
-                        {job.userJobRel && job.userJobRel.length > 0
-                          ? job.userJobRel[0].userId.fullname
-                          : "Not assigned"}
-                      </span>
+                      <span>{getAssignedUserName(job)}</span>
                     </button>
                   </div>
                 </div>

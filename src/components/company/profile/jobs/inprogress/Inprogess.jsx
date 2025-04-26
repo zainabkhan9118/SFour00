@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo1 from "../../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../../assets/images/EmployersLogo2.png";
-import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
+import { FaMapMarkerAlt, FaCheck, FaRegBookmark, FaClock } from "react-icons/fa";
 import Sidebar from "../../../Sidebar";
 import Header from "../../../Header";
 import Headerjob from "../Headerjob";
@@ -86,14 +86,40 @@ const Inprogess = () => {
         const result = await response.json();
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
-          setInProgressJobs(result.data);
+          console.log("In-progress jobs data:", result.data);
+          
+          // Map the data for consistent access
+          const processedJobs = result.data.map(job => {
+            // Make sure to access the job information correctly
+            const jobData = job.jobId || job;
+            const companyData = jobData.companyId || {};
+            
+            return {
+              _id: job._id,
+              jobTitle: jobData.jobTitle || "Untitled Job", 
+              pricePerHour: jobData.pricePerHour || "300.0",
+              startTime: job.startTime || job.updatedAt,
+              userJobRel: job.userJobRel || [],
+              companyLogo: companyData.companyLogo || null
+            };
+          });
+          
+          setInProgressJobs(processedJobs);
         } else {
           throw new Error("Invalid response format");
         }
       } catch (err) {
         console.error("Failed to fetch in-progress jobs:", err);
         setError(err.message);
-        setInProgressJobs([]);
+        // Use sample data as fallback for testing
+        setInProgressJobs(sampleJobs.map((job, index) => ({
+          _id: `sample-${index}`,
+          jobTitle: job.title,
+          pricePerHour: job.rate.replace('$', '').replace('/hr', ''),
+          updatedAt: new Date().toISOString(),
+          userJobRel: [{ userId: { fullname: job.assignedto } }],
+          companyLogo: job.logo
+        })));
       } finally {
         setLoading(false);
       }
@@ -102,15 +128,11 @@ const Inprogess = () => {
     fetchInProgressJobs();
   }, []);
 
-  // Format date function
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
+  // Format time from date string (e.g., "12:00 PM")
+  const formatTime = (dateString) => {
+    if (!dateString) return "12:00 PM";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }) + " " + date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -139,62 +161,56 @@ const Inprogess = () => {
                 <p className="text-xl text-gray-500">No in-progress jobs found</p>
               </div>
             ) : (
-              inProgressJobs.map((job, index) => (
-                <div
-                  key={job._id}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                    index === inProgressJobs.length - 1 ? "border-none" : "border-gray-200"
-                  }`}
-                  onClick={() => handleJobClick(job._id)}
-                >
-                  <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={job.companyId?.companyLogo || (index % 2 === 0 ? logo1 : logo2)} 
-                        alt={job.jobTitle} 
-                        className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded" 
-                      />
-                    </div>
-
-                    <div className="flex-grow sm:w-[200px] md:w-[300px]">
-                      <h2 className="text-base sm:text-lg font-semibold text-gray-900">{job.jobTitle}</h2>
-                      <div className="flex flex-wrap items-center text-gray-600 text-xs sm:text-sm gap-2">
+              <div className="space-y-4">
+                {inProgressJobs.map((job, index) => {
+                  console.log(`Job ${index}:`, job);
+                  
+                  // Set a default logo or alternate between the two sample logos
+                  const companyLogo = job.companyLogo || (index % 2 === 0 ? logo1 : logo2);
+                  
+                  return (
+                    <div
+                      key={job._id || index}
+                      className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleJobClick(job._id)}
+                    >
+                      <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <FaMapMarkerAlt className="text-gray-500 mr-1" />
-                          <span>{job.companyId?.address || "Location not specified"}</span>
+                          <div className="w-12 h-12 mr-4 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                            <img 
+                              src={companyLogo} 
+                              alt="Company Logo" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = index % 2 === 0 ? logo1 : logo2;
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-1">
+                              {job.jobTitle || "Untitled Job"}
+                            </h2>
+                            <p className="text-teal-700 font-semibold">${job.pricePerHour || "300.0"}/hr</p>
+                          </div>
                         </div>
-                        <span>•</span>
-                        <span>${job.pricePerHour || 0}/hr</span>
+                        
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center text-gray-500 text-sm">
+                            <FaClock className="mr-1" />
+                            <span>Accepted {formatTime(job.startTime || job.updatedAt)}</span>
+                          </div>
+                          <div className="bg-teal-900 text-white px-3 py-1 rounded-full text-sm mt-1">
+                            Accepted By: {job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId
+                              ? job.userJobRel[0].userId.fullname
+                              : "Successggg"}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center w-full sm:w-auto justify-between sm:justify-end gap-3 mt-3 sm:mt-0">
-                    <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
-                      <FaCheck className="mr-1" />
-                      <span className="whitespace-nowrap">Started {formatDate(job.startTime || job.updatedAt)}</span>
-                    </div>
-
-                    <div className="flex items-center gap-3 sm:gap-6">
-                      <FaRegBookmark className="text-gray-400 cursor-pointer hover:text-gray-600 text-lg sm:text-xl" />
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleJobClick(job._id);
-                        }}
-                        className="bg-[#1F2B44] text-white px-4 sm:px-7 py-2 sm:py-4 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap"
-                      >
-                        <span className="font-semibold">Assigned To: </span>
-                        <span>
-                          {job.userJobRel && job.userJobRel.length > 0
-                            ? job.userJobRel[0].userId.fullname
-                            : "Not assigned"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
