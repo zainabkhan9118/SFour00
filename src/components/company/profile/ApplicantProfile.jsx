@@ -9,8 +9,12 @@ import security from "../../../assets/images/security.png";
 import lisence from "../../../assets/images/lisence.png";
 import urt from "../../../assets/images/urt.png";
 import rectangle from "../../../assets/images/rectangle.png";
+import { useLocation } from "react-router-dom";
 
 const ApplicantProfile = () => {
+  const location = useLocation();
+  const applicant = location.state?.applicant || {};
+  
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -20,33 +24,36 @@ const ApplicantProfile = () => {
         {/* Header */}
         <Header />
 
-        <div className="flex flex-col  md:flex-row rounded-xl p-6 md:p-8 gap-6 max-w-4xl ">
+        <div className="flex flex-col md:flex-row rounded-xl p-6 md:p-8 gap-6 max-w-4xl">
           {/* Image & Info */}
           <div className="flex-shrink-0">
             <img
-              src={profileImage}
-              alt="Dany Danial"
+              src={applicant.profilePic || profileImage}
+              alt={applicant.fullname || "Applicant"}
               className="w-32 h-32 md:w-48 md:h-48 rounded-lg object-cover shadow-md"
             />
-            <h3 className="text-2xl font-bold mt-4">Dany Danial</h3>
-            <p className="text-gray-400 text-base">23 years | Australia</p>
+            <h3 className="text-2xl font-bold mt-4">{applicant.fullname || "Applicant Name"}</h3>
+            <p className="text-gray-400 text-base">
+              {applicant.age ? `${applicant.age} years` : ""} 
+              {applicant.country && ` | ${applicant.country}`}
+            </p>
 
-            <div className="flex items-center text-gray-600 mt-2 bg-gray-100 px-3 py-2 rounded-full w-full md:w-[308px] h-[28px]">
-              <FaMapMarkerAlt className="text-gray-500 mr-2" />
+            <div className="flex items-center text-gray-600 mt-2 bg-gray-100 px-3 py-2 rounded-full w-full md:w-[308px] h-auto min-h-[28px]">
+              <FaMapMarkerAlt className="text-gray-500 mr-2 flex-shrink-0" />
               <span className="text-sm">
-                1789 North Street, San Antonio, TX 78201
+                {applicant.address && applicant.address.length > 0 
+                  ? applicant.address[0].address 
+                  : "Address not provided"}
               </span>
             </div>
           </div>
 
           {/* About Section */}
           <div className="w-full md:w-2/3">
-            <h2 className="text-2xl font-bold">About Dany</h2>
+            <h2 className="text-2xl font-bold">About {applicant.fullname?.split(' ')[0] || "Applicant"}</h2>
             <p className="text-gray-600 mt-2">
-              Lorem Ipsum is simply dummy text of the printing and typesetting
-              industry. Lorem Ipsum has been the industry's standard dummy text
-              ever since the 1500s, when an unknown printer took a galley of
-              type and scrambled.
+              {applicant.about || 
+                "This applicant has not provided any additional information about themselves."}
             </p>
           </div>
         </div>
@@ -56,53 +63,57 @@ const ApplicantProfile = () => {
           <div className="w-full md:w-1/3">
             <h2 className="text-2xl font-bold mb-4">Experience</h2>
 
-            <div className="flex items-start gap-3 mb-4">
-              <img src={security} className="w-8 h-8" />
-              <div>
-                <h3 className="font-bold text-lg">Security Supervisor</h3>
-                <p className="text-gray-500">SoftShift</p>
-                <p className="text-gray-400 text-sm">June 2020 - Present</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 mb-4">
-              <img src={rectangle} className="w-8 h-8" />
-              <div>
-                <h3 className="font-bold text-lg">Assistant Manager</h3>
-                <p className="text-gray-500">Tech Solutions</p>
-                <p className="text-gray-400 text-sm">Jan 2018 - May 2020</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 mb-4">
-              <img src={rectangle} className="w-8 h-8" />
-              <div>
-                <h3 className="font-bold text-lg">Intern</h3>
-                <p className="text-gray-500">XYZ Corporation</p>
-                <p className="text-gray-400 text-sm">Jul 2017 - Dec 2017</p>
-                <p className="text-orange-500 text-sm flex items-center gap-1 mt-1">
-                  <MdOutlineWorkOutline /> Work Reference
-                </p>
-              </div>
-            </div>
+            {applicant.experiences && applicant.experiences.length > 0 ? (
+              applicant.experiences.map((exp, index) => (
+                <div key={index} className="flex items-start gap-3 mb-4">
+                  <img src={index % 2 === 0 ? security : rectangle} className="w-8 h-8" alt="" />
+                  <div>
+                    <h3 className="font-bold text-lg">{exp.position || "Position"}</h3>
+                    <p className="text-gray-500">{exp.companyName || "Company"}</p>
+                    <p className="text-gray-400 text-sm">
+                      {exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ""}
+                      {" - "}
+                      {exp.currentlyWorking ? "Present" : (exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "")}
+                    </p>
+                    {exp.experienceCertificate && (
+                      <p className="text-orange-500 text-sm flex items-center gap-1 mt-1">
+                        <MdOutlineWorkOutline /> Work Reference
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No experience information available</p>
+            )}
           </div>
 
           {/* Education Section */}
           <div className="w-full md:w-2/3">
             <h2 className="text-2xl font-bold mb-4">Education</h2>
 
-            <div className="flex items-start gap-3 mb-4">
-              <img src={security} className="w-8 h-8" />
-              <div>
-                <h3 className="font-bold text-lg">BS Social Science</h3>
-                <p className="text-gray-500">ABC University</p>
-                <p className="text-gray-400 text-sm">Oct 2017 - Nov 7 2021</p>
-              </div>
-            </div>
+            {applicant.education && applicant.education.length > 0 ? (
+              applicant.education.map((edu, index) => (
+                <div key={index} className="flex items-start gap-3 mb-4">
+                  <img src={security} className="w-8 h-8" alt="" />
+                  <div>
+                    <h3 className="font-bold text-lg">{edu.qualification || "Degree"}</h3>
+                    <p className="text-gray-500">{edu.institution || "Institution"}</p>
+                    <p className="text-gray-400 text-sm">
+                      {edu.startDate ? new Date(edu.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ""}
+                      {" - "}
+                      {edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ""}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No education information available</p>
+            )}
 
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 mt-6">
               <div className="flex items-center gap-2">
-                <img src={lisence} className="w-8 h-8" />
+                <img src={lisence} className="w-8 h-8" alt="" />
                 <div className="flex flex-col">
                   <h3 className="font-bold">Certificate</h3>
                   <p className="text-gray-400 text-sm">Work Reference</p>
@@ -115,7 +126,7 @@ const ApplicantProfile = () => {
 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <img src={lisence} className="w-8 h-8" />
+                <img src={lisence} className="w-8 h-8" alt="" />
                 <div className="flex flex-row gap-4 items-center">
                   <h3 className="font-bold">License</h3>
                   <AiFillCheckCircle className="text-green-500" />
@@ -124,13 +135,15 @@ const ApplicantProfile = () => {
               <FaEye className="text-gray-500 cursor-pointer" />
             </div>
 
-            <div className="flex items-start gap-3">
-              <img src={urt} className="w-8 h-8" />
-              <div>
-                <h3 className="font-bold">UTR Number</h3>
-                <p className="text-gray-400 text-sm">MZB12345678</p>
+            {applicant.utrNumber && (
+              <div className="flex items-start gap-3">
+                <img src={urt} className="w-8 h-8" alt="" />
+                <div>
+                  <h3 className="font-bold">UTR Number</h3>
+                  <p className="text-gray-400 text-sm">{applicant.utrNumber}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

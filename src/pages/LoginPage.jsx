@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { FaFacebook, FaGoogle, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getAuth } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
 import axios from "axios";
 import { AppContext } from "../context/AppContext";
@@ -42,21 +42,99 @@ export default function LoginPage() {
         setShowPassword(!showPassword);
     };
 
+    // This function exactly mirrors what works in WorkApplied.jsx
+    const fetchAndStoreJobSeekerId = async (firebaseId) => {
+        console.log("🔍 Using EXACT WorkApplied approach to fetch job seeker ID...");
+        try {
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            
+            if (!currentUser) {
+                console.error("❌ Current user not found");
+                return null;
+            }
+            
+            const uid = currentUser.uid;
+            console.log("🔑 Using Firebase UID instead of token:", uid);
+            
+            // Fetch job seeker data
+            const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
+                headers: {
+                    "firebase-id": uid,
+                }
+            });
+            
+            console.log("🔍 Job seeker API full response:", userResponse);
+            
+            if (userResponse.data?.data?._id) {
+                const jobSeekerId = userResponse.data.data._id;
+                const certificateId = userResponse.data.data.certificates[0]?._id || null;
+                const lisence = userResponse.data.data.licenses[0]?._id || null;
+                // console.log("certificateId",certificateId);
+                localStorage.setItem("jobSeekerId", jobSeekerId);
+                localStorage.setItem("certificateId",(certificateId));
+                localStorage.setItem("licenseId", lisence);
+
+                // After getting jobSeekerId, fetch bank details
+                try {
+                    const bankResponse = await axios.get(`${BASEURL}/bank-details`, {
+                        headers: {
+                            'jobseekerid': jobSeekerId
+                        }
+                    });
+
+                    if (bankResponse.data?.data?.length > 0) {
+                        // Get the bank detail ID
+                        const bankDetailId = bankResponse.data.data[0]._id;
+                        localStorage.setItem("bankDetailId", bankDetailId);
+                        console.log("✅ Bank detail ID restored:", bankDetailId);
+                    } else {
+                        console.log("ℹ️ No existing bank details found for the user");
+                    }
+                } catch (bankError) {
+                    console.error("❌ Error fetching bank details:", bankError);
+                }
+
+                return jobSeekerId;
+            } else {
+                console.warn("⚠️ No job seeker document ID found in API response");
+                
+                // Handle case where the user is a job seeker but doesn't have a profile yet
+                // We'll store the user ID as a fallback, which will be used until they create a profile
+                const userId = localStorage.getItem("userId");
+                if (userId) {
+                    console.log("⚠️ Using user ID as temporary fallback until profile is created:", userId);
+                    // Don't actually store this as jobSeekerId - let the profile creation process do that
+                }
+                
+                return null;
+            }
+        } catch (err) {
+            console.error("❌ Error fetching job seeker data:", err);
+            console.warn("⚠️ Unable to fetch job seeker profile - likely new user");
+            
+            // Same fallback approach - identify that we need a profile to be created
+            const userId = localStorage.getItem("userId");
+            if (userId) {
+                console.log("⚠️ User needs to create a job seeker profile");
+            }
+            
+            return null;
+        }
+    };
+
     const storeUserData = async (firebaseId, userData) => {
         console.log("Storing user data, role:", userData.role);
-        console.log("Full user data:", userData);
         
         // Store the basic user data
         setUser(userData);
         setRole(userData.role);
         
-        // The backend returns userId instead of _id in the login response
-        const jobSeekerId = userData.userId || userData._id;
-        
-        // If there's a userId in the userData, directly store it as jobSeekerId for Job Seekers
-        if (userData.role === "Job Seeker" && jobSeekerId) {
-            localStorage.setItem("jobSeekerId", jobSeekerId);
-            console.log("✅ Job seeker ID stored directly from login response:", jobSeekerId);
+        // Store the user ID from login response
+        const userId = userData.userId || userData._id;
+        if (userId) {
+            localStorage.setItem("userId", userId);
+            console.log("✅ User ID stored:", userId);
         }
         
         // Create session data
@@ -64,35 +142,29 @@ export default function LoginPage() {
             firebaseId: firebaseId,
             role: userData.role,
             timestamp: Date.now(),
-            userId: jobSeekerId
+            userId: userId
         };
         
         setSessionData(sessionData);
         localStorage.setItem("sessionData", JSON.stringify(sessionData));
         
-        // As a fallback, try to get job seeker details - but only if we didn't already store the ID
-        if (userData.role === "Job Seeker" && !jobSeekerId) {
-            try {
-                console.log("No jobSeekerId found in login response, attempting fallback fetch...");
+        // For Job Seekers, use the EXACT same approach that works in WorkApplied.jsx
+        if (userData.role === "Job Seeker") {
+            console.log("Job Seeker detected, fetching job seeker document ID...");
+            const jobSeekerId = await fetchAndStoreJobSeekerId(firebaseId);
+            
+            if (jobSeekerId) {
+                console.log("✅ Job seeker ID successfully stored: " + jobSeekerId);
+                console.log("⚠️ User ID (login response): " + userId);
+                console.log("⚠️ Job Seeker ID (document _id): " + jobSeekerId);
                 
-                // Make a direct API call to get job seeker details
-                const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
-                    headers: {
-                        "firebase-id": firebaseId,
-                    },
-                });
-                
-                console.log("Job seeker API response:", userResponse.data);
-                
-                if (userResponse.data?.data?._id) {
-                    const apiJobSeekerId = userResponse.data.data._id;
-                    localStorage.setItem("jobSeekerId", apiJobSeekerId);
-                    console.log("✅ Job seeker ID stored successfully from API:", apiJobSeekerId);
+                if (userId === jobSeekerId) {
+                    console.error("❌ ERROR: User ID and Job Seeker ID are the same!");
                 } else {
-                    console.warn("⚠️ Job seeker ID not found in API response");
+                    console.log("✅ VERIFIED: User ID and Job Seeker ID are different as expected");
                 }
-            } catch (error) {
-                console.error("Error in fallback job seeker ID fetch:", error.response?.data || error);
+            } else {
+                console.warn("⚠️ Could not fetch job seeker document ID");
             }
         }
         
