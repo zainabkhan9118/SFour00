@@ -17,7 +17,7 @@ const EditLicense = () => {
   const [dateOfExpiry, setDateOfExpiry] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [licenseId, setLicenseId] = useState(null);  // Initialize as null
+  const [licenseId, setLicenseId] = useState(localStorage.getItem("licenseId") || null);
   const [originalValues, setOriginalValues] = useState({
     licenseNumber: "",
     dateOfExpiry: "",
@@ -25,58 +25,53 @@ const EditLicense = () => {
   });
 
   useEffect(() => {
-    const storedLicenseId = localStorage.getItem("licenseId");
-    if (storedLicenseId) {
-      const fetchLicense = async () => {
-        const jobSeekerId = localStorage.getItem("jobSeekerId");
-        if (!jobSeekerId) return;
+    const fetchLicense = async () => {
+      const jobSeekerId = localStorage.getItem("jobSeekerId");
+      const storedLicenseId = licenseId;
 
-        setIsLoading(true);
-        try {
-          const response = await axios.get(`${BASEURL}/license/${storedLicenseId}`, {
-            headers: {
-              'jobseekerid': jobSeekerId
-            }
+      if (!jobSeekerId || !storedLicenseId) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`${BASEURL}/license/${storedLicenseId}`, {
+          headers: {
+            'jobseekerid': jobSeekerId
+          }
+        });
+        console.log("API Response:", response.data);
+
+        if (response.data && response.data.data) {
+          const license = response.data.data;
+          setLicenseNumber(license.licenseNumber);
+          setDateOfExpiry(new Date(license.dateOfExpiry).toISOString().split('T')[0]);
+          
+          setOriginalValues({
+            licenseNumber: license.licenseNumber,
+            dateOfExpiry: new Date(license.dateOfExpiry).toISOString().split('T')[0],
+            licensePicPdf: license.licensePicPdf
           });
-
-          if (response.data && response.data.data) {
-            const license = response.data.data;
-            const expiryDate = new Date(license.dateOfExpiry).toISOString().split('T')[0];
-            
-            setLicenseNumber(license.licenseNumber);
-            setDateOfExpiry(expiryDate);
-            setLicenseId(storedLicenseId);
-            
-            setOriginalValues({
-              licenseNumber: license.licenseNumber,
-              dateOfExpiry: expiryDate,
-              licensePicPdf: license.licensePicPdf
+          
+          if (license.licensePicPdf) {
+            setSelectedFile({
+              name: license.licensePicPdf.split('/').pop(),
+              url: license.licensePicPdf,
+              isExisting: true
             });
-            
-            if (license.licensePicPdf) {
-              setSelectedFile({
-                name: license.licensePicPdf.split('/').pop(),
-                url: license.licensePicPdf,
-                isExisting: true
-              });
-            }
           }
-        } catch (error) {
-          if (error.response?.status === 404) {
-            localStorage.removeItem("licenseId");
-            setLicenseId(null);
-            console.log("License not found, treating as new license creation");
-          } else {
-            console.error("Error fetching license:", error.response?.data?.message || error.message);
-          }
-        } finally {
-          setIsLoading(false);
         }
-      };
+      } catch (error) {
+        console.error("API Error:", error.response?.data || error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    if (licenseId) {
       fetchLicense();
     }
-  }, []); // Run only once on component mount
+  }, [licenseId]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -91,46 +86,50 @@ const EditLicense = () => {
 
     try {
       const formData = new FormData();
-      formData.append('licenseNumber', licenseNumber);
-      formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
-      if (selectedFile instanceof File) {
-        formData.append('licensePicPdf', selectedFile);
-      }
-
-      let response;
       
       if (licenseId) {
-        try {
-          response = await axios.patch(
-            `${BASEURL}/license/${licenseId}`,
-            formData,
-            {
-              headers: {
-                'jobseekerid': jobSeekerId,
-                'Content-Type': 'multipart/form-data'
-              }
-            }
-          );
-        } catch (patchError) {
-          // If patch fails with 404, create a new license instead
-          if (patchError.response && patchError.response.status === 404) {
-            response = await axios.post(
-              `${BASEURL}/license`,
-              formData,
-              {
-                headers: {
-                  'jobseekerid': jobSeekerId,
-                  'Content-Type': 'multipart/form-data'
-                }
-              }
-            );
-          } else {
-            throw patchError;
-          }
+        if (licenseNumber !== originalValues.licenseNumber) {
+          formData.append('licenseNumber', licenseNumber);
         }
+        
+        if (dateOfExpiry !== originalValues.dateOfExpiry) {
+          formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
+        }
+        
+        if (selectedFile instanceof File) {
+          formData.append('licensePicPdf', selectedFile);
+        }
+
+        let hasChanges = false;
+        for (let pair of formData.entries()) {
+          hasChanges = true;
+          break;
+        }
+
+        if (!hasChanges) {
+          navigate("/User-PersonalDetails");
+          return;
+        }
+
+        const response = await axios.patch(
+          `${BASEURL}/license/${licenseId}`,
+          formData,
+          {
+            headers: {
+              'jobseekerid': jobSeekerId,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+        // console.log("API Response:", response.data);
       } else {
-        // Create new license
-        response = await axios.post(
+        formData.append('licenseNumber', licenseNumber);
+        formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
+        if (selectedFile instanceof File) {
+          formData.append('licensePicPdf', selectedFile);
+        }
+
+        const response = await axios.post(
           `${BASEURL}/license`,
           formData,
           {
@@ -140,29 +139,18 @@ const EditLicense = () => {
             }
           }
         );
-      }
+        // console.log("API Response:", response.data);
 
-      console.log("License response:", response.data);
-
-      // Handle the response
-      if (response.data) {
-        const license = response.data.data || response.data;
-        const newLicenseId = license.id || license._id || (license.license && (license.license.id || license.license._id));
-
-        if (newLicenseId) {
-          localStorage.setItem("licenseId", newLicenseId);
+        if (response.data && response.data.data && response.data.data._id) {
+          const newLicenseId = response.data.data._id;
           setLicenseId(newLicenseId);
-          console.log("License operation successful:", newLicenseId);
-          navigate("/User-PersonalDetails");
-        } else {
-          console.error("Response structure:", response.data);
-          throw new Error("Could not find license ID in response");
+          localStorage.setItem("licenseId", newLicenseId);
         }
-      } else {
-        throw new Error("No data received from server");
       }
+
+      navigate("/User-PersonalDetails");
     } catch (error) {
-      console.error("Failed to save license:", error.response?.data || error.message);
+      console.error("API Error:", error.response?.data || error);
       alert(error.response?.data?.message || "Failed to save license");
     } finally {
       setIsLoading(false);
