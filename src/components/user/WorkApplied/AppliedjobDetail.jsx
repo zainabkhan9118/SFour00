@@ -1,16 +1,81 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { ArrowRight, X, Upload, Bookmark } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import salary from "../../../assets/images/salary.png";
 import { AiOutlineInfoCircle } from "react-icons/ai"; 
 import PopupInprogess from '../popupModel/popupModel-Inprogress/PopupInprogess';
+import { format } from 'date-fns';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+const MapModal = ({ isOpen, onClose, position }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Job Location</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">×</button>
+        </div>
+        <div className="h-[500px] w-full">
+          <MapContainer
+            center={[position.lat, position.lng]}
+            zoom={13}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[position.lat, position.lng]}>
+              <Popup>
+                Job Location
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AppliedjobDetail = () => {
-    const [isInProgressOpen, setIsInProgressOpen] = useState(false); 
-    
+    const [isInProgressOpen, setIsInProgressOpen] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
+    const [jobDetails, setJobDetails] = useState(null);
+    const { id } = useParams();
+
+    useEffect(() => {
+      // Fetch job details using the ID
+      const fetchJobDetails = async () => {
+        try {
+          const response = await fetch(`/api/jobs/applied/${id}`);
+          const data = await response.json();
+          if (data.data && data.data.length > 0) {
+            setJobDetails(data.data[0]);
+          }
+        } catch (error) {
+          console.error('Error fetching job details:', error);
+        }
+      };
+
+      if (id) {
+        fetchJobDetails();
+      }
+    }, [id]);
+
     
   return (
     <div className="flex flex-row min-h-screen">
@@ -220,7 +285,7 @@ const AppliedjobDetail = () => {
                 <button className="w-[200px] h-[50px] px-6 py-2 bg-[#1F2B44] text-white font-semibold rounded-full hover:bg-gray-900 transition duration-200">
                   Message
                 </button>
-                <button className="w-[200px] h-[50px] px-6 py-2 bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200">
+                <button onClick={() => setIsMapOpen(true)} className="w-[200px] h-[50px] px-6 py-2 bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200">
                   View Map
                 </button>
               </div>
@@ -233,6 +298,13 @@ const AppliedjobDetail = () => {
         </div>
         {isInProgressOpen && (
             <PopupInprogess onClose={() => setIsInProgressOpen(false)} />
+          )}
+          {isMapOpen && jobDetails && (
+            <MapModal
+              isOpen={isMapOpen}
+              onClose={() => setIsMapOpen(false)}
+              position={{ lat: jobDetails?.location?.lat, lng: jobDetails?.location?.lng }}
+            />
           )}
       </div>
     </div>

@@ -38,7 +38,7 @@ const UserRoutes = [
   <Route key="User-WorkApplied" path="/User-WorkApplied" element={<WorkApplied />} />,
   <Route key="User-MyWorkAssignedPage" path="/User-MyWorkAssignedPage" element={<MyWorkAssignedPage />} />,
   <Route key="User-MyWorkAssignBook" path="/User-MyWorkAssignedBook" element={<WorkAssignedBook/>} />,
-  <Route key="User-AppliedAndAssignedDetail" path="/User-AppliedAndAssignedDetail" element={<AppliedjobDetail/>} />,
+  <Route key="User-AppliedAndAssignedDetail" path="/User-AppliedAndAssignedDetail/:id" element={<AppliedjobDetail/>} />,
   <Route key="User-ReportProblem" path="/User-reportProblem" element={<ReportProblem/>} />,
   <Route key="User-WorkCompleted" path="/User-WorkCompleted" element={<UserCompleted/>} />,
   <Route key="User-workInprogess" path="/User-workInprogess" element={<UserWorkInprogess />} />,

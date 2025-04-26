@@ -38,7 +38,8 @@ export const getAppliedJobs = async (jobSeekerId) => {
         params: { status: "applied" }, // Use params for query parameters
     });
 };
-  
+
+
 
 // Get job location (for company + job)
 export const getJobLocation = async (companyId, jobId) => {
