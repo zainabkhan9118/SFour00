@@ -8,6 +8,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
 import AssignJobButton from "./popupsButtons/AssignJobButton";
 import { useParams, useNavigate } from "react-router-dom";
+import LoadingSpinner from "../../../common/LoadingSpinner";
 
 const ViewApplicant = () => {
     const [showButton, setShowButton] = useState(false);
@@ -86,9 +87,7 @@ const ViewApplicant = () => {
                 <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
                 <div className="flex flex-col flex-1 w-full">
                     <Header />
-                    <div className="flex justify-center items-center h-full">
-                        <p className="text-xl text-gray-500">Loading job and applicant details...</p>
-                    </div>
+                    <LoadingSpinner />
                 </div>
             </div>
         );
