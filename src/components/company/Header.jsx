@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaBell } from "react-icons/fa";
 import Avatar from "../../assets/images/logo.png";
 import { useLocation } from "react-router-dom";
@@ -6,6 +6,22 @@ import { useLocation } from "react-router-dom";
 const Header = () => {
   const location = useLocation();
   const pathname = location.pathname;
+  const [companyName, setCompanyName] = useState("Company Name");
+
+  useEffect(() => {
+    // Get company name from localStorage
+    try {
+      const companyProfileData = localStorage.getItem('companyProfile');
+      if (companyProfileData) {
+        const profileData = JSON.parse(companyProfileData);
+        if (profileData && profileData.companyName) {
+          setCompanyName(profileData.companyName);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing company profile data:", error);
+    }
+  }, []);
 
   // Function to get the title based on current route
   const getPageTitle = () => {
@@ -86,7 +102,7 @@ const Header = () => {
             alt="User Avatar"
             className="w-10 h-10 rounded-full"
           />
-          <span className="font-semibold text-gray-800">Dani Danial</span>
+          <span className="font-semibold text-gray-800">{companyName}</span>
           <span className="w-3 h-3 bg-green-500 rounded-full"></span>
         </div>
       </div>

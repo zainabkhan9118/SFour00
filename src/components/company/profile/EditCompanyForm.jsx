@@ -8,6 +8,7 @@ import CompanySideBar from "./CompanySideBar";
 import axios from 'axios';
 import { getAuth } from "firebase/auth";
 import company from "../../../assets/images/company.png";
+import LoadingSpinner from "../../common/LoadingSpinner";
 
 const EditCompanyForm = () => {
   const navigate = useNavigate();
@@ -149,89 +150,92 @@ const EditCompanyForm = () => {
   
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
-      <Sidebar />
+    <>
+      {isLoading && <LoadingSpinner />}
+      <div className="flex min-h-screen overflow-hidden">
+        <Sidebar />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <Header />
 
-        <main className="flex-3">
-          <div className="flex flex-row flex-1">
-            <div>
-              <CompanySideBar />
-            </div>
-            
-            <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
-              <div className="flex items-center p-4">
-                <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
-                  <FaArrowLeft className="mr-2" />
-                  <span className="font-medium text-black">Edit Company Details</span>
-                </button>
+          <main className="flex-3">
+            <div className="flex flex-row flex-1">
+              <div>
+                <CompanySideBar />
               </div>
-
-              <div className="w-full max-w-2xl">
-                <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
-                  <div className="flex justify-center mb-2">
-                    <div className="relative">
-                      <img
-                        src={previewImage || company}
-                        alt="Company Logo"
-                        className="w-24 h-24 rounded-full object-cover cursor-pointer"
-                        onClick={handleImageClick}
-                      />
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                      />
-                    </div>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Company Name"
-                  />
-
-                
-
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Address"
-                  />
-
-                  <textarea
-                    value={formData.bio}
-                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="About Company"
-                    rows="4"
-                  />
-
-                  <button
-                    type="submit"
-                    className={`w-full text-white font-medium p-4 rounded-full transition flex items-center justify-center ${
-                      isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
-                    }`}
-                    disabled={isLoading}
-                  >
-                    <span>{isLoading ? "Loading..." : "Save Changes"}</span>
-                    {!isLoading && <FiArrowRight className="ml-2" />}
+              
+              <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
+                <div className="flex items-center p-4">
+                  <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+                    <FaArrowLeft className="mr-2" />
+                    <span className="font-medium text-black">Edit Company Details</span>
                   </button>
-                </form>
+                </div>
+
+                <div className="w-full max-w-2xl">
+                  <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
+                    <div className="flex justify-center mb-2">
+                      <div className="relative">
+                        <img
+                          src={previewImage || company}
+                          alt="Company Logo"
+                          className="w-24 h-24 rounded-full object-cover cursor-pointer"
+                          onClick={handleImageClick}
+                        />
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </div>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.companyName}
+                      onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="Company Name"
+                    />
+
+                  
+
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="Address"
+                    />
+
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                      className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="About Company"
+                      rows="4"
+                    />
+
+                    <button
+                      type="submit"
+                      className={`w-full text-white font-medium p-4 rounded-full transition flex items-center justify-center ${
+                        isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
+                      }`}
+                      disabled={isLoading}
+                    >
+                      <span>{isLoading ? "Loading..." : "Save Changes"}</span>
+                      {!isLoading && <FiArrowRight className="ml-2" />}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

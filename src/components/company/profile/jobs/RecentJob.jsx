@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../../Sidebar";
 import Header from "../../Header";
 import Headerjob from "./Headerjob";
+import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 
@@ -127,9 +128,7 @@ const RecentJob = () => {
         <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
           <Header />
           <Headerjob />
-          <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-gray-500">Loading jobs...</p>
-          </div>
+          <LoadingSpinner />
         </div>
       </div>
     );

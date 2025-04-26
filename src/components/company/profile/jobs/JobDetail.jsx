@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../Sidebar";
 import Header from "../../Header";
+import LoadingSpinner from "../../../common/LoadingSpinner";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -90,7 +91,7 @@ const JobDetail = () => {
                 <div className="flex flex-col flex-1 overflow-x-hidden">
                     <Header />
                     <div className="flex justify-center items-center h-full">
-                        <p className="text-xl text-gray-500">Loading job details...</p>
+                        <LoadingSpinner />
                     </div>
                 </div>
             </div>

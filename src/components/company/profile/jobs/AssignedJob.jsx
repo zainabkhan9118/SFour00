@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../../Sidebar";
 import Header from "../../Header";
 import Headerjob from "./Headerjob";
+import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
@@ -132,7 +133,7 @@ const AssignedJob = () => {
 
         {loading ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-gray-500">Loading assigned jobs...</p>
+            <LoadingSpinner />
           </div>
         ) : error ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">

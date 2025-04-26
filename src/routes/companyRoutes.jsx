@@ -46,16 +46,13 @@ const CompanyRoutes = [
   <Route key="rota-management" path="/rota-management" element={<RotaManagement />} />,
   <Route key="chat-support" path="/chat-support" element={<ChatSupport />} />,
   <Route key="in-progress" path="/in-progress" element={<Inprogess />} />,
-  <Route key="inProgress-jobDetail" path="/inProgress-jobDetail" element={<InProgressJobDetail />} />,
+  <Route key="inProgress-jobDetail" path="/inProgress-jobDetail/:jobId" element={<InProgressJobDetail />} />,
   <Route key="completed-job" path="/completed-job" element={<Completed />} />,
-  <Route key="completed-jobDetail" path="/completed-jobDetail" element={<CompletedJobDetail />} />,
+  <Route key="completed-jobDetail" path="/completed-jobDetail/:jobId" element={<CompletedJobDetail />} />,
   <Route key="faq" path="/faq" element={<FAQ />} />,
   <Route key="notification" path="/notification" element={<Notification />} />,
   <Route key="qrcode" path="/qr-code" element={<Qrcode/>} />,
   <Route key="alert-log" path="/alert-log" element={<AlertLog/>} />
-
-
-
 ];
 
 export default CompanyRoutes;
