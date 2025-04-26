@@ -196,7 +196,7 @@ const WorkApplied = () => {
                         <BookmarkIcon />
                       </button>
                       <button
-                        onClick={() => handleNavigate(job._id)}
+                        // onClick={() => handleNavigate(job._id)}
                         className="bg-orange-500 font-semibold text-white w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
                       >
                         Applied

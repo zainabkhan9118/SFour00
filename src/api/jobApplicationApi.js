@@ -120,3 +120,14 @@ export const getAppliedJobs = async (jobSeekerId) => {
     }
   });
 };
+
+export const getInProgressJobs = async (jobSeekerId) => {
+  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+    params: { status: "inProgress" },
+    headers: {
+      'accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
+};
+

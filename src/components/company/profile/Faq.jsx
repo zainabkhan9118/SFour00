@@ -6,36 +6,47 @@ import CompanySideBar from "./CompanySideBar";
 
 const faqs = [
   {
-    question: "What is the S4 App?",
-    answer:
-      "S4 is a dedicated platform for the security industry, connecting job seekers with companies hiring for security roles. Whether you're looking to start or advance your career or find qualified candidates, S4 streamlines the entire process.",
+    question: "What is S4 App?",
+    answer: "S4 is a dedicated platform for the security industry, connecting job seekers with companies hiring for security roles. Whether you're looking to start or advance your career or find qualified candidates, S4 streamlines the entire process.",
   },
   {
     question: "How do I sign up on the S4 App?",
-    answer:       "Simply download the app, choose whether you’re a job seeker or a company, and follow the easy registration process to get started.",
-
+    answer: "Simply download the app, choose whether you're a job seeker or a company, and follow the easy registration process to get started.",
   },
   {
     question: "Is the app only for security jobs?",
-    answer:       "Yes, S4 focuses specifically on jobs within the security sector, including positions like security guards, supervisors, CCTV operators, and more.",
-
+    answer: "Yes, S4 focuses specifically on jobs within the security sector, including positions like security guards, supervisors, CCTV operators, and more.",
   },
   {
-    question: "Can companies post multiple job listings?",
-    answer:       "Absolutely. Companies can post as many job listings as they need and manage applications directly through the app dashboard.",
-
+    question: "How do I update my profile?",
+    answer: "Go to the 'Profile' section from the main menu. You can edit your details there...",
   },
   {
-    question: "Is S4 available in all cities?",
-    answer:       "The app currently supports select cities but is continuously expanding. You’ll be notified as soon as new locations become available.",
-
+    question: "Can company post multiple jobs?",
+    answer: "Absolutely. Companies can post as many job listings as they need and manage applications directly through the app dashboard.",
+  },
+  {
+    question: "How can I contact support?",
+    answer: "You can contact support via the 'Help & Support' section or email us at support@s4app.com...",
+  },
+  {
+    question: "Can I use S4 App offline?",
+    answer: "No it requires internet connection for every feature right now like job posting, applying, profile updates, chatting, reporting and real-time updates",
+  },
+  {
+    question: "How do I change my password?",
+    answer: "Navigate to 'Profile' -> 'Reset Password' -> 'Change Password'",
+  },
+  {
+    question: "Devices supported by S4 App?",
+    answer: "The S4 App is compatible with both Android and iOS devices. Make sure to check the play store for the latest version.",
   },
   {
     question: "Is there a fee to use the S4 App?",
-    answer:    "Job seekers can use the app for free. Companies may be charged based on the number of job posts or premium features they use.",
-
+    answer: "The app is free to download and use for both job seekers and Companies right now. However, some premium features may incur charges in the future.",
   },
 ];
+
 
 const FAQs = () => {
   const [openIndex, setOpenIndex] = useState(null);
