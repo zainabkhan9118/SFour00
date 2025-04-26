@@ -120,7 +120,10 @@ const WorkApplied = () => {
           <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">Loading...</div>
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p>Loading applied jobs...</p>
+            </div>
           </div>
         </div>
       </div>

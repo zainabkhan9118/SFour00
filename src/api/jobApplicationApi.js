@@ -131,3 +131,38 @@ export const getInProgressJobs = async (jobSeekerId) => {
   });
 };
 
+export const getCompletedJobs = async (jobSeekerId) => {
+  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+    params: { status: "completed" },
+    headers: {
+      'accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
+export const getJobDetailsById = async (jobSeekerId, jobId) => {
+  try {
+    console.log(`Fetching job details for jobId: ${jobId} and jobSeekerId: ${jobSeekerId}`);
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+      params: { 
+        status: "inProgress",
+        jobId: jobId 
+      },
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data?.data?.[0]?.jobId;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data?.message || 'Server error occurred');
+    } else if (error.request) {
+      throw new Error('No response received from server');
+    }
+    throw error;
+  }
+};
+

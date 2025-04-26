@@ -53,35 +53,8 @@ const UserWorkInprogess = () => {
       try {
         let jobSeekerId = localStorage.getItem("jobSeekerId");
 
-        if (!jobSeekerId) {
-          const auth = getAuth();
-          const currentUser = auth.currentUser;
-          if (currentUser) {
-            const firebaseId = currentUser.uid;
-            try {
-              const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
-                headers: {
-                  "firebase-id": firebaseId,
-                },
-              });
-              if (userResponse.data?.data?._id) {
-                jobSeekerId = userResponse.data.data._id;
-                localStorage.setItem("jobSeekerId", jobSeekerId);
-              }
-            } catch (err) {
-              console.error("Error fetching user data:", err);
-              throw new Error("Unable to fetch user data. Please try logging in again.");
-            }
-          }
-        }
-
-        if (!jobSeekerId) {
-          throw new Error("Unable to fetch your in-progress jobs. Please try logging out and back in.");
-        }
-
         const response = await getInProgressJobs(jobSeekerId);
-        console.log('API Response:', response);
-
+        
         if (!response?.data?.data) {
           throw new Error("Invalid response format from server");
         }
@@ -111,7 +84,10 @@ const UserWorkInprogess = () => {
           <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">Loading...</div>
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p>Loading in-progress jobs...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -185,7 +161,7 @@ const UserWorkInprogess = () => {
                       </button>
                       <button
                         onClick={() => handleNavigate(job._id)}
-                        className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full"
+                        className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-gray-800 transition-colors"
                       >
                         Book Off
                       </button>
