@@ -6,6 +6,7 @@ import time from "../../../../../assets/images/time.png";
 import qr from "../../../../../assets/images/qr-code.png";
 import Sidebar from "../../../Sidebar";
 import Header from "../../../Header";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../../constants/enums";
 
 const InProgressJobDetail = () => {
@@ -141,7 +142,7 @@ const InProgressJobDetail = () => {
         <div className="flex flex-col flex-1">
           <Header />
           <div className="flex justify-center items-center h-64">
-            <p className="text-xl text-gray-500">Loading job details...</p>
+            <LoadingSpinner />
           </div>
         </div>
       </div>

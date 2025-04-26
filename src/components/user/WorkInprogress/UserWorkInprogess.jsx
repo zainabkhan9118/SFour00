@@ -1,10 +1,10 @@
-import React from 'react'
-import { useState } from "react";
+import React, { useState, useEffect } from 'react'
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
+import LoadingSpinner from "../../common/LoadingSpinner";
 import { useNavigate } from 'react-router-dom';
-
+import { JobStatus } from "../../../constants/enums";
 
 const CheckIcon = () => (
   <svg
@@ -38,129 +38,150 @@ const BookmarkIcon = () => (
   </svg>
 );
 
-const jobs = [
-  {
-    id: 1,
-    title: "Networking Engineer",
-    location: "Washington",
-    salary: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111646.png",
-  },
-  {
-    id: 2,
-    title: "Product Designer",
-    location: "Dhaka",
-    salary: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/2111/2111632.png",
-  },
-  {
-    id: 3,
-    title: "Junior Graphic Designer",
-    location: "Brazil",
-    salary: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/733/733609.png",
-  },
-  {
-    id: 4,
-    title: "Visual Designer",
-    location: "Wisconsin",
-    salary: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/732/732221.png",
-  },
-  {
-    id: 5,
-    title: "Marketing Officer",
-    location: "United States",
-    salary: "$12/hr",
-    date: "Dec 4, 2019 21:42",
-    status: "Active",
-    icon: "https://cdn-icons-png.flaticon.com/512/733/733579.png",
-  },
-];
-
 const UserWorkInprogess = () => {
+  const navigate = useNavigate();
+  const [inProgressJobs, setInProgressJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const navigate  = useNavigate();
+  useEffect(() => {
+    const fetchInProgressJobs = async () => {
+      try {
+        setLoading(true);
+        const userId = localStorage.getItem('userId');
+        
+        if (!userId) {
+          throw new Error('User ID not found, please log in again');
+        }
+        
+        const response = await fetch(`/api/apply/user/${userId}?status=${JobStatus.IN_PROGRESS}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.statusCode === 200 && Array.isArray(result.data)) {
+          setInProgressJobs(result.data);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        console.error('Failed to fetch in-progress jobs:', err);
+        setError(err.message);
+        // Use sample data as fallback
+        setInProgressJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleNavigate = () => {
-    navigate("/User-AppliedAndAssignedDetail"); 
-  }
+    fetchInProgressJobs();
+  }, []);
+
+  const handleNavigate = (jobId) => {
+    navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
+  };
+
+  // Format date function
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    }) + " " + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-    {/* Sidebar */}
-    <Sidebar />
+      {/* Sidebar */}
+      <Sidebar />
 
-    {/* Main Content */}
-    <div className="flex flex-col flex-1">
-      {/* Header */}
-      <Header />
-      <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
-        {/* Tabs */}
-        <HeaderWork />
+      {/* Main Content */}
+      <div className="flex flex-col flex-1">
+        {/* Header */}
+        <Header />
+        <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
+          {/* Tabs */}
+          <HeaderWork />
 
-        {/* Job List */}
-        <div className="">
-          {jobs.map((job) => (
-            <div
-              key={job.id}
-              className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
-            >
-              {/* Job Icon and Details */}
-              <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                <img
-                  src={job.icon}
-                  alt={job.title}
-                  className="w-12 h-12 rounded-full border border-gray-300"
-                />
-                <div>
-                  <h3 className="font-medium text-lg">{job.title}</h3>
-                  <div className="text-sm text-gray-500 flex items-center flex-wrap">
-                    <span>{job.location}</span>
-                    <span className="mx-2 hidden sm:inline">•</span>
-                    <span>{job.salary}</span>
+          {/* Job List with Loading State */}
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : error ? (
+            <div className="bg-white p-6 rounded-lg shadow text-center">
+              <p className="text-red-500 text-lg">{error}</p>
+              <p className="mt-2">Using sample data instead</p>
+            </div>
+          ) : inProgressJobs.length > 0 ? (
+            <div className="">
+              {inProgressJobs.map((job) => (
+                <div
+                  key={job._id}
+                  className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
+                >
+                  {/* Job Icon and Details */}
+                  <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
+                    <img
+                      src={job.jobId?.companyId?.companyLogo || "https://cdn-icons-png.flaticon.com/512/2111/2111646.png"}
+                      alt={job.jobId?.jobTitle || "Job"}
+                      className="w-12 h-12 rounded-full border border-gray-300"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://cdn-icons-png.flaticon.com/512/2111/2111646.png";
+                      }}
+                    />
+                    <div>
+                      <h3 className="font-medium text-lg">{job.jobId?.jobTitle || "Job Title"}</h3>
+                      <div className="text-sm text-gray-500 flex items-center flex-wrap">
+                        <span>{job.jobId?.companyId?.address || "Location"}</span>
+                        <span className="mx-2 hidden sm:inline">•</span>
+                        <span>${job.jobId?.pricePerHour || 0}/hr</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Job Date and Status */}
+                  <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
+                    <div className="text-sm font-medium text-gray-400">{formatDate(job.updatedAt || job.createdAt)}</div>
+                    <div className="flex items-center font-medium text-xs text-green-500">
+                      <CheckIcon />
+                      <span className="ml-1 text-sm">{job.jobStatus || "In Progress"}</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <BookmarkIcon />
+                    </button>
+                    <button
+                      onClick={() => handleNavigate(job._id)}
+                      className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full"
+                    >
+                      Book Off
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Job Date and Status */}
-              <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                <div className="text-sm font-medium text-gray-400">{job.date}</div>
-                <div className="flex items-center font-medium text-xs text-green-500">
-                  <CheckIcon />
-                  <span className="ml-1 text-sm">{job.status}</span>
-                </div>
-                
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex  justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-              <button className="text-gray-400 hover:text-gray-600">
-                  <BookmarkIcon  />
-                </button>
-                <button
-                  onClick={handleNavigate}
-                  className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm  rounded-full"
-                >
-                  Book Off
-                </button>
-              
-              </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="bg-white p-8 rounded-lg shadow text-center">
+              <p className="text-gray-500 text-lg">No in-progress jobs found</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  </div>
   )
-}
+};
 
 export default UserWorkInprogess

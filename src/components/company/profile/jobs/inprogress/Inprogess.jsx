@@ -6,6 +6,7 @@ import { FaMapMarkerAlt, FaCheck, FaRegBookmark, FaClock } from "react-icons/fa"
 import Sidebar from "../../../Sidebar";
 import Header from "../../../Header";
 import Headerjob from "../Headerjob";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../../constants/enums";
 
 // Sample data for fallback if needed
@@ -148,7 +149,7 @@ const Inprogess = () => {
 
         {loading ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-gray-500">Loading in-progress jobs...</p>
+            <LoadingSpinner />
           </div>
         ) : error ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">

@@ -94,13 +94,21 @@ const Completed = () => {
   
   // Get the assigned user's name from the job
   const getAssignedUserName = (job) => {
-    if (!job || !job.jobId || !job.jobId.applicantsList) return "Not assigned";
+    // Check for userJobRel first (most recent API structure)
+    if (job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId) {
+      return job.userJobRel[0].userId.fullname || "Assigned Worker";
+    }
     
-    const assignedUser = job.jobId.applicantsList.find(
-      user => user._id === job.jobSeekerId
-    );
+    // Fall back to legacy applicantsList structure
+    if (job.jobId && job.jobId.applicantsList && job.jobId.applicantsList.length > 0) {
+      const assignedUser = job.jobId.applicantsList.find(
+        user => user._id === job.jobSeekerId
+      );
+      
+      return assignedUser ? assignedUser.fullname : "Assigned Worker";
+    }
     
-    return assignedUser ? assignedUser.fullname : "Not assigned";
+    return "Not assigned";
   };
   
   return (
@@ -114,7 +122,6 @@ const Completed = () => {
         {loading ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
             <LoadingSpinner />
-            <p className="ml-3 text-xl text-gray-500">Loading completed jobs...</p>
           </div>
         ) : error ? (
           <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
@@ -138,9 +145,13 @@ const Completed = () => {
                   <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
                     <div className="flex-shrink-0">
                       <img 
-                        src={index % 2 === 0 ? logo1 : logo2} 
+                        src={job.jobId?.companyId?.companyLogo || (index % 2 === 0 ? logo1 : logo2)} 
                         alt={job.jobId?.jobTitle || "Job"} 
                         className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = index % 2 === 0 ? logo1 : logo2;
+                        }}
                       />
                     </div>
 
@@ -152,9 +163,11 @@ const Completed = () => {
                         <div className="flex items-center">
                           <FaMapMarkerAlt className="text-gray-500 mr-1" />
                           <span>
-                            {(job.jobId?.latitude && job.jobId?.longitude) 
-                              ? `${job.latitude}, ${job.longitude}` 
-                              : "Location not specified"}
+                            {job.jobId?.companyId?.address || 
+                              (job.jobId?.latitude && job.jobId?.longitude) ? 
+                                `${job.jobId.latitude}, ${job.jobId.longitude}` : 
+                                "Location not specified"
+                            }
                           </span>
                         </div>
                         <span className="hidden sm:inline">•</span>
