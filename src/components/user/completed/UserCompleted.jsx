@@ -1,6 +1,6 @@
-import React from 'react'
+// import React from 'react'
 import { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
@@ -45,7 +45,7 @@ const UserCompleted = () => {
   const [completedJobs, setCompletedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCompletedJobs = async () => {
@@ -74,9 +74,9 @@ const UserCompleted = () => {
     fetchCompletedJobs();
   }, []);
 
-  const handleNavigate = (jobId) => {
-    navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
-  };
+  // const handleNavigate = (jobId) => {
+  //   navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
+  // };
 
   if (loading) {
     return (
