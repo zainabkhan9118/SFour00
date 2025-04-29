@@ -6,23 +6,30 @@ import Sidebar from "../SideBar";
 import { FaArrowLeft, FaBars } from "react-icons/fa";
 
 const UserChatPage = () => {
-  const [contacts, setContacts] = useState([
-    { name: "Marvin McKinney", role: "Human Resources", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=3", time: "12h" },
-    { name: "Jacob Jones", role: "Marketing Coordinator", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=2", time: "16h" },
-    { name: "Leslie Alexander", role: "Web Designer", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=1", time: "24h" },
-    { name: "Eleanor Pena", role: "Developer", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=5", time: "Aug 17" },
-    { name: "Kathryn Murphy", role: "Project Manager", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=4", time: "8m" },
-    { name: "Wade Warren", role: "Web Design", message: "Lorem ipsum dolor sit amet", avatar: "https://i.pravatar.cc/100?img=6", time: "8m" },
-  ]);
-  const [selectedContact, setSelectedContact] = useState(contacts[0]);
+  const [selectedContact, setSelectedContact] = useState(null);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
 
+  console.log("[ChatPage] Current state:", {
+    hasSelectedContact: !!selectedContact,
+    selectedContactId: selectedContact?.firebaseId,
+    showChatSidebar,
+    showSidebar,
+    isMobile: window.innerWidth < 768
+  });
+
   // Handle selecting a contact on mobile view
   const handleContactSelect = (contact) => {
+    console.log("[ChatPage] Contact selected:", {
+      contactId: contact.firebaseId,
+      contactName: contact.name,
+      previousContactId: selectedContact?.firebaseId
+    });
+    
     setSelectedContact(contact);
     // On mobile, hide the sidebar after selecting a contact
     if (window.innerWidth < 768) {
+      console.log("[ChatPage] Mobile view - hiding chat sidebar");
       setShowChatSidebar(false);
     }
   };
@@ -43,7 +50,10 @@ const UserChatPage = () => {
         {/* Mobile header with toggle buttons */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b z-20">
           <button 
-            onClick={() => setShowSidebar(!showSidebar)} 
+            onClick={() => {
+              console.log("[ChatPage] Toggling main sidebar");
+              setShowSidebar(!showSidebar);
+            }} 
             className="text-gray-700 p-1"
           >
             <FaBars size={20} />
@@ -51,7 +61,10 @@ const UserChatPage = () => {
           <h1 className="text-lg font-bold">{showChatSidebar ? "Messages" : selectedContact?.name}</h1>
           {!showChatSidebar && (
             <button 
-              onClick={() => setShowChatSidebar(true)}
+              onClick={() => {
+                console.log("[ChatPage] Showing chat sidebar");
+                setShowChatSidebar(true);
+              }}
               className="text-orange-500 p-1"
             >
               <FaArrowLeft size={20} />
@@ -64,7 +77,6 @@ const UserChatPage = () => {
           {/* Chat Sidebar - Toggle on mobile */}
           <div className={`${showChatSidebar ? 'block' : 'hidden'} md:block z-10 w-full md:w-auto`}>
             <ChatSidebar
-              contacts={contacts}
               onSelect={handleContactSelect}
               selectedContact={selectedContact}
             />
@@ -72,10 +84,19 @@ const UserChatPage = () => {
 
           {/* Main Chat Window - Full width on mobile when sidebar is hidden */}
           <div className={`${showChatSidebar ? 'hidden' : 'block'} md:block flex-1 w-full`}>
-            <MessageArea 
-              selectedContact={selectedContact} 
-              onBackClick={() => setShowChatSidebar(true)} 
-            />
+            {selectedContact ? (
+              <MessageArea 
+                selectedContact={selectedContact} 
+                onBackClick={() => {
+                  console.log("[ChatPage] Back button clicked - showing chat sidebar");
+                  setShowChatSidebar(true);
+                }} 
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Select a contact to start chatting
+              </div>
+            )}
           </div>
         </div>
       </div>

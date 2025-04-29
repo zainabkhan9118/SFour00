@@ -21,7 +21,6 @@ const SessionWrapper = ({ children }) => {
       }
     } else {
       if (location.pathname !== "/login" && location.pathname !== "/CreateAccount") {
-        toast.error("You are not logged in.");
         navigate("/login");
       }
     }
