@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import { useNavigate } from 'react-router-dom';
 import { getInProgressJobs } from "../../../api/jobApplicationApi";
-import { getAuth } from "firebase/auth";
-import axios from "axios";
+// import { getAuth } from "firebase/auth";
+// import axios from "axios";
 import { AppContext } from "../../../context/AppContext";
 import companyImage from "../../../assets/images/company.png";
 
