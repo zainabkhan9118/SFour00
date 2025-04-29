@@ -33,12 +33,29 @@ export const updateStatusByQR = async (jobId, qrData) => {
   return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, qrData);
 };
 
-export const getAppliedJobs = async (jobSeekerId) => {
+export const getAppliedJobs = async (jobSeekerId, status = "applied") => {
     return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-        params: { status: "applied" }, // Use params for query parameters
+        params: { status }, // Use params for query parameters
     });
 };
-  
+
+// Get assigned jobs for job seeker - specifically jobs with status "applied" and isAssignable=true
+export const getAssignedJobs = async (jobSeekerId) => {
+    return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+        params: { status: "applied" }, // Keep the status as "applied"
+        headers: {
+            'accept': '*/*',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+// Get jobs with specific status and flags
+export const getJobsByStatus = async (jobSeekerId, params = {}) => {
+    return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+        params, // Pass all parameters (status, isAssigned, isAssignable, etc.)
+    });
+};
 
 // Get job location (for company + job)
 export const getJobLocation = async (companyId, jobId) => {

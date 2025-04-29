@@ -111,12 +111,58 @@ export const withdrawApplication = async (jobId, jobSeekerId) => {
   }
 };
 
-export const getAppliedJobs = async (jobSeekerId) => {
+export const getAppliedJobs = async (jobSeekerId, status = "applied", additionalParams = {}) => {
+  // Combine the status with any additional filter parameters
+  const params = { status, ...additionalParams };
+  
   return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-    params: { status: "applied" },
+    params,
     headers: {
       'accept': '*/*',
       'Content-Type': 'application/json'
     }
   });
+};
+
+// Function to assign job to an applicant (book a job)
+export const assignJobToApplicant = async (applicationId) => {
+  try {
+    // Get the jobSeekerId from localStorage to authenticate the request
+    const jobSeekerId = localStorage.getItem("jobSeekerId");
+    
+    if (!jobSeekerId) {
+      throw new Error("User not logged in or jobSeekerId not found");
+    }
+
+    console.log("Using jobSeekerId from localStorage:", jobSeekerId);
+    
+    // Match exactly what works in the Flutter implementation
+    const data = {
+      status: "assigned",
+      isAssigned: true
+    };
+    
+    console.log("Making job assignment request with data:", data);
+    
+    // Make the PATCH request with jobSeekerId in the header
+    const response = await axios.patch(`${BASE_URL}/apply/${applicationId}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'jobSeekerId': jobSeekerId
+      }
+    });
+    
+    console.log('Job assignment response:', response.data);
+    
+    if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
+      return response.data;
+    } else if (response.data && response.data.statusCode === 500) {
+      throw new Error(response.data.message || "Server error occurred");
+    } else {
+      throw new Error("Failed to assign job");
+    }
+  } catch (error) {
+    console.error(`Error assigning job:`, error);
+    throw error;
+  }
 };

@@ -87,7 +87,8 @@ const WorkApplied = () => {
         }
 
         console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
-        const response = await getAppliedJobs(jobSeekerId);
+        // Only get jobs with "applied" status that haven't been assigned yet
+        const response = await getAppliedJobs(jobSeekerId, "applied", { isAssigned: false });
         console.log('API Response:', response);
 
         if (!response?.data?.data) {
