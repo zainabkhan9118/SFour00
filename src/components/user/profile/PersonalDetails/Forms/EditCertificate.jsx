@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight, FiUpload } from "react-icons/fi";
@@ -13,16 +13,11 @@ const BASEURL = import.meta.env.VITE_BASE_URL;
 const EditCertificate = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const [issueDate, setIssueDate] = useState("");
-  const [organization, setOrganization] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [certificateId, setCertificateId] = useState(localStorage.getItem("certificateId") || null); 
-  const [originalValues, setOriginalValues] = useState({
-    issueDate: "",
-    organizationName: "",
-    certificatePicPdf: null
-  });
+  const [issueDate, setIssueDate] = React.useState("");
+  const [organization, setOrganization] = React.useState("");
+  const [selectedFile, setSelectedFile] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [certificateId, setCertificateId] = React.useState(null);
 
   useEffect(() => {
     const storedCertId = localStorage.getItem("certificateId");
@@ -47,12 +42,6 @@ const EditCertificate = () => {
             setOrganization(certificate.organizationName);
             setCertificateId(storedCertId);
             
-            setOriginalValues({
-              issueDate: issueDateValue,
-              organizationName: certificate.organizationName,
-              certificatePicPdf: certificate.certificatePicPdf
-            });
-            
             if (certificate.certificatePicPdf) {
               setSelectedFile({
                 name: certificate.certificatePicPdf.split('/').pop(),
@@ -62,13 +51,9 @@ const EditCertificate = () => {
             }
           }
         } catch (error) {
-          // If certificate not found, clear storage and state
           if (error.response?.status === 404) {
             localStorage.removeItem("certificateId");
             setCertificateId(null);
-            console.log("Certificate not found, treating as new certificate creation");
-          } else {
-            console.error("Error fetching certificate:", error.response?.data?.message || error.message);
           }
         } finally {
           setIsLoading(false);
@@ -77,13 +62,13 @@ const EditCertificate = () => {
 
       fetchCertificate();
     }
-  }, []); 
+  }, []);
 
-  const handleSave = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     const jobSeekerId = localStorage.getItem("jobSeekerId");
+    
     if (!jobSeekerId) {
       alert("Please ensure you are logged in");
       setIsLoading(false);
@@ -92,29 +77,16 @@ const EditCertificate = () => {
 
     try {
       const formData = new FormData();
-      formData.append('issueDate', new Date(issueDate).toISOString());
       formData.append('organizationName', organization);
+      formData.append('issueDate', new Date(issueDate).toISOString());
+      
       if (selectedFile instanceof File) {
         formData.append('certificatePicPdf', selectedFile);
       }
 
-      let response;
-      
-      if (certificateId) {
-        // Update existing certificate
-        response = await axios.patch(
-          `${BASEURL}/certificate/${certificateId}`,
-          formData,
-          {
-            headers: {
-              'jobseekerid': jobSeekerId,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-      } else {
-        // Create new certificate
-        response = await axios.post(
+      if (!certificateId) {
+        // For new certificate (POST request)
+        const response = await axios.post(
           `${BASEURL}/certificate`,
           formData,
           {
@@ -124,65 +96,30 @@ const EditCertificate = () => {
             }
           }
         );
-      }
 
-      console.log("Certificate response:", response.data);
-
-      // Handle the response
-      if (response.data) {
-        const certificate = response.data.data || response.data;
-        const certId = certificate.id || certificate._id || (certificate.certificate && (certificate.certificate.id || certificate.certificate._id));
-
-        if (certId) {
-          localStorage.setItem("certificateId", certId);
-          setCertificateId(certId);
-          console.log("Certificate operation successful:", certId);
-          navigate("/User-PersonalDetails");
-        } else {
-          console.error("Response structure:", response.data);
-          throw new Error("Could not find certificate ID in response");
+        if (response.data && response.data.data) {
+          const certId = response.data.data._id;
+          if (certId) {
+            localStorage.setItem("certificateId", certId);
+            navigate("/User-PersonalDetails");
+          }
         }
       } else {
-        throw new Error("No data received from server");
-      }
-    } catch (error) {
-      if (error.response && error.response.status === 404) {
-        // If certificate not found during update, clear the ID and try creating a new one
-        localStorage.removeItem("certificateId");
-        setCertificateId(null);
-        
-        try {
-          // Attempt to create a new certificate
-          const response = await axios.post(
-            `${BASEURL}/certificate`,
-            formData,
-            {
-              headers: {
-                'jobseekerid': jobSeekerId,
-                'Content-Type': 'multipart/form-data'
-              }
-            }
-          );
-
-          if (response.data) {
-            const certificate = response.data.data || response.data;
-            const certId = certificate.id || certificate._id || (certificate.certificate && (certificate.certificate.id || certificate.certificate._id));
-
-            if (certId) {
-              localStorage.setItem("certificateId", certId);
-              setCertificateId(certId);
-              console.log("New certificate created successfully:", certId);
-              navigate("/User-PersonalDetails");
-              return;
+        // For updating existing certificate (PATCH request)
+        await axios.patch(
+          `${BASEURL}/certificate/${certificateId}`,
+          formData,
+          {
+            headers: {
+              'jobseekerid': jobSeekerId,
+              'Content-Type': 'multipart/form-data'
             }
           }
-        } catch (createError) {
-          console.error("Failed to create new certificate:", createError);
-          throw createError;
-        }
+        );
+        navigate("/User-PersonalDetails");
       }
-      
-      console.error("Failed to save certificate:", error.response?.data || error.message);
+    } catch (error) {
+      console.error('API Error:', error.response || error);
       alert(error.response?.data?.message || "Failed to save certificate");
     } finally {
       setIsLoading(false);
@@ -196,6 +133,15 @@ const EditCertificate = () => {
     }
   };
 
+  // Reset function to clear form when adding new certificate
+  const handleAddNew = () => {
+    localStorage.removeItem("certificateId");
+    setCertificateId(null);
+    setIssueDate("");
+    setOrganization("");
+    setSelectedFile(null);
+  };
+
   return (
     <div className="flex min-h-screen overflow-hidden">
       {isLoading && <LoadingSpinner />}
@@ -206,17 +152,25 @@ const EditCertificate = () => {
           <div className="flex flex-row flex-1">
             <UserSidebar />
             <div className="p-4 flex-1 bg-gray-50">
-              <div className="flex items-center p-4">
+              <div className="flex items-center justify-between p-4">
                 <button onClick={() => navigate("/User-PersonalDetails")} className="text-gray-600 hover:text-gray-800 flex items-center">
                   <FaArrowLeft className="mr-2" />
                   <span className="font-medium text-black">
                     {certificateId ? "Edit Certificate" : "Add Certificate"}
                   </span>
                 </button>
+                {certificateId && (
+                  <button
+                    onClick={handleAddNew}
+                    className="text-orange-500 hover:text-orange-600"
+                  >
+                    Add New Certificate
+                  </button>
+                )}
               </div>
               
               <div className="w-full max-w-2xl">
-                <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
+                <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
                   <div className="relative">
                     <input
                       type="date"
@@ -226,11 +180,6 @@ const EditCertificate = () => {
                       placeholder="Select Issue Date"
                       required
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
                   </div>
                   
                   <input
@@ -243,7 +192,7 @@ const EditCertificate = () => {
                   />
                   
                   <div 
-                    className={`border-2 border-dashed border-orange-300 rounded-lg p-8 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-40`}
+                    className="border-2 border-dashed border-orange-300 rounded-lg p-8 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-40"
                     onClick={() => fileInputRef.current.click()}
                     onDragOver={(e) => {
                       e.preventDefault();
