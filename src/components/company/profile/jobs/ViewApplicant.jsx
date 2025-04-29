@@ -6,16 +6,20 @@ import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { CiUser } from "react-icons/ci";
+import { IoMdClose } from "react-icons/io";
 import AssignJobButton from "./popupsButtons/AssignJobButton";
 import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../../common/LoadingSpinner";
+import { JobStatus } from "../../../../constants/enums";
 
 const ViewApplicant = () => {
     const [showButton, setShowButton] = useState(false);
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [assignError, setAssignError] = useState(null);
     const [selectedApplicant, setSelectedApplicant] = useState(null);
+    const [assignLoading, setAssignLoading] = useState(false);
     
     const { jobId } = useParams();
     const navigate = useNavigate();
@@ -29,6 +33,27 @@ const ViewApplicant = () => {
             month: 'short', 
             day: 'numeric' 
         });
+    };
+
+    // Check if job is already assigned
+    const checkJobAssignmentStatus = async () => {
+        try {
+            const response = await fetch(`/api/apply/${jobId}/status`);
+            
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.statusCode === 200) {
+                return result.data?.status === JobStatus.ASSIGNED;
+            }
+            return false;
+        } catch (err) {
+            console.error("Failed to check job assignment status:", err);
+            return false;
+        }
     };
 
     // Fetch job data from backend
@@ -75,9 +100,61 @@ const ViewApplicant = () => {
         navigate(`/applicant-profile`, { state: { applicant } });
     };
 
-    const handleAssignJob = (applicant) => {
+    const handleAssignJob = async (applicant) => {
+        // Clear any previous errors
+        setAssignError(null);
         setSelectedApplicant(applicant);
-        setShowButton(true);
+        setAssignLoading(true);
+        
+        try {
+            // First check if job is already assigned
+            const isAssigned = await checkJobAssignmentStatus();
+            
+            if (isAssigned) {
+                // If job is already assigned, show error and don't proceed
+                setAssignError(`This job is already assigned to a jobseeker. You cannot assign it again.`);
+                setAssignLoading(false);
+                return;
+            }
+            
+            // Proceed with assignment if job is not already assigned
+            const response = await fetch(`/api/apply/${jobId}/enable-assignment`, {
+                method: 'PATCH',
+                headers: {
+                    'jobSeekerId': applicant._id,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    isAssignable: true
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to enable assignment: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log("Assignment API response:", result);
+            
+            if (result.statusCode === 200) {
+                console.log("Assignment successfully enabled");
+                // After successful API call, show the assign job modal
+                setShowButton(true);
+            } else {
+                throw new Error(result.message || "Failed to enable assignment");
+            }
+        } catch (err) {
+            console.error("Error enabling assignment:", err);
+            setAssignError(err.message || "Failed to enable assignment. Please try again.");
+        } finally {
+            setAssignLoading(false);
+        }
+    };
+    
+    // Close error notification
+    const closeErrorNotification = () => {
+        setAssignError(null);
     };
     
     // Display loading state
@@ -121,6 +198,24 @@ const ViewApplicant = () => {
                 </div>
 
                 <div className="flex flex-col px-4 md:px-8 space-y-4 md:space-y-6">
+                    {/* Assignment Error Alert */}
+                    {assignError && (
+                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm relative" role="alert">
+                            <div className="flex items-start">
+                                <div className="flex-grow">
+                                    <p className="font-bold">Assignment Error</p>
+                                    <p className="text-sm">{assignError}</p>
+                                </div>
+                                <button 
+                                    onClick={closeErrorNotification}
+                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                >
+                                    <IoMdClose size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex flex-col md:flex-row p-4 md:p-6 justify-between rounded-lg w-full bg-white shadow-sm">
                         <div className="flex items-center space-x-4 mb-6 md:mb-0">
                             <div className="flex items-center justify-center rounded-full">

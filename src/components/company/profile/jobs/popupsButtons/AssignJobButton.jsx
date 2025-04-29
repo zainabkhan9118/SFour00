@@ -31,16 +31,21 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
       setAssigning(true);
       setAssignError(null);
       
-      // Fix: Correcting the API endpoint URL to match the expected format
+      // Making API call with the correct PATCH method
       const response = await fetch(`/api/apply/${job._id}/enable-assignment`, {
-        method: 'PATCH',
+        method: 'PATCH', // Using PATCH as specified by the API
         headers: {
+          'jobSeekerId': applicant._id,
           'Content-Type': 'application/json',
-          'jobSeekerId': applicant._id
-        }
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          isAssignable: true
+        })
       });
       
       const data = await response.json();
+      console.log("Assign job response:", data);
       
       if (!response.ok) {
         throw new Error(data.message || 'Failed to assign job');
