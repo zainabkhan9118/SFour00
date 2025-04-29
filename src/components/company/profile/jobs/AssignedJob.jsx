@@ -92,14 +92,44 @@ const AssignedJob = () => {
         const result = await response.json();
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
-          setAssignedJobs(result.data);
+          console.log("Assigned jobs data:", result.data);
+          
+          // Process the data with complete jobseeker information
+          const processedJobs = result.data.map(job => {
+            // Make sure to access the job information correctly
+            const jobData = job.jobId || job;
+            const companyData = jobData.companyId || {};
+            
+            return {
+              _id: job._id,
+              jobId: jobData._id,
+              jobTitle: jobData.jobTitle || "Untitled Job",
+              pricePerHour: jobData.pricePerHour || 0,
+              createdAt: job.createdAt,
+              updatedAt: job.updatedAt,
+              jobStatus: job.status || JobStatus.ASSIGNED,
+              
+              // Preserve all possible jobseeker information fields
+              userJobRel: job.userJobRel || [],
+              jobSeekerId: job.jobSeekerId || null,
+              applicantsList: jobData.applicantsList || [],
+              
+              companyId: {
+                companyLogo: companyData.companyLogo,
+                address: companyData.address || "Location not specified"
+              }
+            };
+          });
+          
+          console.log("Processed jobs with jobseeker info:", processedJobs);
+          setAssignedJobs(processedJobs);
         } else {
           throw new Error("Invalid response format");
         }
       } catch (err) {
         console.error("Failed to fetch assigned jobs:", err);
         setError(err.message);
-        // Keep sample data as fallback
+        // Use empty array instead of sample data in production
         setAssignedJobs([]);
       } finally {
         setLoading(false);
@@ -121,6 +151,42 @@ const AssignedJob = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+  
+  // Get the assigned jobseeker's name from the job
+  const getAssignedJobseekerName = (job) => {
+    // Check for userJobRel first (most recent API structure)
+    if (job.userJobRel && job.userJobRel.length > 0) {
+      if (job.userJobRel[0].userId && job.userJobRel[0].userId.fullname) {
+        return job.userJobRel[0].userId.fullname;
+      }
+      
+      // Sometimes userId might be just the ID, not an object
+      if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
+        return job.userJobRel[0].jobSeekerId.fullname || "Jobseeker";
+      }
+    }
+    
+    // Check for direct jobSeekerId reference
+    if (job.jobSeekerId) {
+      // If jobSeekerId is an object with fullname
+      if (typeof job.jobSeekerId === 'object' && job.jobSeekerId.fullname) {
+        return job.jobSeekerId.fullname;
+      }
+    }
+    
+    // Fall back to applicantsList structure
+    if (job.applicantsList && job.applicantsList.length > 0) {
+      // Find the assigned applicant
+      const assignedApplicant = job.applicantsList.find(applicant => 
+        applicant.status === JobStatus.ASSIGNED || 
+        applicant.status === "ASSIGNED"
+      ) || job.applicantsList[0];
+      
+      return assignedApplicant.fullname || "Jobseeker";
+    }
+    
+    return "Not assigned";
   };
   
   return (
@@ -191,9 +257,7 @@ const AssignedJob = () => {
                     <button className="bg-[#1F2B44] text-white px-4 sm:px-7 py-2 sm:py-4 rounded-full text-xs sm:text-sm font-medium w-full sm:w-auto">
                       <span className="font-semibold">Assigned To: </span>
                       <span className="text-xs sm:text-sm">
-                        {job.userJobRel && job.userJobRel.length > 0
-                          ? job.userJobRel[0].userId.fullname
-                          : "Not assigned"}
+                        {getAssignedJobseekerName(job)}
                       </span>
                     </button>
                   </div>

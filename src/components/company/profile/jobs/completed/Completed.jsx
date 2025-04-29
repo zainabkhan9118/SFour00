@@ -161,13 +161,9 @@ const Completed = () => {
                       </h2>
                       <div className="flex flex-wrap items-center text-gray-600 text-xs sm:text-sm gap-2">
                         <div className="flex items-center">
-                          <FaMapMarkerAlt className="text-gray-500 mr-1" />
+                          <FaCheck className="text-gray-500 mr-1" />
                           <span>
-                            {job.jobId?.companyId?.address || 
-                              (job.jobId?.latitude && job.jobId?.longitude) ? 
-                                `${job.jobId.latitude}, ${job.jobId.longitude}` : 
-                                "Location not specified"
-                            }
+                            Completed {getCompletionTimeAgo(job.updatedAt).replace("completed ", "")}
                           </span>
                         </div>
                         <span className="hidden sm:inline">•</span>

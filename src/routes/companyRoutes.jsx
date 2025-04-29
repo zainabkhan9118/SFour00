@@ -25,6 +25,7 @@ import AlertLog from "../components/user/WorkInprogress/AlertLog";
 import EditCompanyForm from "../components/company/profile/EditCompanyForm";
 import EditContactForm from "../components/company/profile/EditContactForm";
 import EditEmailForm from "../components/company/profile/EditEmailForm";
+import EditManagerForm from "../components/company/profile/EditManagerForm";
 import MapExample from "../components/company/profile/test";
 
 
@@ -34,13 +35,14 @@ const CompanyRoutes = [
   <Route key="edit-company-profile" path="/edit-company-profile" element={<EditCompanyForm />} />,
   <Route key="edit-company-contact" path="/edit-company-contact" element={<EditContactForm />} />,
   <Route key="edit-company-email" path="/edit-company-email" element={<EditEmailForm />} />,
+  <Route key="edit-company-manager" path="/edit-company-manager" element={<EditManagerForm />} />,
   <Route key="problems-reported" path="/problems-reported" element={<ProblemChat />} />,
   <Route key="job-posting" path="/job-posting" element={<JobPosting />} />,
   <Route key="recents-jobs" path="/recents-jobs" element={<RecentJob />} />,
   <Route key="job-detail" path="/job-detail/:jobId" element={<JobDetail />} />,
   <Route key="view-applicant" path="/view-applicant/:jobId" element={<ViewApplicant />} />,
   <Route key="applicant-profile" path="/applicant-profile" element={<ApplicantProfile />} />,
-  <Route key="assign-jobDetail" path="/assign-jobDetail" element={<AssignedJobDetail />} />,
+  <Route key="assign-jobDetail" path="/assign-jobDetail/:jobId" element={<AssignedJobDetail />} />,
   <Route key="chat" path="/chat" element={<Chat />} />,
   <Route key="job-assigned" path="/job-assigned" element={<AssignedJob />} />,
   <Route key="rota-management" path="/rota-management" element={<RotaManagement />} />,

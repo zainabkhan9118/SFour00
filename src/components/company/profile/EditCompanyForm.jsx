@@ -23,7 +23,12 @@ const EditCompanyForm = () => {
     address: '',
     bio: '',
     companyLogo: null,
-    jobPosts: []
+    jobPosts: [],
+    manager: {
+      managerName: '',
+      managerEmail: '',
+      managerPhone: ''
+    }
   });
   const [previewImage, setPreviewImage] = useState(null);
 
@@ -54,7 +59,13 @@ const EditCompanyForm = () => {
             companyEmail: data.companyEmail || '',
             address: data.address || '',
             bio: data.bio || '',
-            companyLogo: data.companyLogo || null
+            companyLogo: data.companyLogo || null,
+            jobPosts: data.jobPosts || [],
+            manager: {
+              managerName: data.manager?.managerName || '',
+              managerEmail: data.manager?.managerEmail || '',
+              managerPhone: data.manager?.managerPhone || ''
+            }
           });
           setPreviewImage(data.companyLogo);
           setIsDataAlreadyPosted(true);
@@ -110,13 +121,23 @@ const EditCompanyForm = () => {
 
       // Create FormData to send file
       const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'companyLogo' && formData[key] instanceof File) {
-          formDataToSend.append('companyLogo', formData[key]);
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
+      
+      // Handle flat fields
+      formDataToSend.append('companyName', formData.companyName);
+      formDataToSend.append('companyContact', formData.companyContact);
+      formDataToSend.append('companyEmail', formData.companyEmail);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('bio', formData.bio);
+      
+      // Handle file field
+      if (formData.companyLogo instanceof File) {
+        formDataToSend.append('companyLogo', formData.companyLogo);
+      }
+      
+      // Handle manager nested object
+      formDataToSend.append('manager[managerName]', formData.manager.managerName);
+      formDataToSend.append('manager[managerEmail]', formData.manager.managerEmail);
+      formDataToSend.append('manager[managerPhone]', formData.manager.managerPhone);
       
       const response = await axios[method](endpoint, formDataToSend, {
         headers: {
@@ -200,7 +221,7 @@ const EditCompanyForm = () => {
                       placeholder="Company Name"
                     />
 
-                  
+                   
 
                     <input
                       type="text"
@@ -217,6 +238,7 @@ const EditCompanyForm = () => {
                       placeholder="About Company"
                       rows="4"
                     />
+
 
                     <button
                       type="submit"

@@ -7,6 +7,7 @@ import LoadingSpinner from "../../common/LoadingSpinner";
 
 import { MdEdit } from "react-icons/md";
 import { MdOutlineHome } from "react-icons/md";
+import { FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
 
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar";
@@ -62,6 +63,10 @@ const ProfileCompany = () => {
 
   const handleEditEmail = () => {
     navigate('/edit-company-email');
+  };
+
+  const handleEditManager = () => {
+    navigate('/edit-company-manager');
   };
 
   return (
@@ -152,7 +157,49 @@ const ProfileCompany = () => {
                         </p>
                       </div>
 
-
+                      {/* Manager Information Section */}
+                      <div className="mt-12">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-2xl font-bold">Manager Information</h3>
+                          <button 
+                            onClick={handleEditManager}
+                            className="w-8 h-8 bg-[#1F2B44] rounded flex items-center justify-center">
+                            <MdEdit className="text-white text-lg" />
+                          </button>
+                        </div>
+                        
+                        <div className="mt-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                          {companyData?.manager ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <FaUser className="text-gray-500" />
+                                <p className="text-gray-700">
+                                  <span className="font-medium">Name: </span>
+                                  {companyData.manager.managerName || "Not provided"}
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center gap-3">
+                                <FaEnvelope className="text-gray-500" />
+                                <p className="text-gray-700">
+                                  <span className="font-medium">Email: </span>
+                                  {companyData.manager.managerEmail || "Not provided"}
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center gap-3">
+                                <FaPhone className="text-gray-500" />
+                                <p className="text-gray-700">
+                                  <span className="font-medium">Phone: </span>
+                                  {companyData.manager.managerPhone || "Not provided"}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">No manager information available. Click edit to add manager details.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
