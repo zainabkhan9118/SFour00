@@ -15,7 +15,7 @@ import {
   updateLocation, 
   updateStatusByQR 
 } from "../../../api/myWorkApi";
-import { assignJobToApplicant } from "../../../api/jobApplicationApi";
+
 import { AppContext } from "../../../context/AppContext";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
