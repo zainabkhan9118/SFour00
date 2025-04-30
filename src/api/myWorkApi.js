@@ -10,7 +10,13 @@ export const applyForJob = async (jobId, data) => {
 
 // Update application status
 export const updateJobStatus = async (jobId, data) => {
-  return axios.patch(`${BASE_URL}/apply/${jobId}`, data);
+  const jobSeekerId = localStorage.getItem("jobSeekerId");
+  return axios.patch(`${BASE_URL}/apply/${jobId}`, data, {
+    headers: {
+      'jobSeekerId': jobSeekerId,
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 // Create invoice for job application
@@ -25,12 +31,24 @@ export const enableAssignment = async (jobId, data) => {
 
 // Update job location
 export const updateLocation = async (jobId, locationData) => {
-  return axios.patch(`${BASE_URL}/apply/${jobId}/location`, locationData);
+  const jobSeekerId = localStorage.getItem("jobSeekerId");
+  return axios.patch(`${BASE_URL}/apply/${jobId}/location`, locationData, {
+    headers: {
+      'jobSeekerId': jobSeekerId,
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 // Update status via QR
 export const updateStatusByQR = async (jobId, qrData) => {
-  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, qrData);
+  const jobSeekerId = localStorage.getItem("jobSeekerId");
+  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, qrData, {
+    headers: {
+      'jobSeekerId': jobSeekerId,
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 export const getAppliedJobs = async (jobSeekerId, status = "applied") => {

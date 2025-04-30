@@ -125,9 +125,74 @@ export const getAppliedJobs = async (jobSeekerId, status = "applied", additional
 };
 
 // Function to assign job to an applicant (book a job)
+// export const assignJobToApplicant = async (applicationId) => {
+//   try {
+//     const jobSeekerId = localStorage.getItem("jobSeekerId");
+    
+//     if (!jobSeekerId) {
+//       throw new Error("User not logged in or jobSeekerId not found");
+//     }
+
+//     console.log("Using jobSeekerId from localStorage:", jobSeekerId);
+    
+//     // Extract the job ID from the application
+//     // Since we already have applicationId but API expects jobId, we need to make an additional call
+//     // to get the job ID for this application
+//     try {
+//       // First get the application details to extract the jobId
+//       const appResponse = await axios.get(`${BASE_URL}/apply/${applicationId}`, {
+//         headers: { 'jobSeekerId': jobSeekerId }
+//       });
+      
+//       if (!appResponse.data?.data?.jobId?._id) {
+//         throw new Error("Could not find job ID for this application");
+//       }
+      
+//       // Extract the jobId from the application
+//       const jobId = appResponse.data.data.jobId._id;
+//       console.log(`Found jobId ${jobId} for application ${applicationId}`);
+      
+//       // Now make the correct API call using jobId in path and jobSeekerId in header
+//       // as specified in the Swagger documentation
+//       const response = await axios.patch(`${BASE_URL}/apply/${jobId}`, 
+//         { status: "assigned", isAssigned: true },
+//         { headers: { 'jobSeekerId': jobSeekerId } }
+//       );
+      
+//       console.log('Job assignment response:', response.data);
+//       return response.data;
+//     } catch (apiError) {
+//       console.error("API call failed:", apiError);
+      
+//       // Return a simulated success for better UX
+//       return {
+//         statusCode: 200,
+//         message: "Operation completed with simulated success",
+//         data: { 
+//           _id: applicationId,
+//           status: "assigned",
+//           isAssigned: true
+//         }
+//       };
+//     }
+//   } catch (error) {
+//     console.error(`Error in assignJobToApplicant:`, error);
+    
+//     // Always return a success response to keep UI working
+//     return {
+//       statusCode: 200,
+//       message: "Operation completed with simulated success",
+//       data: { 
+//         _id: applicationId,
+//         status: "assigned",
+//         isAssigned: true
+//       }
+//     };
+//   }
+// };
+
 export const assignJobToApplicant = async (applicationId) => {
   try {
-    // Get the jobSeekerId from localStorage to authenticate the request
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     
     if (!jobSeekerId) {
@@ -136,33 +201,52 @@ export const assignJobToApplicant = async (applicationId) => {
 
     console.log("Using jobSeekerId from localStorage:", jobSeekerId);
     
-    // Match exactly what works in the Flutter implementation
-    const data = {
-      status: "assigned",
-      isAssigned: true
-    };
-    
-    console.log("Making job assignment request with data:", data);
-    
-    // Make the PATCH request with jobSeekerId in the header
-    const response = await axios.patch(`${BASE_URL}/apply/${applicationId}`, data, {
-      headers: {
-        'Content-Type': 'application/json',
-        'jobSeekerId': jobSeekerId
-      }
+    // First get the application details
+    const appResponse = await axios.get(`${BASE_URL}/apply/${applicationId}`, {
+      headers: { 'jobSeekerId': jobSeekerId }
     });
     
-    console.log('Job assignment response:', response.data);
+    console.log("Application details response:", appResponse.data);
+
+    // Check different possible response structures
+    const applicationData = appResponse.data?.data || appResponse.data;
     
-    if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
-      return response.data;
-    } else if (response.data && response.data.statusCode === 500) {
-      throw new Error(response.data.message || "Server error occurred");
-    } else {
-      throw new Error("Failed to assign job");
+    if (!applicationData) {
+      throw new Error("No application data received");
     }
+
+    // Try to get jobId from different possible locations in the response
+    const jobId = applicationData.jobId?._id || 
+                 applicationData.job?._id || 
+                 applicationData._id; // if the response is the job itself
+    
+    if (!jobId) {
+      console.error("Could not find job ID in response. Full response:", appResponse.data);
+      throw new Error("Could not find job ID in the application data");
+    }
+    
+    console.log(`Found jobId ${jobId} for application ${applicationId}`);
+    
+    // Make the PATCH request to update the application status
+    const response = await axios.patch(
+      `${BASE_URL}/apply/${jobId}`,
+      { 
+        status: "assigned",
+        isAssigned: true 
+      },
+      { 
+        headers: { 
+          'jobSeekerId': jobSeekerId,
+          'Content-Type': 'application/json'
+        } 
+      }
+    );
+    
+    console.log('Job assignment response:', response.data);
+    return response.data;
+    
   } catch (error) {
-    console.error(`Error assigning job:`, error);
+    console.error("Error in assignJobToApplicant:", error);
     throw error;
   }
 };

@@ -24,17 +24,17 @@ const UserSidebar = () => {
   const fallbackProfileName = "John Doe";
   const fallbackProfileDp = "src/assets/images/profile.jpeg";
 
-  const handleLogout = async () => {
-    try {
-      localStorage.removeItem("sessionData");
-      await signOut(auth);
-      toast.success("Logged out successfully!");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error during logout:", error);
-      toast.error("Failed to log out. Please try again.");
-    }
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     localStorage.removeItem("sessionData");
+  //     await signOut(auth);
+  //     toast.success("Logged out successfully!");
+  //     navigate("/login");
+  //   } catch (error) {
+  //     console.error("Error during logout:", error);
+  //     toast.error("Failed to log out. Please try again.");
+  //   }
+  // };
 
   const isActive = (path) => {
     if (path === "/User-PersonalDetails") {
@@ -148,12 +148,12 @@ const UserSidebar = () => {
             <span>FAQ's</span>
           </Link>
         </li>
-        <li onClick={handleLogout}>
+        {/* <li onClick={handleLogout}>
           <div className="flex items-center space-x-3 text-red-500 cursor-pointer">
             <FaSignOutAlt className="text-orange-500" />
             <span>Logout</span>
           </div>
-        </li>
+        </li> */}
       </ul>
       <div className="mt-6 text-xs text-gray-500">
         <p>Terms and conditions of use:</p>

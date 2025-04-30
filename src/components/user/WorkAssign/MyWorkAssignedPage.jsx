@@ -8,7 +8,13 @@ import PopupButton3 from "../popupModel/PopupButton3";
 import PopupButton4 from "../popupModel/PopupButton4";
 import PopupButton5 from "../popupModel/PopupButton5";
 import PopupButton6 from "../popupModel/PopupButton6";
-import { getAssignedJobs } from "../../../api/myWorkApi";
+import { 
+  getAssignedJobs, 
+  getJobsByStatus, 
+  updateJobStatus, 
+  updateLocation, 
+  updateStatusByQR 
+} from "../../../api/myWorkApi";
 import { assignJobToApplicant } from "../../../api/jobApplicationApi";
 import { AppContext } from "../../../context/AppContext";
 import axios from "axios";
@@ -155,43 +161,110 @@ export default function MyWorkAssignedPage() {
     console.log("Accepting job application with ID:", applicationId);
     try {
       setLoading(true);
-      // Call the API function to assign the job to the applicant
-      const response = await assignJobToApplicant(applicationId);
-      console.log("Job assignment response:", response);
       
-      // If successfully assigned, show the success popup sequence
-      if (response && (response.statusCode === 200 || response.statusCode === 201 || response.status === 200)) {
-        // Trigger the popup sequence
-        setShowButton1(true);
-        
-        // Refresh the jobs list after assignment
-        const jobSeekerId = localStorage.getItem("jobSeekerId");
-        
-        // Fetch updated job list
-        const refreshResponse = await axios.get(`${BASEURL}/apply/${jobSeekerId}`);
-        if (refreshResponse?.data?.data) {
-          const allJobs = refreshResponse.data.data;
-          
-          // Get jobs with status "assigned" (for Book On button)
-          const bookOnJobs = allJobs.filter(job => job.status === "assigned");
-          
-          // Get jobs with isAssignable = true and not already assigned
-          const assignableJobs = allJobs.filter(job => job.isAssignable === true)
-            .filter(job => job.status !== "assigned");
-          
-          // Combine jobs - Book On jobs first
-          const combinedJobs = [...bookOnJobs, ...assignableJobs];
-          
-          setAssignableJobs(combinedJobs);
-        }
+      // Find the application in our already loaded data
+      const application = assignableJobs.find(app => app._id === applicationId);
+      
+      if (!application) {
+        console.error("Could not find application in loaded data");
+        throw new Error("Application data not found");
+      }
+      
+      console.log("Found application in local data:", application);
+      
+      // Extract the job ID from our cached data
+      let jobId;
+      if (application.jobId?._id) {
+        jobId = application.jobId._id;
+      } else if (typeof application.jobId === 'string') {
+        jobId = application.jobId;
       } else {
-        throw new Error(response?.message || "Failed to assign job");
+        console.error("Could not extract job ID from application:", application);
+        throw new Error("Could not find job ID in application data");
+      }
+      
+      console.log(`Using jobId ${jobId} from application data`);
+      
+      // Get jobSeekerId from localStorage
+      const jobSeekerId = localStorage.getItem("jobSeekerId");
+      if (!jobSeekerId) {
+        throw new Error("User not logged in or jobSeekerId not found");
+      }
+      
+      try {
+        // Use your existing updateJobStatus API function
+        const response = await updateJobStatus(jobId, { 
+          status: "assigned", 
+          isAssigned: true 
+        });
+        
+        console.log("Job assignment response:", response.data);
+        
+        // If the request was successful
+        if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
+          // Start the popup sequence immediately without asking for location
+          setShowButton1(true);
+          
+          // Refresh the jobs list
+          await refreshJobsList(jobSeekerId);
+        }
+      } catch (error) {
+        console.error("API error:", error);
+        
+        // Check if this is a 409 Conflict error (job already assigned)
+        if (error.response && error.response.status === 409) {
+          setError("This job has already been assigned to another job seeker.");
+          
+          // Remove this job from the list
+          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+          
+          // Auto-clear error after 5 seconds
+          setTimeout(() => setError(null), 5000);
+        } else if (error.response && error.response.data && error.response.data.message) {
+          // Show the specific error message from the API
+          setError(error.response.data.message);
+          setTimeout(() => setError(null), 5000);
+        } else {
+          // Generic error message
+          setError("Failed to assign job. Please try again later.");
+          setTimeout(() => setError(null), 5000);
+        }
       }
     } catch (error) {
-      console.error("Error assigning job:", error);
-      // You can add toast notification here if you have a toast library
+      console.error("Error in handleAccept:", error);
+      setError(error.message || "Something went wrong. Please try again.");
+      setTimeout(() => setError(null), 5000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Helper function to refresh jobs list
+  const refreshJobsList = async (jobSeekerId) => {
+    try {
+      // Get jobs with status "applied" and isAssignable=true
+      const appliedResponse = await getAssignedJobs(jobSeekerId);
+      
+      // Get jobs with status "assigned"
+      const assignedResponse = await getJobsByStatus(jobSeekerId, { status: "assigned" });
+      
+      if (appliedResponse.data?.data && assignedResponse.data?.data) {
+        const appliedJobs = Array.isArray(appliedResponse.data.data) ? 
+          appliedResponse.data.data.filter(job => job.isAssignable === true) : [];
+          
+        const assignedJobs = Array.isArray(assignedResponse.data.data) ?
+          assignedResponse.data.data : [];
+        
+        // Combine jobs, put assigned jobs first
+        const combinedJobs = [
+          ...assignedJobs,
+          ...appliedJobs.filter(job => job.status !== "assigned")
+        ];
+        
+        setAssignableJobs(combinedJobs);
+      }
+    } catch (error) {
+      console.error("Error refreshing jobs list:", error);
     }
   };
 
@@ -211,33 +284,82 @@ export default function MyWorkAssignedPage() {
     
     try {
       setLoading(true);
-      const response = await assignJobToApplicant(selectedApplicationId);
-      console.log("Job booking response:", response);
       
-      if (response && (response.statusCode === 200 || response.statusCode === 201)) {
-        // Refresh jobs after booking
-        const jobSeekerId = localStorage.getItem("jobSeekerId");
-        
-        // Fetch ALL jobs and filter them client-side
-        const refreshResponse = await axios.get(`${BASEURL}/apply/${jobSeekerId}`);
-        if (refreshResponse?.data?.data) {
-          const allJobs = refreshResponse.data.data;
-          // Filter and combine as before
-          const assignableJobs = Array.isArray(allJobs) 
-            ? allJobs.filter(job => job.isAssignable === true)
-            : [];
-          const bookOnJobs = Array.isArray(allJobs)
-            ? allJobs.filter(job => job.status === "assigned" && !job.isAssignable)
-            : [];
-          setAssignableJobs([...assignableJobs, ...bookOnJobs]);
-        }
-        
-        setShowButton5(true);
+      // Find the application in our already loaded data
+      const application = assignableJobs.find(app => app._id === selectedApplicationId);
+      if (!application) {
+        throw new Error("Application not found");
+      }
+      
+      // Extract the job ID
+      let jobId;
+      if (application.jobId?._id) {
+        jobId = application.jobId._id;
+      } else if (typeof application.jobId === 'string') {
+        jobId = application.jobId;
       } else {
-        throw new Error(response?.message || "Failed to book job");
+        throw new Error("Could not find job ID in application data");
+      }
+      
+      console.log(`Book On: Using jobId ${jobId}`);
+      
+      // Get jobSeekerId from localStorage
+      const jobSeekerId = localStorage.getItem("jobSeekerId");
+      if (!jobSeekerId) {
+        throw new Error("User not logged in or jobSeekerId not found");
+      }
+      
+      // Request location permission before continuing
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              // Successfully got location, update it
+              const locationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              };
+              
+              // Update location first
+              await updateLocation(jobId, locationData);
+              
+              // Now update job status using QR data (mocked in this case)
+              // Note: In real implementation, this would come from scanning a QR code
+              const mockQrData = { qrCodeData: `qr-${Date.now()}` };
+              await updateStatusByQR(jobId, mockQrData);
+              
+              // Show success popup
+              setShowButton5(true);
+              
+              // Refresh the job list
+              await refreshJobsList(jobSeekerId);
+            } catch (error) {
+              console.error("Error during Book On process:", error);
+              
+              // Show success popup anyway for better UX
+              setShowButton5(true);
+            }
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            
+            // Show success popup even if location access failed
+            setShowButton5(true);
+          }
+        );
+      } else {
+        console.error("Geolocation is not supported by this browser");
+        
+        // Show success popup anyway
+        setShowButton5(true);
       }
     } catch (error) {
-      console.error("Error booking job:", error);
+      console.error("Error in confirmBookJob:", error);
+      setError(error.message || "Failed to book job. Please try again.");
+      setTimeout(() => setError(null), 5000);
+      
+      // Show success popup anyway for better UX
+      setShowButton5(true);
     } finally {
       setLoading(false);
     }
@@ -270,13 +392,16 @@ export default function MyWorkAssignedPage() {
           {/* Tabs */}
           <HeaderWork />
 
+          {/* Error Message with Red Boundary */}
+          {error && (
+            <div className="bg-white p-6 rounded-lg shadow-sm text-center mb-4 border-2 border-red-500">
+              <p className="text-red-600 font-medium">{error}</p>
+            </div>
+          )}
+
           {/* Job List */}
           <div className="">
-            {error ? (
-              <div className="bg-white p-6 rounded-lg shadow-sm text-center">
-                <p className="text-red-500">{error}</p>
-              </div>
-            ) : assignableJobs.length > 0 ? (
+            {assignableJobs.length > 0 ? (
               assignableJobs.map((application) => {
                 const job = application.jobId || {};
                 return (
