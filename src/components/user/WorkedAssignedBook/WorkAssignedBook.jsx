@@ -9,7 +9,7 @@ import PopupButton6 from '../popupModel/PopupButton6';
 import PopupButton1 from '../popupModel/PopupButton1';
 import PopupButton2 from '../popupModel/PopupButton2';
 import PopupButton3 from '../popupModel/PopupButton3';
-import { assignJobToApplicant } from "../../../api/jobApplicationApi";
+
 import { AppContext } from "../../../context/AppContext";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import axios from "axios";
@@ -61,83 +61,83 @@ const WorkAssignedBook = () => {
     const [selectedApplicationId, setSelectedApplicationId] = useState(null);
     const { BASEURL } = useContext(AppContext);
 
-    const fetchAllJobs = async () => {
-        try {
-            setLoading(true);
-            let jobSeekerId = localStorage.getItem("jobSeekerId");
+    // const fetchAllJobs = async () => {
+    //     try {
+    //         setLoading(true);
+    //         let jobSeekerId = localStorage.getItem("jobSeekerId");
             
-            if (!jobSeekerId) {
-                const auth = getAuth();
-                const currentUser = auth.currentUser;
-                if (currentUser) {
-                    const firebaseId = currentUser.uid;
-                    try {
-                        const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
-                            headers: {
-                                "firebase-id": firebaseId,
-                            },
-                        });
-                        if (userResponse.data?.data?._id) {
-                            jobSeekerId = userResponse.data.data._id;
-                            localStorage.setItem("jobSeekerId", jobSeekerId);
-                        }
-                    } catch (err) {
-                        console.error("Error fetching user data:", err);
-                        throw new Error("Unable to fetch user data. Please try logging in again.");
-                    }
-                }
-            }
+    //         if (!jobSeekerId) {
+    //             const auth = getAuth();
+    //             const currentUser = auth.currentUser;
+    //             if (currentUser) {
+    //                 const firebaseId = currentUser.uid;
+    //                 try {
+    //                     const userResponse = await axios.get(`${BASEURL}/job-seeker`, {
+    //                         headers: {
+    //                             "firebase-id": firebaseId,
+    //                         },
+    //                     });
+    //                     if (userResponse.data?.data?._id) {
+    //                         jobSeekerId = userResponse.data.data._id;
+    //                         localStorage.setItem("jobSeekerId", jobSeekerId);
+    //                     }
+    //                 } catch (err) {
+    //                     console.error("Error fetching user data:", err);
+    //                     throw new Error("Unable to fetch user data. Please try logging in again.");
+    //                 }
+    //             }
+    //         }
 
-            if (!jobSeekerId) {
-                throw new Error("Unable to fetch jobs. Please try logging out and back in.");
-            }
+    //         if (!jobSeekerId) {
+    //             throw new Error("Unable to fetch jobs. Please try logging out and back in.");
+    //         }
 
-            // Instead of making two separate API calls, let's fetch ALL jobs in one call
-            // and then filter them client-side to ensure we get everything
-            console.log('Fetching ALL jobs for jobSeekerId:', jobSeekerId);
-            const response = await axios.get(`${BASEURL}/apply/${jobSeekerId}`);
-            console.log('All jobs response:', response);
+    //         // Instead of making two separate API calls, let's fetch ALL jobs in one call
+    //         // and then filter them client-side to ensure we get everything
+    //         console.log('Fetching ALL jobs for jobSeekerId:', jobSeekerId);
+    //         const response = await axios.get(`${BASEURL}/apply/${jobSeekerId}`);
+    //         console.log('All jobs response:', response);
             
-            const allJobs = response?.data?.data || [];
-            console.log('Total jobs found:', allJobs.length);
+    //         const allJobs = response?.data?.data || [];
+    //         console.log('Total jobs found:', allJobs.length);
             
-            // Now filter client-side to get both job types we want to display
-            const assignedJobs = allJobs.filter(job => job.status === "assigned");
-            console.log('Jobs with status "assigned" (for Book On):', assignedJobs);
+    //         // Now filter client-side to get both job types we want to display
+    //         const assignedJobs = allJobs.filter(job => job.status === "assigned");
+    //         console.log('Jobs with status "assigned" (for Book On):', assignedJobs);
             
-            const assignableJobs = allJobs.filter(job => job.isAssignable === true);
-            console.log('Jobs with isAssignable=true (for Accept/Decline):', assignableJobs);
+    //         const assignableJobs = allJobs.filter(job => job.isAssignable === true);
+    //         console.log('Jobs with isAssignable=true (for Accept/Decline):', assignableJobs);
 
-            // Combine both types while avoiding duplicates (by ID)
-            const seenIds = new Set();
-            const combinedJobs = [];
+    //         // Combine both types while avoiding duplicates (by ID)
+    //         const seenIds = new Set();
+    //         const combinedJobs = [];
             
-            // Add all assignable jobs first (with Accept/Decline buttons)
-            assignableJobs.forEach(job => {
-                combinedJobs.push(job);
-                seenIds.add(job._id);
-            });
+    //         // Add all assignable jobs first (with Accept/Decline buttons)
+    //         assignableJobs.forEach(job => {
+    //             combinedJobs.push(job);
+    //             seenIds.add(job._id);
+    //         });
             
-            // Then add assigned jobs (with Book On button) if not already included
-            assignedJobs.forEach(job => {
-                if (!seenIds.has(job._id)) {
-                    combinedJobs.push(job);
-                }
-            });
+    //         // Then add assigned jobs (with Book On button) if not already included
+    //         assignedJobs.forEach(job => {
+    //             if (!seenIds.has(job._id)) {
+    //                 combinedJobs.push(job);
+    //             }
+    //         });
             
-            console.log('Combined jobs to display:', combinedJobs);
-            setAssignedJobs(combinedJobs);
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching jobs:", err);
-            setError(err.message || "Failed to load jobs. Please try again later.");
-            setLoading(false);
-        }
-    };
+    //         console.log('Combined jobs to display:', combinedJobs);
+    //         setAssignedJobs(combinedJobs);
+    //         setLoading(false);
+    //     } catch (err) {
+    //         console.error("Error fetching jobs:", err);
+    //         setError(err.message || "Failed to load jobs. Please try again later.");
+    //         setLoading(false);
+    //     }
+    // };
 
-    useEffect(() => {
-        fetchAllJobs();
-    }, [BASEURL]);
+    // useEffect(() => {
+    //     fetchAllJobs();
+    // }, [BASEURL]);
 
     const handleBookJob = async (applicationId) => {
         console.log("Booking job with application ID:", applicationId);
