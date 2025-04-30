@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../SideBar";
 import Header from "../Header";
 import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
-import { applyForJobWithSeekerId } from "../../../api/jobApplicationApi";
+import { applyForJobWithSeekerId, getAppliedJobs } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { AppContext } from "../../../context/AppContext";
 import { toast } from "react-toastify";
@@ -36,21 +36,41 @@ export default function JobDetails() {
     }
     
     setApplying(true);
+    setApplyError(null);
+    setApplySuccess(false);
+    
     try {
+      // This follows the same pattern as the Flutter controller's applyJob method
+      console.log(`Applying for job ${jobId} with jobSeeker ${jobSeekerId}`);
+      
       const response = await applyForJobWithSeekerId(jobId, jobSeekerId);
       console.log("API response:", response);
 
       if (response.statusCode === 201) {
+        setApplySuccess(true);
         toast.success("Successfully applied for the job!", { autoClose: 3000 });
+        
+        // Refresh the applied jobs list in the background
+        try {
+          const refreshResponse = await getAppliedJobs(jobSeekerId);
+          console.log("Refreshed applied jobs:", refreshResponse);
+        } catch (refreshError) {
+          console.error("Error refreshing applied jobs:", refreshError);
+        }
+        
         setTimeout(() => {
           setIsModalOpen(false);
           navigate("/User-WorkApplied");
         }, 2000);
+      } else if (response.statusCode === 200) {
+        setApplyError("You have already applied for this job");
+        toast.warning("Already applied for this job.");
       } else {
-        toast.error("Already applied for this job.");
+        throw new Error(response?.message || "Failed to apply for job");
       }
     } catch (error) {
       console.error('Error applying for job:', error);
+      setApplyError(error.response?.data?.message || error.message || "Failed to apply for job. Please try again.");
       toast.error(error.response?.data?.message || "Failed to apply for job. Please try again.");
     } finally {
       setApplying(false);
