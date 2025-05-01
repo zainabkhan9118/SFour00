@@ -2,17 +2,33 @@ import React, { useRef } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
-const PopupButton6 = ({ onClose }) => {
+const PopupButton6 = ({ onClose, onClose5 }) => {
   const navigate = useNavigate();
   const buttonRef = useRef();
 
-  const handleNavigate = () => {
-    navigate("/User-MyWorkAssignedPage"); // Navigate to the desired route
-  }
+  // Close all popups and navigate to work assigned page
+  const handleOkayClick = () => {
+    if (onClose5) {
+      // First close parent popup (PopupButton5) if the prop exists
+      onClose5();
+    }
+    
+    // Then close this popup
+    onClose();
+    
+    // Finally navigate to the work assigned page
+    navigate("/User-MyWorkAssignedPage");
+  };
 
+  // Close just this popup
+  const closeThisPopup = () => {
+    onClose();
+  };
+
+  // Close when clicking backdrop
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
-      onClose(); 
+      closeThisPopup();
     }
   };
 
@@ -29,7 +45,7 @@ const PopupButton6 = ({ onClose }) => {
         {/* Close Button */}
         <div className="w-12 h-12 rounded-full bg-[#E7F0FA] absolute top-[-20px] right-[-3px] flex items-center justify-center">
           <button
-            onClick={onClose}
+            onClick={closeThisPopup}
             className="text-gray-500 focus:outline-none"
           >
             <IoCloseCircleOutline className="text-4xl text-orange-400" />
@@ -49,7 +65,7 @@ const PopupButton6 = ({ onClose }) => {
         {/* Buttons */}
         <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4 mt-6 w-full">
           <button
-            onClick={handleNavigate} 
+            onClick={handleOkayClick} 
             className="px-6 py-2 w-full md:w-[140px] h-12 bg-[#1F2B44] text-white rounded-full"
           >
             Okay
