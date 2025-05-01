@@ -2,7 +2,7 @@ import { ArrowRight, X, Upload, Bookmark } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
-import { applyForJobWithSeekerId, getAppliedJobs } from "../../../api/jobApplicationApi";
+import { applyForJob, getAppliedJobs, checkIfAlreadyApplied } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import LazyImage from "../../common/LazyImage";
 import { AppContext } from "../../../context/AppContext";
@@ -41,25 +41,24 @@ export default function JobDetails() {
     try {
       console.log(`Applying for job ${jobId} with jobSeeker ${jobSeekerId}`);
       
-      const response = await applyForJobWithSeekerId(jobId, jobSeekerId);
+      // Use our new API function name
+      const response = await applyForJob(jobId, jobSeekerId);
       console.log("API response:", response);
 
-      if (response.statusCode === 201) {
+      if (response.statusCode === 201 || response.success) {
         setApplySuccess(true);
         toast.success("Successfully applied for the job!", { autoClose: 3000 });
         
-        try {
-          const refreshResponse = await getAppliedJobs(jobSeekerId);
-          console.log("Refreshed applied jobs:", refreshResponse);
-        } catch (refreshError) {
-          console.error("Error refreshing applied jobs:", refreshError);
-        }
+        // The cache for applied jobs will be automatically cleared in the applyForJob function
+        // This ensures that when the user navigates to the applied jobs page,
+        // it will fetch fresh data without requiring a manual refresh
         
         setTimeout(() => {
           setIsModalOpen(false);
           navigate("/User-WorkApplied");
         }, 2000);
-      } else if (response.statusCode === 200) {
+      } else if (response.statusCode === 200 || 
+                (response.message && response.message.toLowerCase().includes('already applied'))) {
         setApplyError("You have already applied for this job");
         toast.warning("Already applied for this job.");
       } else {
@@ -67,6 +66,15 @@ export default function JobDetails() {
       }
     } catch (error) {
       console.error('Error applying for job:', error);
+      
+      // Check if this is an "already applied" error
+      if (error.response?.status === 409 || 
+          (error.response?.data?.message && error.response?.data?.message.toLowerCase().includes('already applied'))) {
+        setApplyError("You have already applied for this job");
+        toast.warning("Already applied for this job.");
+        return;
+      }
+      
       setApplyError(error.response?.data?.message || error.message || "Failed to apply for job. Please try again.");
       toast.error(error.response?.data?.message || "Failed to apply for job. Please try again.");
     } finally {

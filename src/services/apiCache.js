@@ -1,4 +1,3 @@
-
 /**
  * Simple caching utility for API responses
  * This improves application performance by avoiding unnecessary API calls
@@ -43,15 +42,24 @@ export const setCacheData = (key, data, cacheTime = DEFAULT_CACHE_TIME) => {
 };
 
 /**
- * Clear the entire cache or a specific key
- * @param {string} key - The specific cache key to clear (optional)
+ * Clear a specific cache entry
+ * @param {string} cacheKey - Key of the cache to clear
  */
-export const clearCache = (key) => {
-  if (key) {
-    cache.delete(key);
-  } else {
-    cache.clear();
+export const clearCache = (cacheKey) => {
+  if (cache.has(cacheKey)) {
+    console.log(`Clearing cache for ${cacheKey}`);
+    cache.delete(cacheKey);
+    return true;
   }
+  return false;
+};
+
+/**
+ * Clear all cache entries
+ */
+export const clearAllCache = () => {
+  console.log('Clearing all cache entries');
+  cache.clear();
 };
 
 /**

@@ -108,6 +108,9 @@ const WorkApplied = () => {
   useEffect(() => {
     const fetchAppliedJobs = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         let jobSeekerId = localStorage.getItem("jobSeekerId");
 
         if (!jobSeekerId) {
@@ -137,6 +140,19 @@ const WorkApplied = () => {
         }
 
         console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
+        
+        // Force fresh data by clearing the cache before getting applied jobs
+        // This is handled by our enhanced applyForJob function when applying for jobs,
+        // but we also do it here to ensure fresh data when directly navigating to this page
+        try {
+          // Import and use clearCache from apiCache
+          const { clearCache } = await import('../../../services/apiCache');
+          clearCache(`applied-jobs-${jobSeekerId}`);
+        } catch (cacheError) {
+          console.error('Error clearing cache:', cacheError);
+          // Continue even if cache clearing fails
+        }
+        
         // Get jobs with "applied" status
         const response = await getAppliedJobs(jobSeekerId);
         console.log('API Response:', response);
@@ -149,17 +165,16 @@ const WorkApplied = () => {
         } else {
           throw new Error("Invalid response format from server");
         }
-
-        setLoading(false);
       } catch (err) {
         console.error("Error fetching applied jobs:", err);
         setError(err.message || "Failed to load applied jobs. Please try again later.");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchAppliedJobs();
-  }, [BASEURL]); // Add BASEURL to dependency array
+  }, [BASEURL]);
 
   const handleNavigate = (jobId) => {
     navigate(`/User-AppliedAndAssignedDetail/${jobId}`);

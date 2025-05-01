@@ -15,7 +15,8 @@ const EditLicense = () => {
   const [dateOfExpiry, setDateOfExpiry] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [licenseId, setLicenseId] = useState(localStorage.getItem("licenseId") || null);
+  const storedLicenseId = localStorage.getItem("licenseId");
+  const [licenseId, setLicenseId] = useState(storedLicenseId === "null" ? null : storedLicenseId);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [originalValues, setOriginalValues] = useState({
     licenseNumber: "",
@@ -34,17 +35,19 @@ const EditLicense = () => {
   useEffect(() => {
     const fetchLicense = async () => {
       const jobSeekerId = localStorage.getItem("jobSeekerId");
-      const storedLicenseId = licenseId;
 
-      if (!jobSeekerId || !storedLicenseId) {
+      if (!jobSeekerId || !licenseId) {
+        console.log("Missing required IDs for license fetch:", { jobSeekerId, licenseId });
         return;
       }
 
       setIsLoading(true);
       try {
-        const response = await axios.get(`${BASEURL}/license/${storedLicenseId}`, {
+        console.log(`Fetching license with ID ${licenseId} for jobSeeker ${jobSeekerId}`);
+
+        const response = await axios.get(`${BASEURL}/license/${licenseId}`, {
           headers: {
-            'jobseekerid': jobSeekerId
+            'jobSeekerId': jobSeekerId
           }
         });
         console.log("API Response:", response.data);
@@ -52,14 +55,14 @@ const EditLicense = () => {
         if (response.data && response.data.data) {
           const license = response.data.data;
           setLicenseNumber(license.licenseNumber);
-          setDateOfExpiry(new Date(license.dateOfExpiry).toISOString().split('T')[0]);
-          
+          setDateOfExpiry(license.dateOfExpiry ? new Date(license.dateOfExpiry).toISOString().split('T')[0] : "");
+
           setOriginalValues({
             licenseNumber: license.licenseNumber,
-            dateOfExpiry: new Date(license.dateOfExpiry).toISOString().split('T')[0],
+            dateOfExpiry: license.dateOfExpiry ? new Date(license.dateOfExpiry).toISOString().split('T')[0] : "",
             licensePicPdf: license.licensePicPdf
           });
-          
+
           if (license.licensePicPdf) {
             setSelectedFile({
               name: license.licensePicPdf.split('/').pop(),
@@ -70,6 +73,11 @@ const EditLicense = () => {
         }
       } catch (error) {
         console.error("API Error:", error.response?.data || error);
+        if (error.response?.status === 404) {
+          console.log("License not found, resetting licenseId");
+          localStorage.removeItem("licenseId");
+          setLicenseId(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -93,60 +101,43 @@ const EditLicense = () => {
 
     try {
       const formData = new FormData();
-      
+
+      formData.append('licenseNumber', licenseNumber);
+      formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
+      if (selectedFile instanceof File) {
+        formData.append('licensePicPdf', selectedFile);
+      }
+
+      let response;
+
       if (licenseId) {
-        if (licenseNumber !== originalValues.licenseNumber) {
-          formData.append('licenseNumber', licenseNumber);
-        }
-        
-        if (dateOfExpiry !== originalValues.dateOfExpiry) {
-          formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
-        }
-        
-        if (selectedFile instanceof File) {
-          formData.append('licensePicPdf', selectedFile);
-        }
+        console.log(`Updating license ${licenseId} with jobSeekerId: ${jobSeekerId}`);
 
-        let hasChanges = false;
-        for (let pair of formData.entries()) {
-          hasChanges = true;
-          break;
-        }
-
-        if (!hasChanges) {
-          navigate("/User-PersonalDetails");
-          return;
-        }
-
-        const response = await axios.patch(
+        response = await axios.patch(
           `${BASEURL}/license/${licenseId}`,
           formData,
           {
             headers: {
-              'jobseekerid': jobSeekerId,
+              'jobSeekerId': jobSeekerId,
               'Content-Type': 'multipart/form-data'
             }
           }
         );
-        // console.log("API Response:", response.data);
+        console.log("License update response:", response.data);
       } else {
-        formData.append('licenseNumber', licenseNumber);
-        formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
-        if (selectedFile instanceof File) {
-          formData.append('licensePicPdf', selectedFile);
-        }
+        console.log(`Creating new license for jobSeekerId: ${jobSeekerId}`);
 
-        const response = await axios.post(
+        response = await axios.post(
           `${BASEURL}/license`,
           formData,
           {
             headers: {
-              'jobseekerid': jobSeekerId,
+              'jobSeekerId': jobSeekerId,
               'Content-Type': 'multipart/form-data'
             }
           }
         );
-        // console.log("API Response:", response.data);
+        console.log("License creation response:", response.data);
 
         if (response.data && response.data.data && response.data.data._id) {
           const newLicenseId = response.data.data._id;
@@ -174,7 +165,7 @@ const EditLicense = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {isLoading && <LoadingSpinner />}
-      
+
       {!isMobile && (
         <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
           <UserSidebar />
@@ -187,7 +178,7 @@ const EditLicense = () => {
             <UserSidebar isMobile={true} />
           </div>
         )}
-        
+
         <div className="p-4 md:p-6 overflow-auto">
           <div className="flex items-center mb-4">
             <button 
@@ -200,7 +191,7 @@ const EditLicense = () => {
               </span>
             </button>
           </div>
-          
+
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               <input
@@ -211,7 +202,7 @@ const EditLicense = () => {
                 placeholder="Add License Number"
                 required
               />
-              
+
               <div className="relative">
                 <input
                   type="date"
@@ -227,7 +218,7 @@ const EditLicense = () => {
                   </svg>
                 </div>
               </div>
-              
+
               <div 
                 className={`border-2 border-dashed border-orange-300 rounded-lg p-6 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-32`}
                 onClick={() => fileInputRef.current.click()}
@@ -270,7 +261,7 @@ const EditLicense = () => {
                   onChange={handleFileChange}
                 />
               </div>
-              
+
               <button 
                 type="submit" 
                 className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"

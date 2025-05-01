@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import UserSidebar from "../../UserSidebar";
-import axios from "axios";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
-
-const BASEURL = import.meta.env.VITE_BASE_URL;
+import { getAuth } from "firebase/auth";
+import { getEducation, addEducation, updateEducation, deleteEducation } from "../../../../../api/educationApi";
 
 const EditEducation = () => {
   const navigate = useNavigate();
@@ -39,24 +38,21 @@ const EditEducation = () => {
     const fetchEducations = async () => {
       setIsLoading(true);
       const jobSeekerId = localStorage.getItem("jobSeekerId");
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
 
-      if (!jobSeekerId) {
+      if (!jobSeekerId || !currentUser) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`${BASEURL}/education`, {
-          headers: {
-            'jobseekerid': jobSeekerId,
-            'Content-Type': 'application/json'
-          }
-        });
+        const response = await getEducation(currentUser.uid, jobSeekerId);
 
-        console.log("Fetched education data:", response.data);
+        console.log("Fetched education data:", response);
 
-        if (response.data && response.data.data) {
-          const educations = response.data.data.map(edu => ({
+        if (response && response.data) {
+          const educations = response.data.map(edu => ({
             id: edu._id,
             degree: edu.degreeName,
             institution: edu.institute,
@@ -109,13 +105,17 @@ const EditEducation = () => {
     e.preventDefault();
     setIsLoading(true);
     const jobSeekerId = localStorage.getItem("jobSeekerId");
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
-    if (!jobSeekerId) {
-      console.error("JobSeekerId missing");
+    if (!jobSeekerId || !currentUser) {
+      console.error("Authentication required");
       alert("Authentication required. Please login again.");
       setIsLoading(false);
       return;
     }
+
+    const firebaseId = currentUser.uid;
 
     try {
       const newEducations = [];
@@ -144,20 +144,8 @@ const EditEducation = () => {
       if (newEducations.length > 0) {
         try {
           console.log('Creating new educations:', newEducations);
-          console.log('base url :',BASEURL);
-          const createResponse = await axios.post(
-            `${BASEURL}/education`,
-            newEducations,
-            { 
-              headers: {
-                'jobseekerId': jobSeekerId,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          console.log('base url :',BASEURL);
-          
-          console.log('New educations created:', createResponse.data);
+          const createResponse = await addEducation(firebaseId, jobSeekerId, newEducations);
+          console.log('New educations created:', createResponse);
         } catch (error) {
           console.error('Error creating new educations:', error);
           throw error;
@@ -166,27 +154,20 @@ const EditEducation = () => {
 
       for (const education of updateEducations) {
         try {
-          console.log('base url', BASEURL);
-          
           console.log('Updating education:', education._id);
-          const updateResponse = await axios.patch(
-            `${BASEURL}/education/${education._id}`,
-            {
-              degreeName: education.degreeName,
-              institute: education.institute,
-              startDate: education.startDate,
-              endDate: education.endDate,
-              currentlyEnrolled: education.currentlyEnrolled
-            },
-            {
-              headers: {
-                'jobseekerId': jobSeekerId,
-                'id': education._id,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          console.log('Education updated: ................', updateResponse.data);
+          console.log('Using jobSeekerId:', jobSeekerId); // Debug log
+          
+          const updateData = {
+            degreeName: education.degreeName,
+            institute: education.institute,
+            startDate: education.startDate,
+            endDate: education.endDate,
+            currentlyEnrolled: education.currentlyEnrolled
+          };
+          
+          // Pass jobSeekerId as the fourth parameter to updateEducation
+          const updateResponse = await updateEducation(education._id, firebaseId, updateData, jobSeekerId);
+          console.log('Education updated:', updateResponse);
         } catch (error) {
           console.error('Error updating education:', error);
           throw error;
@@ -194,15 +175,10 @@ const EditEducation = () => {
       }
 
       try {
-        const getResponse = await axios.get(`${BASEURL}/education`, {
-          headers: {
-            'jobseekerId': jobSeekerId,
-            'Content-Type': 'application/json'
-          }
-        });
+        const refreshResponse = await getEducation(firebaseId, jobSeekerId);
 
-        if (getResponse.data && getResponse.data.data) {
-          const educations = getResponse.data.data.map(edu => ({
+        if (refreshResponse && refreshResponse.data) {
+          const educations = refreshResponse.data.map(edu => ({
             id: edu._id,
             degree: edu.degreeName,
             institution: edu.institute,
@@ -241,6 +217,8 @@ const EditEducation = () => {
 
     setIsLoading(true);
     const jobSeekerId = localStorage.getItem("jobSeekerId");
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
     const education = formData.educations[index];
 
     try {
@@ -250,17 +228,11 @@ const EditEducation = () => {
         hasJobSeekerId: !!jobSeekerId
       });
 
-      if (education.id) {
-        const response = await axios.delete(`${BASEURL}/education/${education.id}`, {
-          headers: {
-            'jobseekerId': jobSeekerId,
-            'id': education.id,
-            'Content-Type': 'application/json'
-          }
-        });
+      if (education.id && currentUser) {
+        const response = await deleteEducation(education.id, currentUser.uid, jobSeekerId);
         console.log('Education deleted successfully:', {
           status: response.status,
-          data: response.data
+          data: response
         });
       } else {
         console.log('No API call needed - education entry was not yet saved');

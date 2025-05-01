@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../SideBar";
-import Header from "../../Header";
 import UserSidebar from "../UserSidebar";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { getBankDetails, updateBankDetails, createBankDetails } from "../../../../api/bankDetail";

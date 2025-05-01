@@ -14,15 +14,14 @@ import {
 } from "react-icons/fa";
 import UserSidebar from "../UserSidebar";
 import { onAuthStateChanged } from "firebase/auth";
-import axios from "axios";
 import { AppContext } from "../../../../context/AppContext";
 import LazyImage from "../../../../components/common/LazyImage";
 import profilePic from "../../../../assets/images/profile.jpeg";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 // Import the initialized Firebase app to ensure it's loaded
 import { auth } from "../../../../config/firebaseConfig";
-
-const BASEURL = import.meta.env.VITE_BASE_URL;
+// Import our new profile API functions
+import { getPersonalDetails, getExperience, getEducation } from "../../../../api/profileApi";
 
 const PersonalDetails = () => {
   const navigate = useNavigate();
@@ -86,30 +85,16 @@ const PersonalDetails = () => {
       const jobSeekerId = localStorage.getItem("jobSeekerId");
 
       try {
+        // Using our new API functions
         const [userResponse, experienceResponse, educationResponse] = await Promise.all([
-          axios.get(`${BASEURL}/job-seeker`, {
-            headers: {
-              "firebase-id": `${firebaseId}`,
-              "Content-Type": "application/json",
-            },
-          }),
-          axios.get(`${BASEURL}/experience`, {
-            headers: {
-              "firebase-id": firebaseId,
-              "jobseekerid": jobSeekerId,
-            },
-          }),
-          axios.get(`${BASEURL}/education`, {
-            headers: {
-              "firebase-id": firebaseId,
-              "jobseekerid": jobSeekerId,
-            },
-          })
+          getPersonalDetails(firebaseId),
+          getExperience(firebaseId, jobSeekerId),
+          getEducation(firebaseId, jobSeekerId)
         ]);
 
-        const data = userResponse.data.data;
-        const experiences = experienceResponse.data.data || [];
-        const educations = educationResponse.data.data || [];
+        const data = userResponse.data;
+        const experiences = experienceResponse.data || [];
+        const educations = educationResponse.data || [];
 
         console.log("Education data:", educations);
 
