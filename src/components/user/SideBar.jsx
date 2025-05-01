@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../../config/firebaseConfig";
 import logo from "../../assets/images/logo.png";
 import breifcase from "../../assets/images/solar_case-bold-duotone.png";
 import profile from "../../assets/images/icons8_user.png";
 import chat from "../../assets/images/lets-icons_chat-duotone.png";
 import work from "../../assets/images/ic_twotone-work.png";
 import notifications from "../../assets/images/icons8_notification.png";
+import ProfileCompletionPopup from "../user/popupModel/ProfileCompletionPopup";
+import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
+import { useProfileCompletion } from "../../context/profile/ProfileCompletionContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const { isProfileComplete, isLoading } = useProfileCompletion();
   
   // Close sidebar when route changes on mobile
   useEffect(() => {
@@ -59,6 +67,42 @@ const Sidebar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Handler for protected route navigation
+  const handleProtectedNavigation = (e, path) => {
+    // Allow navigation to profile section regardless of completion status
+    if (path === routes.profile) return;
+    
+    // For all other sections, check if profile is complete
+    if (!isLoading && !isProfileComplete) {
+      e.preventDefault();
+      setShowProfilePopup(true);
+    }
+  };
+
+  // Handler for logout functionality
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      // Clear local storage
+      localStorage.clear();
+      // Sign out from Firebase
+      await signOut(auth);
+      // Show success popup instead of redirecting immediately
+      setShowLogoutPopup(true);
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Still navigate to login page if there's an error
+      navigate("/login");
+    }
+  };
+
+  // Handle closing the logout popup
+  const handleCloseLogoutPopup = () => {
+    setShowLogoutPopup(false);
+    // Navigate to login page after closing the popup
+    navigate("/login");
+  };
+
   return (
     <>
       {/* Mobile Menu Button - only visible on small screens */}
@@ -93,7 +137,11 @@ const Sidebar = () => {
 
         {/* Menu Items */}
         <nav className="flex flex-col space-y-8 mb-auto">
-          <Link to={routes.jobs}>
+          <Link 
+            to={routes.jobs}
+            onClick={(e) => handleProtectedNavigation(e, routes.jobs)}
+            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+          >
             <div className={`flex items-center space-x-3 ${isActive(routes.jobs) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
               <img src={breifcase} alt="Logo" className="h-6 w-6" />
               <span>Jobs</span>
@@ -107,21 +155,33 @@ const Sidebar = () => {
             </div>
           </Link>
 
-          <Link to={routes.chat}>
+          <Link 
+            to={routes.chat}
+            onClick={(e) => handleProtectedNavigation(e, routes.chat)}
+            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+          >
             <div className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
               <img src={chat} alt="chat" className="h-7 w-7" />
               <span>Chat</span>
             </div>
           </Link>
 
-          <Link to={routes.work}>
+          <Link 
+            to={routes.work}
+            onClick={(e) => handleProtectedNavigation(e, routes.work)}
+            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+          >
             <div className={`flex items-center space-x-3 ${isActive(routes.work) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
               <img src={work} alt="work" className="h-6 w-6" />
               <span>My Work</span>
             </div>
           </Link>
 
-          <Link to={routes.notifications}>
+          <Link 
+            to={routes.notifications}
+            onClick={(e) => handleProtectedNavigation(e, routes.notifications)}
+            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+          >
             <div className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
               <img src={notifications} alt="work" className="h-6 w-6" />
               <span>Notifications</span>
@@ -129,16 +189,23 @@ const Sidebar = () => {
           </Link>
         </nav>
 
-        <Link to="/login" onClick={() => {
-          // Clear local storage on logout
-          localStorage.clear();
-        }}>
+        <Link to="/login" onClick={handleLogout}>
           <div className="flex items-center space-x-3 text-[#395080] hover:text-white ml-8 mt-8">
             <p className="text-3xl"> →</p>
             <span>Logout</span>
           </div>
         </Link>
       </div>
+
+      {/* Profile Completion Popup */}
+      {showProfilePopup && (
+        <ProfileCompletionPopup onClose={() => setShowProfilePopup(false)} />
+      )}
+
+      {/* Logout Success Popup */}
+      {showLogoutPopup && (
+        <LogoutSuccessPopup onClose={handleCloseLogoutPopup} />
+      )}
     </>
   );
 };

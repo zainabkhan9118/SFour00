@@ -5,12 +5,18 @@ import { FiUpload } from "react-icons/fi";
 import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import axios from "axios";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
+import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
 const EditLicense = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { showSuccess } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
   const [licenseNumber, setLicenseNumber] = useState("");
   const [dateOfExpiry, setDateOfExpiry] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,6 +29,11 @@ const EditLicense = () => {
     dateOfExpiry: "",
     licensePicPdf: null
   });
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -94,7 +105,8 @@ const EditLicense = () => {
 
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     if (!jobSeekerId) {
-      alert("Please ensure you are logged in");
+      setErrorMessage("Please ensure you are logged in");
+      setShowErrorPopup(true);
       setIsLoading(false);
       return;
     }
@@ -124,6 +136,10 @@ const EditLicense = () => {
           }
         );
         console.log("License update response:", response.data);
+        showSuccess("License updated successfully!");
+        setSuccessMessage("License updated successfully!");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
       } else {
         console.log(`Creating new license for jobSeekerId: ${jobSeekerId}`);
 
@@ -143,13 +159,18 @@ const EditLicense = () => {
           const newLicenseId = response.data.data._id;
           setLicenseId(newLicenseId);
           localStorage.setItem("licenseId", newLicenseId);
+          showSuccess("License added successfully!");
+          setSuccessMessage("License added successfully!");
+          setRedirectPath("/User-PersonalDetails");
+          setShowSuccessPopup(true);
         }
       }
-
-      navigate("/User-PersonalDetails");
+      
+      checkProfileCompletion();
     } catch (error) {
       console.error("API Error:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to save license");
+      setErrorMessage(error.response?.data?.message || "Failed to save license");
+      setShowErrorPopup(true);
     } finally {
       setIsLoading(false);
     }
@@ -160,6 +181,17 @@ const EditLicense = () => {
     if (file) {
       setSelectedFile(file);
     }
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
+  };
+
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
   };
 
   return (
@@ -275,6 +307,21 @@ const EditLicense = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
+
+      {showErrorPopup && (
+        <ProfileErrorPopup
+          message={errorMessage}
+          onClose={handleCloseErrorPopup}
+        />
+      )}
     </div>
   );
 };

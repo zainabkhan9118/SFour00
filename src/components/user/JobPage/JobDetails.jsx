@@ -2,11 +2,11 @@ import { ArrowRight, X, Upload, Bookmark } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchAllJobs, fetchJobsByCompany } from "../../../api/jobsApi";
-import { applyForJob, getAppliedJobs, checkIfAlreadyApplied } from "../../../api/jobApplicationApi";
+import { applyForJob } from "../../../api/jobApplicationApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import LazyImage from "../../common/LazyImage";
-import { AppContext } from "../../../context/AppContext";
-import { toast } from "react-toastify";
+import ProfileSuccessPopup from "../../user/popupModel/ProfileSuccessPopup";
+import ProfileErrorPopup from "../../user/popupModel/ProfileErrorPopup";
 
 export default function JobDetails() {
   const navigate = useNavigate();
@@ -22,6 +22,11 @@ export default function JobDetails() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
 
   // Handle applying for the job
   const handleApplyForJob = async (e) => {
@@ -30,7 +35,8 @@ export default function JobDetails() {
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     
     if (!jobSeekerId) {
-      toast.error("Please login first to apply for this job");
+      setErrorMessage("Please login first to apply for this job");
+      setShowErrorPopup(true);
       return;
     }
     
@@ -47,20 +53,16 @@ export default function JobDetails() {
 
       if (response.statusCode === 201 || response.success) {
         setApplySuccess(true);
-        toast.success("Successfully applied for the job!", { autoClose: 3000 });
-        
-        // The cache for applied jobs will be automatically cleared in the applyForJob function
-        // This ensures that when the user navigates to the applied jobs page,
-        // it will fetch fresh data without requiring a manual refresh
-        
-        setTimeout(() => {
-          setIsModalOpen(false);
-          navigate("/User-WorkApplied");
-        }, 2000);
+        // Replace toast with our success popup
+        setSuccessMessage("Successfully applied for the job!");
+        setRedirectPath("/User-WorkApplied");
+        setShowSuccessPopup(true);
+        setIsModalOpen(false);
       } else if (response.statusCode === 200 || 
                 (response.message && response.message.toLowerCase().includes('already applied'))) {
         setApplyError("You have already applied for this job");
-        toast.warning("Already applied for this job.");
+        setErrorMessage("You have already applied for this job");
+        setShowErrorPopup(true);
       } else {
         throw new Error(response?.message || "Failed to apply for job");
       }
@@ -71,12 +73,14 @@ export default function JobDetails() {
       if (error.response?.status === 409 || 
           (error.response?.data?.message && error.response?.data?.message.toLowerCase().includes('already applied'))) {
         setApplyError("You have already applied for this job");
-        toast.warning("Already applied for this job.");
+        setErrorMessage("You have already applied for this job");
+        setShowErrorPopup(true);
         return;
       }
       
       setApplyError(error.response?.data?.message || error.message || "Failed to apply for job. Please try again.");
-      toast.error(error.response?.data?.message || "Failed to apply for job. Please try again.");
+      setErrorMessage("Already apply for this job.");
+      setShowErrorPopup(true);
     } finally {
       setApplying(false);
     }
@@ -138,6 +142,17 @@ export default function JobDetails() {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
+  };
+
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
   };
 
   if (loading) {
@@ -591,6 +606,21 @@ export default function JobDetails() {
             </div>
           </div>
         </div>
+      )}
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
+
+      {showErrorPopup && (
+        <ProfileErrorPopup
+          message={errorMessage}
+          onClose={handleCloseErrorPopup}
+        />
       )}
     </div>
   );

@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import UserSidebar from "../UserSidebar";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { getBankDetails, updateBankDetails, createBankDetails } from "../../../../api/bankDetail";
+import { useToast } from "../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../user/popupModel/ProfileSuccessPopup";
+import ProfileErrorPopup from "../../../user/popupModel/ProfileErrorPopup";
 
 const BankAccountDetails = () => {
   const navigate = useNavigate();
@@ -10,6 +14,13 @@ const BankAccountDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [bankDetailId, setBankDetailId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { showSuccess } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
   const [formData, setFormData] = useState({
     accountName: "",
     bankName: "",
@@ -71,17 +82,24 @@ const BankAccountDetails = () => {
       let response;
       
       if (!formData.accountName || !formData.bankName || !formData.accountNumber) {
-        alert("Please fill in all required fields");
+        setErrorMessage("Please fill in all required fields");
+        setShowErrorPopup(true);
         setIsLoading(false);
         return;
       }
 
       if (bankDetailId) {
         response = await updateBankDetails(bankDetailId, formData);
-        console.log("Bank details updated successfully");
+        showSuccess("Bank details updated successfully");
+        setSuccessMessage("Bank details updated successfully!");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
       } else {
         response = await createBankDetails(formData);
-        console.log("Bank details created successfully");
+        showSuccess("Bank details created successfully");
+        setSuccessMessage("Bank details created successfully!");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
         if (response.data && response.data._id) {
           localStorage.setItem("bankDetailId", response.data._id);
           setBankDetailId(response.data._id);
@@ -89,10 +107,11 @@ const BankAccountDetails = () => {
       }
       
       setIsEditing(false);
-      navigate("/User-PersonalDetails");
+      checkProfileCompletion();
     } catch (error) {
       console.error("Error saving bank details:", error);
-      alert(error.response?.data?.message || "Failed to save bank details");
+      setErrorMessage(error.response?.data?.message || "Failed to save bank details");
+      setShowErrorPopup(true);
     } finally {
       setIsLoading(false);
     }
@@ -136,6 +155,17 @@ const BankAccountDetails = () => {
       }
       setIsEditing(false);
     }
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
+  };
+
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
   };
 
   return (
@@ -227,6 +257,21 @@ const BankAccountDetails = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
+
+      {showErrorPopup && (
+        <ProfileErrorPopup
+          message={errorMessage}
+          onClose={handleCloseErrorPopup}
+        />
+      )}
     </div>
   );
 };

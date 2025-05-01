@@ -5,14 +5,22 @@ import { FiArrowRight } from "react-icons/fi";
 import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { updateUtrData, getUtrData } from "../../../../../api/utr";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 
 const EditUTRNumber = () => {
   const navigate = useNavigate();
   const [utrNumber, setUtrNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
   // Add state for responsive design
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -49,10 +57,14 @@ const EditUTRNumber = () => {
     
     try {
       await updateUtrData(utrNumber);
-      navigate("/User-PersonalDetails");
+      showSuccess("UTR number updated successfully!");
+      setSuccessMessage("UTR number updated successfully!");
+      setRedirectPath("/User-PersonalDetails");
+      setShowSuccessPopup(true);
+      checkProfileCompletion();
     } catch (error) {
       console.error("Failed to update UTR number:", error);
-      alert(error.message || "Failed to update UTR number");
+      showError(error.message || "Failed to update UTR number");
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +72,13 @@ const EditUTRNumber = () => {
   
   const handleBack = () => {
     navigate("/User-PersonalDetails");
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
   };
 
   return (
@@ -115,6 +134,14 @@ const EditUTRNumber = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
     </div>
   );
 };

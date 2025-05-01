@@ -21,13 +21,15 @@ import JobStatsDisplay from "../components/common/JobStatsDisplay";
 import { toast } from "react-toastify";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import LoginSuccessPopup from "../components/user/popupModel/LoginSuccessPopup";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
 
   const { BASEURL, setRole, setUser, setSessionData } = useContext(AppContext);
 
@@ -62,14 +64,12 @@ export default function LoginPage() {
   // This function exactly mirrors what works in WorkApplied.jsx
   const fetchAndStoreJobSeekerId = async (firebaseId) => {
     console.log(
-      "🔍 Using EXACT WorkApplied approach to fetch job seeker ID..."
     );
     try {
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
-        console.error("❌ Current user not found");
         return null;
       }
 
@@ -83,7 +83,6 @@ export default function LoginPage() {
         },
       });
 
-      console.log("🔍 Job seeker API full response:", userResponse);
 
       if (userResponse.data?.data?._id) {
         const jobSeekerId = userResponse.data.data._id;
@@ -197,8 +196,11 @@ export default function LoginPage() {
   };
 
   const handleSignIn = async (values, { setFieldError }) => {
+    const { email, password } = values;
+    
     if (!email || !password) {
-    //   toast.error("Please fill in all fields.");
+      setFieldError("email", "Email is required");
+      setFieldError("password", "Password is required");
       return;
     }
 
@@ -229,13 +231,15 @@ export default function LoginPage() {
         // Store user data and get role
         const role = await storeUserData(firebaseId, userData);
 
-        toast("Login successful!");
-
-        // Navigate based on role
+        // Set success message and show popup instead of toast
+        setSuccessMessage("Login successful!");
+        setShowSuccessPopup(true);
+        
+        // Set redirect path based on role
         if (role === "Job Seeker") {
-          navigate("/User-PersonalDetails");
+          setRedirectPath("/User-PersonalDetails");
         } else if (role === "Company") {
-          navigate("/company-profile");
+          setRedirectPath("/company-profile");
         }
       } else {
         setFieldError("password", "Invalid email or password");
@@ -272,13 +276,15 @@ export default function LoginPage() {
         // Store user data and get role
         const role = await storeUserData(idToken, userData);
 
-        toast("Google login successful!");
-
-        // Navigate based on role
+        // Show success popup instead of toast
+        setSuccessMessage("Google login successful!");
+        setShowSuccessPopup(true);
+        
+        // Set redirect path based on role
         if (role === "Job Seeker") {
-          navigate("/User-PersonalDetails");
+          setRedirectPath("/User-PersonalDetails");
         } else if (role === "Company") {
-          navigate("/company-profile");
+          setRedirectPath("/company-profile");
         }
       } else {
         toast.error("No user found in backend.");
@@ -326,8 +332,6 @@ export default function LoginPage() {
           initialValues={{ email: "", password: "" }}
           validationSchema={validationSchema}
           onSubmit={async (values, formikHelpers) => {
-            setEmail(values.email);
-            setPassword(values.password);
             await handleSignIn(values, formikHelpers);
           }}
         >
@@ -408,6 +412,20 @@ export default function LoginPage() {
 
       {/* Right Section */}
       <JobStatsDisplay />
+      
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <LoginSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={() => {
+            setShowSuccessPopup(false);
+            if (redirectPath) {
+              navigate(redirectPath);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

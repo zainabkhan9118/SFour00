@@ -6,12 +6,20 @@ import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { getAuth } from "firebase/auth";
 import { getEducation, addEducation, updateEducation, deleteEducation } from "../../../../../api/educationApi";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 
 const EditEducation = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { showSuccess, showError, showInfo } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
   const [formData, setFormData] = useState({
     educations: [
       { 
@@ -110,7 +118,7 @@ const EditEducation = () => {
 
     if (!jobSeekerId || !currentUser) {
       console.error("Authentication required");
-      alert("Authentication required. Please login again.");
+      showError("Authentication required. Please login again.");
       setIsLoading(false);
       return;
     }
@@ -196,14 +204,21 @@ const EditEducation = () => {
         console.error("Error refreshing education data:", refreshError);
       }
 
-      navigate(-1);
+      // Show success message
+      showSuccess("Education details saved successfully!");
+      setSuccessMessage("Education details saved successfully!");
+      setRedirectPath("/User-PersonalDetails");
+      setShowSuccessPopup(true);
+
+      // Check profile completion status
+      await checkProfileCompletion();
     } catch (error) {
       console.error("Error saving educations:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
       });
-      alert(error.response?.data?.message || error.message || "Failed to save education details. Please try again.");
+      showError(error.response?.data?.message || error.message || "Failed to save education details. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -212,6 +227,7 @@ const EditEducation = () => {
   const handleDelete = async (index) => {
     if (formData.educations.length <= 1) {
       console.log("Preventing deletion of last education entry");
+      showInfo("At least one education entry is required");
       return;
     }
 
@@ -234,6 +250,7 @@ const EditEducation = () => {
           status: response.status,
           data: response
         });
+        showSuccess("Education entry deleted successfully");
       } else {
         console.log('No API call needed - education entry was not yet saved');
       }
@@ -248,6 +265,7 @@ const EditEducation = () => {
         response: error.response?.data,
         status: error.response?.status
       });
+      showError("Failed to delete education entry. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -272,6 +290,13 @@ const EditEducation = () => {
       ...prev,
       educations: [...prev.educations, newEducation]
     }));
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
   };
 
   return (
@@ -395,6 +420,14 @@ const EditEducation = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
     </div>
   );
 };

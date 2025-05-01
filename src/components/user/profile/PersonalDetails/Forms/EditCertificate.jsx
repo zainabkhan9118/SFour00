@@ -5,18 +5,26 @@ import { FiArrowRight, FiUpload } from "react-icons/fi";
 import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import axios from "axios";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
 const EditCertificate = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { showSuccess, showError } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
   const [issueDate, setIssueDate] = React.useState("");
   const [organization, setOrganization] = React.useState("");
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [certificateId, setCertificateId] = React.useState(null);
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  const [showSuccessPopup, setShowSuccessPopup] = React.useState(false);
+  const [successMessage, setSuccessMessage] = React.useState("");
+  const [redirectPath, setRedirectPath] = React.useState("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,7 +85,7 @@ const EditCertificate = () => {
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     
     if (!jobSeekerId) {
-      alert("Please ensure you are logged in");
+      showError("Please ensure you are logged in");
       setIsLoading(false);
       return;
     }
@@ -107,7 +115,11 @@ const EditCertificate = () => {
           const certId = response.data.data._id;
           if (certId) {
             localStorage.setItem("certificateId", certId);
-            navigate("/User-PersonalDetails");
+            showSuccess("Certificate added successfully!");
+            setSuccessMessage("Certificate added successfully!");
+            setRedirectPath("/User-PersonalDetails");
+            setShowSuccessPopup(true);
+            checkProfileCompletion();
           }
         }
       } else {
@@ -121,11 +133,15 @@ const EditCertificate = () => {
             }
           }
         );
-        navigate("/User-PersonalDetails");
+        showSuccess("Certificate updated successfully!");
+        setSuccessMessage("Certificate updated successfully!");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
+        checkProfileCompletion();
       }
     } catch (error) {
       console.error('API Error:', error.response || error);
-      alert(error.response?.data?.message || "Failed to save certificate");
+      showError(error.response?.data?.message || "Failed to save certificate");
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +160,13 @@ const EditCertificate = () => {
     setIssueDate("");
     setOrganization("");
     setSelectedFile(null);
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
   };
 
   return (
@@ -259,6 +282,14 @@ const EditCertificate = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
     </div>
   );
 };

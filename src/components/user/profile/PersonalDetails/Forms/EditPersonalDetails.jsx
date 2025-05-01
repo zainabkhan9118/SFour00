@@ -8,8 +8,10 @@ import { getAuth } from "firebase/auth";
 import axios from "axios";
 import { AppContext } from "../../../../../context/AppContext";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
-// Import our specialized profile creation function
 import { createNewJobSeekerProfile, updatePersonalDetails } from "../../../../../api/profileApi";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../popupModel/ProfileSuccessPopup";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -17,6 +19,8 @@ const EditPersonalDetails = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const { setProfileName, setProfileDp } = useContext(AppContext);
+  const { showSuccess, showError } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
     addresses: [{ address: "", duration: "", isCurrent: false }],
@@ -27,6 +31,9 @@ const EditPersonalDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -138,13 +145,13 @@ const EditPersonalDetails = () => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
       console.error("User not authenticated");
+      showError("User not authenticated. Please log in again.");
       setIsLoading(false);
       return;
     }
     const firebaseId = currentUser.uid;
 
     try {
-      // Prepare the form data
       const formDataToSend = new FormData();
       formDataToSend.append("fullname", formData.name);
       formDataToSend.append("shortBio", formData.bio);
@@ -164,61 +171,61 @@ const EditPersonalDetails = () => {
         formDataToSend.append("profilePic", profileImage);
       }
 
-      // Use different functions based on whether this is a new profile or an update
       if (isDataAlreadyPosted) {
-        // For existing profiles, use the update function
         const response = await updatePersonalDetails(firebaseId, formDataToSend);
         console.log("Profile updated successfully:", response);
-        
+
         const data = response.data;
         if (setProfileName && setProfileDp) {
           setProfileName(data.fullname || "");
           setProfileDp(previewImage || profileImage);
         }
+
+        showSuccess("Profile updated successfully!");
+        setSuccessMessage("Your profile has been updated successfully.");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
+
+        await checkProfileCompletion();
       } else {
-        // For new profiles, use our specialized creation function
         console.log("Creating new profile with data:", {
           fullname: formData.name,
           shortBio: formData.bio,
           addresses: formData.addresses,
-          hasProfileImage: profileImage instanceof File
+          hasProfileImage: profileImage instanceof File,
         });
-        
+
         const response = await createNewJobSeekerProfile(firebaseId, {
           fullname: formData.name,
           shortBio: formData.bio,
           address: formData.addresses,
-          profilePic: profileImage instanceof File ? profileImage : undefined
+          profilePic: profileImage instanceof File ? profileImage : undefined,
         });
-        
+
         console.log("Profile creation response:", response);
 
-        // Even with mixed 201+500 response, we should have success flag set in our function
         if (response.success) {
-          // *** IMPORTANT: Always fetch the jobSeekerId regardless of whether it was in the response ***
-          // This ensures we always get the jobSeekerId even if the creation API didn't return it
           try {
             console.log("Fetching jobSeekerId after profile creation...");
             const profileResponse = await axios.get(`${BASEURL}/job-seeker`, {
               headers: {
                 "firebase-id": firebaseId,
-                "Content-Type": "application/json"
-              }
+                "Content-Type": "application/json",
+              },
             });
-            
+
             console.log("Profile fetch response:", profileResponse.data);
-            
+
             if (profileResponse.data && profileResponse.data.data && profileResponse.data.data._id) {
               const jobSeekerId = profileResponse.data.data._id;
               localStorage.setItem("jobSeekerId", jobSeekerId);
               console.log("JobSeekerId fetched and stored:", jobSeekerId);
-              
-              // Also store other useful IDs if available
+
               if (profileResponse.data.data.certificates && profileResponse.data.data.certificates.length > 0) {
                 const certificateId = profileResponse.data.data.certificates[0]?._id;
                 if (certificateId) localStorage.setItem("certificateId", certificateId);
               }
-              
+
               if (profileResponse.data.data.licenses && profileResponse.data.data.licenses.length > 0) {
                 const licenseId = profileResponse.data.data.licenses[0]?._id;
                 if (licenseId) localStorage.setItem("licenseId", licenseId);
@@ -229,42 +236,50 @@ const EditPersonalDetails = () => {
           } catch (fetchError) {
             console.error("Error fetching jobSeekerId after profile creation:", fetchError);
           }
-          
+
           if (setProfileName && setProfileDp) {
             setProfileName(formData.name);
             setProfileDp(previewImage || profileImage);
           }
+
+          showSuccess("Profile created successfully!");
+          setSuccessMessage("Your profile has been created successfully! Let's continue with more details.");
+          setRedirectPath("/User-PersonalDetails");
+          setShowSuccessPopup(true);
+
+          await checkProfileCompletion();
         } else {
           throw new Error("Failed to create profile");
         }
       }
-
-      navigate("/User-PersonalDetails");
     } catch (error) {
       console.error("Error saving profile data:", error);
-      // Even with an error, if it's the "201+500" case, we might want to consider it a success
-      // and still try to fetch the jobSeekerId
+      showError("Error saving profile data. Please try again.");
       if (error.response && error.response.status === 201) {
         console.log("Got 201 status code with error, treating as success");
-        
-        // Try to fetch the jobSeekerId even after an error
+
         try {
           const profileResponse = await axios.get(`${BASEURL}/job-seeker`, {
             headers: {
               "firebase-id": firebaseId,
-              "Content-Type": "application/json"
-            }
+              "Content-Type": "application/json",
+            },
           });
-          
+
           if (profileResponse.data && profileResponse.data.data && profileResponse.data.data._id) {
             localStorage.setItem("jobSeekerId", profileResponse.data.data._id);
             console.log("JobSeekerId fetched and stored after error recovery:", profileResponse.data.data._id);
+
+            showSuccess("Profile saved successfully, but some features may need to be updated later.");
+            setSuccessMessage("Your profile has been created successfully!");
+            setRedirectPath("/User-PersonalDetails");
+            setShowSuccessPopup(true);
+
+            await checkProfileCompletion();
           }
         } catch (fetchError) {
           console.error("Failed to fetch jobSeekerId during error recovery:", fetchError);
         }
-        
-        navigate("/User-PersonalDetails");
       }
     } finally {
       setIsLoading(false);
@@ -273,6 +288,13 @@ const EditPersonalDetails = () => {
 
   const handleBack = () => {
     navigate("/User-PersonalDetails");
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
   };
 
   return (
@@ -403,6 +425,14 @@ const EditPersonalDetails = () => {
           </div>
         </div>
       </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
     </div>
   );
 };

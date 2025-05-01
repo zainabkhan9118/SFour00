@@ -29,6 +29,23 @@ export const applyForJob = async (jobId, jobSeekerId, formData = null) => {
       }
     }
 
+    // First, check if the user has already applied for this job
+    try {
+      const alreadyApplied = await checkIfAlreadyApplied(jobId, jobSeekerId);
+      if (alreadyApplied) {
+        console.log("User has already applied for this job, returning 409 error");
+        return {
+          success: false,
+          statusCode: 409,
+          message: "You have already applied for this job",
+          data: { status: "applied" }
+        };
+      }
+    } catch (checkError) {
+      console.log("Error checking if already applied:", checkError);
+      // Continue with application attempt even if check fails
+    }
+
     // Use either the provided formData or a default object
     const data = formData || { status: "applied" };
     
@@ -57,15 +74,53 @@ export const applyForJob = async (jobId, jobSeekerId, formData = null) => {
     // Format error message based on response type
     if (error.response) {
       const message = error.response.data?.message || error.response.data || 'Server error occurred';
+      
+      // Check for specific 500 "Internal server error" which is likely an "already applied" scenario
+      if (error.response.status === 500 && 
+          (typeof message === 'string' && message.includes('Internal server error'))) {
+        console.log("Received 500 error, treating as 'already applied'");
+        
+        // Double check by fetching applied jobs
+        try {
+          const appliedJobs = await _getAppliedJobs(jobSeekerId);
+          if (appliedJobs?.data) {
+            const isApplied = appliedJobs.data.some(job => 
+              job.jobId === jobId || 
+              (typeof job.jobId === 'object' && job.jobId._id === jobId)
+            );
+            
+            if (isApplied) {
+              return {
+                success: false,
+                statusCode: 409,
+                message: "You have already applied for this job",
+                data: { status: "applied" }
+              };
+            }
+          }
+        } catch (checkError) {
+          console.log("Failed to verify applied status:", checkError);
+        }
+        
+        // If we couldn't verify or it isn't applied, still treat 500 as a possible duplicate
+        return {
+          success: false,
+          statusCode: 409,
+          message: "You may have already applied for this job",
+          data: null
+        };
+      }
+      
       // Check if it's an already applied error (typically 409 Conflict)
       if (error.response.status === 409 || (typeof message === 'string' && message.toLowerCase().includes('already applied'))) {
         return {
           success: false,
           statusCode: 409,
           message: "You have already applied for this job",
-          data: null
+          data: { status: "applied" }
         };
       }
+      
       throw new Error(message);
     } else if (error.request) {
       throw new Error('No response received from server. Please check your connection.');

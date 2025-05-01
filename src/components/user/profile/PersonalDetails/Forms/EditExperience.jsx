@@ -5,6 +5,10 @@ import { FiArrowRight } from "react-icons/fi";
 import UserSidebar from "../../UserSidebar";
 import axios from "axios";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
+import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -13,6 +17,13 @@ const EditExperience = () => {
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { showSuccess, showError, showInfo } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
   const [formData, setFormData] = useState({
     experiences: [
       { 
@@ -111,7 +122,8 @@ const EditExperience = () => {
 
     if (!jobSeekerId) {
       console.error("JobSeekerId not found");
-      alert("Please ensure you are logged in and try again");
+      setErrorMessage("Please ensure you are logged in and try again");
+      setShowErrorPopup(true);
       setIsLoading(false);
       return;
     }
@@ -215,16 +227,21 @@ const EditExperience = () => {
 
       if (successfulExperiences.length > 0) {
         console.log('Successfully saved experiences:', successfulExperiences);
-        navigate("/User-PersonalDetails");
+        setSuccessMessage("Experiences saved successfully!");
+        setRedirectPath("/User-PersonalDetails");
+        setShowSuccessPopup(true);
+        checkProfileCompletion();
       } else {
-        alert("Failed to save any experiences. Please try again.");
+        setErrorMessage("Failed to save any experiences. Please try again.");
+        setShowErrorPopup(true);
       }
     } catch (error) {
       console.error("Error in save operation:", error);
       if (error.response) {
         console.error("Error details:", error.response.data);
       }
-      alert("Failed to save experiences. Please try again.");
+      setErrorMessage(error.response?.data?.message || "Failed to save experiences. Please try again.");
+      setShowErrorPopup(true);
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +249,8 @@ const EditExperience = () => {
 
   const handleDelete = async (index) => {
     if (formData.experiences.length <= 1) {
-      alert("You must have at least one experience entry.");
+      setErrorMessage("You must have at least one experience entry.");
+      setShowErrorPopup(true);
       return;
     }
 
@@ -254,9 +272,12 @@ const EditExperience = () => {
         ...prev,
         experiences: prev.experiences.filter((_, i) => i !== index)
       }));
+      setSuccessMessage("Experience deleted successfully!");
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error("Error deleting experience:", error);
-      alert("Failed to delete experience. Please try again.");
+      setErrorMessage(error.response?.data?.message || "Failed to delete experience. Please try again.");
+      setShowErrorPopup(true);
     } finally {
       setIsLoading(false);
     }
@@ -284,6 +305,17 @@ const EditExperience = () => {
       ...prev,
       experiences: [...prev.experiences, newExperience]
     }));
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    if (redirectPath) {
+      navigate(redirectPath);
+    }
+  };
+
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
   };
 
   return (
@@ -435,6 +467,21 @@ const EditExperience = () => {
           </div>
         </div>
       </div>
+      
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
+
+      {showErrorPopup && (
+        <ProfileErrorPopup
+          message={errorMessage}
+          onClose={handleCloseErrorPopup}
+        />
+      )}
     </div>
   );
 };
