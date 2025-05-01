@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import { CiClock1 } from "react-icons/ci";
 
 const UserNotification = () => {
@@ -58,14 +56,8 @@ const UserNotification = () => {
 
   return (
     <div className="flex flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar />
-
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        {/* Header */}
-        <Header />
-
         {/* Notification Section */}
         <div className="w-full mx-auto p-4 sm:p-6">
           <div className="space-y-4">

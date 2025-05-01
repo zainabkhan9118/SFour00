@@ -132,20 +132,13 @@ const BankAccountDetails = () => {
   return (
     <div className="flex min-h-screen">
       {isLoading && <LoadingSpinner />}
-      
-      {/* Sidebar */}
-      <Sidebar />
 
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        {/* Header */}
-        <Header />
-     
         <main className="flex-3"> 
           <div className="flex flex-row flex-1">
             <UserSidebar />
             <div className="w-[60vw] ml-3 mx-auto p-6">
-              <h1 className="text-2xl font-bold mb-4">Bank Account Details</h1>
               <div className="bg-white rounded-lg p-6">
                 <div className="grid grid-cols-2 gap-4">
                   <input

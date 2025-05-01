@@ -1,5 +1,6 @@
 // API functions for handling job application and related requests
 import axios from 'axios';
+import { cachedApiCall } from '../services/apiCache';
 
 // Use the environment variable for the base URL
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -111,51 +112,87 @@ export const withdrawApplication = async (jobId, jobSeekerId) => {
   }
 };
 
-export const getAppliedJobs = async (jobSeekerId) => {
-  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-    params: { status: "applied" },
-    headers: {
-      'accept': '*/*',
-      'Content-Type': 'application/json'
-    }
-  });
-};
-
-export const getInProgressJobs = async (jobSeekerId) => {
-  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-    params: { status: "inProgress" },
-    headers: {
-      'accept': '*/*',
-      'Content-Type': 'application/json'
-    }
-  });
-};
-
-export const getCompletedJobs = async (jobSeekerId) => {
-  return axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-    params: { status: "completed" },
-    headers: {
-      'accept': '*/*',
-      'Content-Type': 'application/json'
-    }
-  });
-};
-
-export const getJobDetailsById = async (jobSeekerId, jobId) => {
+// Internal functions for GET methods (to be cached)
+const _getAppliedJobs = async (jobSeekerId) => {
   try {
-    console.log(`Fetching job details for jobId: ${jobId} and jobSeekerId: ${jobSeekerId}`);
     const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-      params: { 
-        status: "inProgress",
-        jobId: jobId 
-      },
+      params: { status: "applied" },
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json'
       }
     });
+    return response.data;
+  } catch (error) {
+    console.error('Error in _getAppliedJobs:', error);
+    throw error;
+  }
+};
 
-    return response.data?.data?.[0]?.jobId;
+const _getInProgressJobs = async (jobSeekerId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+      params: { status: "inProgress" },
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error in _getInProgressJobs:', error);
+    throw error;
+  }
+};
+
+const _getCompletedJobs = async (jobSeekerId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+      params: { status: "completed" },
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error in _getCompletedJobs:', error);
+    throw error;
+  }
+};
+
+const _getJobDetailsById = async (jobSeekerId, jobId) => {
+  const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+    params: { 
+      status: "inProgress",
+      jobId: jobId 
+    },
+    headers: {
+      'accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  return response.data?.data?.[0]?.jobId;
+};
+
+// Public cached versions of GET methods
+export const getAppliedJobs = async (jobSeekerId) => {
+  return cachedApiCall(_getAppliedJobs, [jobSeekerId], `applied-jobs-${jobSeekerId}`, 2 * 60 * 1000); // 2 minute cache
+};
+
+export const getInProgressJobs = async (jobSeekerId) => {
+  return cachedApiCall(_getInProgressJobs, [jobSeekerId], `in-progress-jobs-${jobSeekerId}`, 2 * 60 * 1000); // 2 minute cache
+};
+
+export const getCompletedJobs = async (jobSeekerId) => {
+  return cachedApiCall(_getCompletedJobs, [jobSeekerId], `completed-jobs-${jobSeekerId}`, 5 * 60 * 1000); // 5 minute cache (completed jobs change less frequently)
+};
+
+export const getJobDetailsById = async (jobSeekerId, jobId) => {
+  try {
+    console.log(`Fetching job details for jobId: ${jobId} and jobSeekerId: ${jobSeekerId}`);
+    return cachedApiCall(_getJobDetailsById, [jobSeekerId, jobId], `job-details-${jobSeekerId}-${jobId}`, 2 * 60 * 1000);
   } catch (error) {
     if (error.response) {
       throw new Error(error.response.data?.message || 'Server error occurred');

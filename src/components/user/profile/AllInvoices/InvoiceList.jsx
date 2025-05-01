@@ -103,20 +103,14 @@ const InvoiceList = () => {
   };
 
   return (
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <Sidebar />
-    
+      <div className="flex min-h-screen">  
         {/* Main Content */}
         <div className="flex flex-col flex-1">
-          {/* Header */}
-          <Header />
-       
+
           <main className="flex-3 mt-4"> 
           <div className="flex flex-row flex-1">
           <UserSidebar />
           <div className="w-[60vw] ml-4 p-6">
-            <h1 className="text-2xl font-bold mb-4">All Invoices</h1>
             <div className="bg-white rounded-lg p-5">
               {invoices.map((invoice) => (
                 <div

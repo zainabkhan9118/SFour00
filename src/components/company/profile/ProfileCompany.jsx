@@ -4,6 +4,7 @@ import { getAuth } from "firebase/auth";
 import Header from "../Header";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import LazyImage from "../../common/LazyImage";
 
 import { MdEdit } from "react-icons/md";
 import { MdOutlineHome } from "react-icons/md";
@@ -93,10 +94,12 @@ const ProfileCompany = () => {
                     <div className="max-w-3xl">
                       {/* Company Logo */}
                       <div className="w-[246px] h-[198px] rounded-lg flex items-center justify-center">
-                        <img
+                        <LazyImage
                           src={companyData?.companyLogo || company}
-                          alt="Company Logo"
+                          alt={`${companyData?.companyName || 'Company'} Logo`}
                           className="w-full h-full object-contain p-4"
+                          fallbackSrc={company}
+                          placeholderColor="#f3f4f6"
                         />
                       </div>
 

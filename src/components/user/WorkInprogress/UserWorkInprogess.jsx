@@ -1,13 +1,11 @@
 import { useState, useEffect, useContext } from 'react'
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import { useNavigate } from 'react-router-dom';
 import { getInProgressJobs } from "../../../api/jobApplicationApi";
-// import { getAuth } from "firebase/auth";
-// import axios from "axios";
 import { AppContext } from "../../../context/AppContext";
+import LazyImage from "../../common/LazyImage";
 import companyImage from "../../../assets/images/company.png";
+import LoadingSpinner from "../../common/LoadingSpinner";
 
 const CheckIcon = () => (
   <svg
@@ -54,13 +52,16 @@ const UserWorkInprogess = () => {
         let jobSeekerId = localStorage.getItem("jobSeekerId");
 
         const response = await getInProgressJobs(jobSeekerId);
+        console.log('In progress jobs API response:', response);
         
-        if (!response?.data?.data) {
+        // Fix error handling to accommodate the actual response format
+        if (response && response.data) {
+          const jobsData = response.data;
+          console.log('In progress jobs data:', jobsData);
+          setInProgressJobs(Array.isArray(jobsData) ? jobsData : []);
+        } else {
           throw new Error("Invalid response format from server");
         }
-
-        const jobsData = response.data.data;
-        setInProgressJobs(Array.isArray(jobsData) ? jobsData : []);
       } catch (err) {
         console.error("Error fetching in-progress jobs:", err);
         setError(err.message || "Failed to load in-progress jobs. Please try again later.");
@@ -79,14 +80,11 @@ const UserWorkInprogess = () => {
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p>Loading in-progress jobs...</p>
+            <div className="flex justify-center items-center py-10">
+              <LoadingSpinner />
             </div>
           </div>
         </div>
@@ -97,9 +95,7 @@ const UserWorkInprogess = () => {
   if (error) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
             <div className="text-center text-red-500 py-4">{error}</div>
@@ -111,9 +107,7 @@ const UserWorkInprogess = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           <HeaderWork />
           <div className="">
@@ -128,10 +122,12 @@ const UserWorkInprogess = () => {
                     className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
                   >
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                      <img
+                      <LazyImage
                         src={job.companyId?.companyLogo || companyImage}
                         alt={job.jobTitle || "Company"}
                         className="w-12 h-12 rounded-full border border-gray-300"
+                        fallbackSrc={companyImage}
+                        placeholderColor="#f3f4f6"
                       />
                       <div>
                         <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>

@@ -1,6 +1,4 @@
 import React from "react";
-import Header from "../../Header";
-import Sidebar from "../../SideBar";
 import UserSidebar from "../UserSidebar";
 import { Chatbot } from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
@@ -131,15 +129,9 @@ const ContactSupport = () => {
     <div className="flex min-h-screen">
       {/* Add the custom styles */}
       <style>{chatbotStyles}</style>
-      
-      {/* Sidebar */}
-      <Sidebar />
 
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        {/* Header */}
-        <Header />
-
         <main className="flex-1">
           <div className="flex flex-row flex-1">
             <UserSidebar />

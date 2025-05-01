@@ -1,21 +1,16 @@
 import React, { useContext } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaUser,
   FaLock,
   FaFileInvoice,
   FaHeadset,
   FaQuestionCircle,
-  FaSignOutAlt,
   FaUniversity,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
-import { auth } from "../../../config/firebaseConfig";
 import { AppContext } from "../../../context/AppContext";
 
 const UserSidebar = () => {
-  const navigate = useNavigate();
   const { profileName, profileDp } = useContext(AppContext);
   const location = useLocation();
   const currentPath = location.pathname;
@@ -24,6 +19,7 @@ const UserSidebar = () => {
   const fallbackProfileName = "John Doe";
   const fallbackProfileDp = "src/assets/images/profile.jpeg";
 
+  // Check if current path matches route or is a sub-route
   const isActive = (path) => {
     if (path === "/User-PersonalDetails") {
       return (
@@ -40,119 +36,102 @@ const UserSidebar = () => {
   };
 
   return (
-    <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
-      <div className="flex items-center space-x-3 pb-4">
+    <div className="h-full bg-white py-4 px-3">
+      {/* Profile quick info - smaller height */}
+      <div className="flex items-center mb-6 px-2">
         <img
-          src={profileDp || fallbackProfileDp} // Use fallback image if profileDp is not defined
+          src={profileDp || fallbackProfileDp}
           alt="profile"
-          className="w-10 h-10 rounded-full"
+          className="w-8 h-8 rounded-full object-cover"
         />
-        <span className="font-semibold  text-lg">
-        {profileName?.trim() ? profileName : fallbackProfileName} {/* Use fallback name if profileName is not defined */}
+        <span className="ml-2 font-medium text-sm text-gray-800 truncate">
+          {profileName?.trim() ? profileName : fallbackProfileName}
         </span>
       </div>
-      <ul className="mt-4 space-y-8 text-gray-700">
-        <li>
-          <Link
-            to="/User-PersonalDetails"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-PersonalDetails")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaUser
-              className={`${
-                isActive("/User-PersonalDetails")
-                  ? "text-orange-500"
-                  : "text-gray-600"
-              }`}
-            />
-            <span>Personal Details</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-BankDetails"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-BankDetails")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaUniversity className="text-orange-500" />
-            <span>Bank Details</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/ResetPassword"
-            className={`flex items-center space-x-3 ${
-              isActive("/ResetPassword")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaLock className="text-orange-500" />
-            <span>Reset Password</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-InvoiceList"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-InvoiceList")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaFileInvoice className="text-orange-500" />
-            <span>My Invoices</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-ContactSupport"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-ContactSupport")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/User-ContactSupport");
-            }}
-          >
-            <FaHeadset className="text-orange-500" />
-            <span>Contact S4 Support</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-FAQSection"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-FAQSection")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaQuestionCircle className="text-orange-500" />
-            <span>FAQ's</span>
-          </Link>
-        </li>
-      </ul>
-      <div className="mt-6 text-xs text-gray-500">
+      
+      {/* Navigation links - more compact */}
+      <nav className="flex flex-col space-y-4 text-sm">
+        <Link
+          to="/User-PersonalDetails"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/User-PersonalDetails")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaUser className="text-orange-500 mr-3" size={14} />
+          <span>Personal Details</span>
+        </Link>
+        
+        <Link
+          to="/User-BankDetails"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/User-BankDetails")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaUniversity className="text-orange-500 mr-3" size={14} />
+          <span>Bank Details</span>
+        </Link>
+        
+        <Link
+          to="/ResetPassword"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/ResetPassword")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaLock className="text-orange-500 mr-3" size={14} />
+          <span>Reset Password</span>
+        </Link>
+        
+        <Link
+          to="/User-InvoiceList"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/User-InvoiceList")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaFileInvoice className="text-orange-500 mr-3" size={14} />
+          <span>My Invoices</span>
+        </Link>
+        
+        <Link
+          to="/User-ContactSupport"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/User-ContactSupport")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaHeadset className="text-orange-500 mr-3" size={14} />
+          <span>Contact S4 Support</span>
+        </Link>
+        
+        <Link
+          to="/User-FAQSection"
+          className={`flex items-center p-2 rounded-md ${
+            isActive("/User-FAQSection")
+              ? "bg-orange-100 text-orange-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <FaQuestionCircle className="text-orange-500 mr-3" size={14} />
+          <span>FAQ's</span>
+        </Link>
+      </nav>
+      
+      {/* Footer text - more compact */}
+      <div className="mt-6 text-xs text-gray-500 px-2">
         <p>Terms and conditions of use:</p>
-        <p>
-          <a href="#" className="text-blue-500 underline">
-            Privacy policy
-          </a>
-          ,
-          <a href="#" className="text-blue-500 underline">
-            {" "}
-            Cookie policy
-          </a>
-        </p>
+        <div className="flex space-x-1">
+          <a href="#" className="text-blue-500 hover:underline">Privacy policy</a>
+          <span>,</span>
+          <a href="#" className="text-blue-500 hover:underline">Cookie policy</a>
+        </div>
       </div>
     </div>
   );

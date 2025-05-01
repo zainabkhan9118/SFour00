@@ -1,11 +1,12 @@
 // API functions for handling job-related requests
 import axios from 'axios';
+import { cachedApiCall } from '../services/apiCache';
 
 // Use the environment variable for the base URL
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-// Function to fetch all jobs
-export const fetchAllJobs = async () => {
+// Original function kept for reference and direct use when needed
+const _fetchAllJobs = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/jobs`);
     return response.data;
@@ -15,10 +16,13 @@ export const fetchAllJobs = async () => {
   }
 };
 
+// Cached version of fetchAllJobs - 5 minute cache by default
+export const fetchAllJobs = async () => {
+  return cachedApiCall(_fetchAllJobs, [], 'all-jobs');
+};
 
-
-// Function to fetch jobs by company ID
-export const fetchJobsByCompany = async (companyId) => {
+// Original function kept for reference
+const _fetchJobsByCompany = async (companyId) => {
   try {
     const response = await axios.get(`${BASE_URL}/jobs/company/${companyId}`);
     return response.data;
@@ -28,7 +32,12 @@ export const fetchJobsByCompany = async (companyId) => {
   }
 };
 
-// Function to apply for a job
+// Cached version of fetchJobsByCompany - 5 minute cache by default
+export const fetchJobsByCompany = async (companyId) => {
+  return cachedApiCall(_fetchJobsByCompany, [companyId], `company-jobs-${companyId}`);
+};
+
+// Function to apply for a job - no caching for POST requests
 export const applyForJob = async (jobId, userData) => {
   try {
     const response = await axios.post(`${BASE_URL}/jobs/${jobId}/apply`, userData);
@@ -39,7 +48,7 @@ export const applyForJob = async (jobId, userData) => {
   }
 };
 
-// Function to bookmark a job
+// Function to bookmark a job - no caching for POST requests
 export const toggleJobBookmark = async (jobId, isBookmarked) => {
   try {
     const response = await axios.post(`${BASE_URL}/jobs/${jobId}/bookmark`, { isBookmarked });

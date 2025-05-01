@@ -42,6 +42,14 @@ const Sidebar = () => {
              currentPath.toLowerCase().startsWith("/user-jobdetails/") ||
              currentPath.startsWith("/User-JobDetails/");
     }
+    //For My Work route, also check if on work details page
+    if (path === routes.work) {
+      return currentPath === path || 
+             currentPath.startsWith("/User-MyWorkAssignedPage") ||
+             currentPath.startsWith("/User-workInprogess") ||
+             currentPath.startsWith("/User-WorkCompleted") ;
+
+    }
     // For other routes, exact match
     return currentPath === path;
   };
@@ -74,9 +82,9 @@ const Sidebar = () => {
 
       {/* Sidebar component */}
       <div 
-        className={`fixed md:static md:translate-x-0 min-h-screen z-20  bg-[#121D34] text-gray-400 flex flex-col p-5 border rounded-lg transition-transform duration-300 ease-in-out ${
+        className={`fixed md:static md:translate-x-0 min-h-screen z-20 bg-[#121D34] text-gray-400 flex flex-col p-5 transition-transform duration-300 ease-in-out ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:min-h-screen md:w-64 w-64 rounded-tr-[30px] rounded-br-[30px]`}
+        } md:min-h-screen w-64 md:w-auto md:flex-shrink-0 rounded-tr-[30px] rounded-br-[30px]`}
       >
         {/* Logo */}
         <div className="flex justify-center mb-10">
