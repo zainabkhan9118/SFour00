@@ -21,7 +21,7 @@ const Sidebar = () => {
   // List of routes for easier checking
   const routes = {
     jobs: "/user-Job",
-    profile: "/User-UserProfile",
+    profile: "/User-PersonalDetails",
     chat: "/User-UserChatPage",
     work: "/User-WorkApplied",
     notifications: "/User-UserNotification"

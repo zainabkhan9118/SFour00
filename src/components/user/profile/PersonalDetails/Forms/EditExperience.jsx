@@ -385,7 +385,7 @@ const EditExperience = () => {
                                     ? experience.experienceCertificate.name 
                                     : experience.experienceCertificate
                                     ? experience.experienceCertificate.split('/').pop()
-                                    : "Upload Experience Certificate (Optional)"}
+                                    : "Upload Experience Certificate"}
                                 </span>
                               </div>
                             </div>

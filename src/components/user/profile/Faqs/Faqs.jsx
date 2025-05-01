@@ -55,19 +55,19 @@ const FAQSection = () => {
   };
 
   return (
-     <div className="flex h-screen">
+     <div className="flex h-screen overflow-hidden">
     {/* Sidebar */}
     <Sidebar />
 
     {/* Main Content */}
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col h-screen  flex-1 overflow-hidden">
       {/* Header */}
       <Header />
    
       <main className="flex-3"> 
       <div className="flex flex-row flex-1">
       <UserSidebar />
-    <div className="w-full mx-auto p-6">
+    <div className="w-full mx-auto p-6 h-screen overflow-auto">
       <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
       <div className="space-y-4">
         {faqs.map((faq, index) => (
