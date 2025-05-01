@@ -43,6 +43,13 @@ export const updateLocation = async (jobId, locationData) => {
 // Update status via QR
 export const updateStatusByQR = async (jobId, qrData) => {
   const jobSeekerId = localStorage.getItem("jobSeekerId");
+  
+  console.log(`Making QR status update request for job ${jobId}:`, {
+    endpoint: `${BASE_URL}/apply/${jobId}/update-status-by-qr`,
+    jobSeekerId,
+    qrData
+  });
+  
   return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, qrData, {
     headers: {
       'jobSeekerId': jobSeekerId,

@@ -8,6 +8,7 @@ import PopupButton3 from "../popupModel/PopupButton3";
 import PopupButton4 from "../popupModel/PopupButton4";
 import PopupButton5 from "../popupModel/PopupButton5";
 import PopupButton6 from "../popupModel/PopupButton6";
+import AlreadyAssignedPopup from "../popupModel/AlreadyAssignedPopup";
 import { 
   getAssignedJobs, 
   getJobsByStatus, 
@@ -66,18 +67,21 @@ export default function MyWorkAssignedPage() {
   const [showButton4, setShowButton4] = useState(false);
   const [showButton5, setShowButton5] = useState(false);
   const [showButton6, setShowButton6] = useState(false);
+  const [showAlreadyAssignedPopup, setShowAlreadyAssignedPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [allJobs, setAllJobs] = useState([]);
   const [assignableJobs, setAssignableJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [selectedJobId, setSelectedJobId] = useState(null); 
   const { BASEURL } = useContext(AppContext);
 
   useEffect(() => {
     const fetchAssignedJobs = async () => {
       try {
         let jobSeekerId = localStorage.getItem("jobSeekerId");
-        console.log('Initial jobSeekerId from localStorage:', jobSeekerId);
+       // console.log('Initial jobSeekerId from localStorage:', jobSeekerId);
 
         if (!jobSeekerId) {
           const auth = getAuth();
@@ -95,7 +99,7 @@ export default function MyWorkAssignedPage() {
                 localStorage.setItem("jobSeekerId", jobSeekerId);
               }
             } catch (err) {
-              console.error("Error fetching user data:", err);
+              //console.error("Error fetching user data:", err);
               throw new Error("Unable to fetch user data. Please try logging in again.");
             }
           }
@@ -106,35 +110,35 @@ export default function MyWorkAssignedPage() {
         }
 
         // Go back to the original API call that was working
-        console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
+       // console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
         const response = await getAssignedJobs(jobSeekerId);
-        console.log('API Response:', response);
+        //console.log('API Response:', response);
 
         if (!response?.data?.data) {
           throw new Error("Invalid response format from server");
         }
 
         const jobsData = response.data.data;
-        console.log('All applied jobs data:', jobsData);
+        //console.log('All applied jobs data:', jobsData);
         
         // Filter for jobs with isAssignable = true (for Accept/Decline buttons)
         const assignableJobs = Array.isArray(jobsData)
           ? jobsData.filter(job => job.isAssignable === true)
           : [];
-        console.log('Filtered assignable jobs:', assignableJobs);
+        //console.log('Filtered assignable jobs:', assignableJobs);
         
         // Now also make a separate call to get jobs with status="assigned" (for Book On button)
-        console.log('Fetching jobs with status "assigned" (for Book On button)');
+       // console.log('Fetching jobs with status "assigned" (for Book On button)');
         const assignedResponse = await axios.get(`${BASEURL}/apply/${jobSeekerId}`, {
           params: { status: "assigned" }
         });
-        console.log('Assigned jobs API Response:', assignedResponse);
+        //console.log('Assigned jobs API Response:', assignedResponse);
         
         const assignedJobsData = assignedResponse?.data?.data || [];
         const bookOnJobs = Array.isArray(assignedJobsData)
           ? assignedJobsData.filter(job => job.status === "assigned")
           : [];
-        console.log('Jobs with Book On button:', bookOnJobs);
+       // console.log('Jobs with Book On button:', bookOnJobs);
         
         // Combine both types of jobs - put "Book On" jobs first
         const combinedJobs = [
@@ -158,7 +162,7 @@ export default function MyWorkAssignedPage() {
   }, [BASEURL]);
 
   const handleAccept = async (applicationId) => {
-    console.log("Accepting job application with ID:", applicationId);
+   // console.log("Accepting job application with ID:", applicationId);
     try {
       setLoading(true);
       
@@ -170,7 +174,7 @@ export default function MyWorkAssignedPage() {
         throw new Error("Application data not found");
       }
       
-      console.log("Found application in local data:", application);
+      //console.log("Found application in local data:", application);
       
       // Extract the job ID from our cached data
       let jobId;
@@ -179,11 +183,11 @@ export default function MyWorkAssignedPage() {
       } else if (typeof application.jobId === 'string') {
         jobId = application.jobId;
       } else {
-        console.error("Could not extract job ID from application:", application);
+        //console.error("Could not extract job ID from application:", application);
         throw new Error("Could not find job ID in application data");
       }
       
-      console.log(`Using jobId ${jobId} from application data`);
+      //console.log(`Using jobId ${jobId} from application data`);
       
       // Get jobSeekerId from localStorage
       const jobSeekerId = localStorage.getItem("jobSeekerId");
@@ -198,7 +202,7 @@ export default function MyWorkAssignedPage() {
           isAssigned: true 
         });
         
-        console.log("Job assignment response:", response.data);
+        //console.log("Job assignment response:", response.data);
         
         // If the request was successful
         if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
@@ -207,33 +211,57 @@ export default function MyWorkAssignedPage() {
           
           // Refresh the jobs list
           await refreshJobsList(jobSeekerId);
-        }
-      } catch (error) {
-        console.error("API error:", error);
-        
-        // Check if this is a 409 Conflict error (job already assigned)
-        if (error.response && error.response.status === 409) {
-          setError("This job has already been assigned to another job seeker.");
+        } else if (response.data && response.data.statusCode === 409) {
+          // Direct response with 409 status code
+          //console.log("Job is already assigned (409 from direct response)");
+          setErrorMessage("This job has already been assigned to another job seeker.");
+          setShowAlreadyAssignedPopup(true);
           
           // Remove this job from the list
           setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+        }
+      } catch (error) {
+        //console.error("API error:", error);
+        
+        // Check if this is a 409 Conflict error (job already assigned)
+        if (error.response && error.response.status === 409) {
+          // Error response with 409 status
+          //console.log("Job is already assigned (409 from error response)");
+          setErrorMessage(error.response.data?.message || "This job has already been assigned to another job seeker.");
+          setShowAlreadyAssignedPopup(true);
           
-          // Auto-clear error after 5 seconds
-          setTimeout(() => setError(null), 5000);
+          // Remove this job from the list
+          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
         } else if (error.response && error.response.data && error.response.data.message) {
           // Show the specific error message from the API
-          setError(error.response.data.message);
-          setTimeout(() => setError(null), 5000);
+          setErrorMessage(error.response.data.message);
+          setShowAlreadyAssignedPopup(true);
+        } else if (error.message && error.message.includes("409")) {
+          // Fallback for when status code might be in the error message
+          //console.log("Job is already assigned (409 in error message)");
+          setErrorMessage("This job has already been assigned to another job seeker.");
+          setShowAlreadyAssignedPopup(true);
+          
+          // Remove this job from the list
+          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+        } else if (error.message && error.message.includes("already assigned")) {
+          // Fallback for when error message contains "already assigned"
+          //console.log("Job is already assigned (from error message text)");
+          setErrorMessage(error.message);
+          setShowAlreadyAssignedPopup(true);
+          
+          // Remove this job from the list
+          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
         } else {
           // Generic error message
-          setError("Failed to assign job. Please try again later.");
-          setTimeout(() => setError(null), 5000);
+          setErrorMessage("Failed to assign job. Please try again later.");
+          setShowAlreadyAssignedPopup(true);
         }
       }
     } catch (error) {
       console.error("Error in handleAccept:", error);
-      setError(error.message || "Something went wrong. Please try again.");
-      setTimeout(() => setError(null), 5000);
+      setErrorMessage(error.message || "Something went wrong. Please try again.");
+      setShowAlreadyAssignedPopup(true);
     } finally {
       setLoading(false);
     }
@@ -275,6 +303,26 @@ export default function MyWorkAssignedPage() {
 
   const handleBookOn = (applicationId) => {
     console.log("Booking on for application ID:", applicationId);
+    // Find the application object
+    const application = assignableJobs.find(app => app._id === applicationId);
+    
+    if (application) {
+      // Get the job ID
+      let jobId;
+      if (application.jobId?._id) {
+        jobId = application.jobId._id;
+      } else if (typeof application.jobId === 'string') {
+        jobId = application.jobId;
+      }
+      
+      if (jobId) {
+        // Store it in state and localStorage for persistence
+        setSelectedJobId(jobId);
+        localStorage.setItem("selectedJobId", jobId);
+        console.log(`Setting selected job ID: ${jobId}`);
+      }
+    }
+    
     setSelectedApplicationId(applicationId);
     setShowButton4(true);
   };
@@ -302,6 +350,8 @@ export default function MyWorkAssignedPage() {
       }
       
       console.log(`Book On: Using jobId ${jobId}`);
+      setSelectedJobId(jobId);
+      localStorage.setItem("selectedJobId", jobId);
       
       // Get jobSeekerId from localStorage
       const jobSeekerId = localStorage.getItem("jobSeekerId");
@@ -323,12 +373,7 @@ export default function MyWorkAssignedPage() {
               // Update location first
               await updateLocation(jobId, locationData);
               
-              // Now update job status using QR data (mocked in this case)
-              // Note: In real implementation, this would come from scanning a QR code
-              const mockQrData = { qrCodeData: `qr-${Date.now()}` };
-              await updateStatusByQR(jobId, mockQrData);
-              
-              // Show success popup
+              // Now show the QR code scanner popup instead of using mock data
               setShowButton5(true);
               
               // Refresh the job list
@@ -336,21 +381,21 @@ export default function MyWorkAssignedPage() {
             } catch (error) {
               console.error("Error during Book On process:", error);
               
-              // Show success popup anyway for better UX
+              // Show QR scanner popup anyway for better UX
               setShowButton5(true);
             }
           },
           (error) => {
             console.error("Geolocation error:", error);
             
-            // Show success popup even if location access failed
+            // Show QR scanner popup even if location access failed
             setShowButton5(true);
           }
         );
       } else {
         console.error("Geolocation is not supported by this browser");
         
-        // Show success popup anyway
+        // Show QR scanner popup anyway
         setShowButton5(true);
       }
     } catch (error) {
@@ -358,7 +403,7 @@ export default function MyWorkAssignedPage() {
       setError(error.message || "Failed to book job. Please try again.");
       setTimeout(() => setError(null), 5000);
       
-      // Show success popup anyway for better UX
+      // Show QR scanner popup anyway for better UX
       setShowButton5(true);
     } finally {
       setLoading(false);
@@ -528,6 +573,7 @@ export default function MyWorkAssignedPage() {
             setShowButton6(true);
           }}
           onClose5={() => setShowButton5(false)}
+          jobId={selectedJobId} // Pass the selected job ID
         />
       )}
       
@@ -536,6 +582,13 @@ export default function MyWorkAssignedPage() {
           onClose={() => {
             setShowButton6(false);
           }}
+        />
+      )}
+
+      {showAlreadyAssignedPopup && (
+        <AlreadyAssignedPopup
+          message={errorMessage}
+          onClose={() => setShowAlreadyAssignedPopup(false)}
         />
       )}
     </div>

@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import PopupButton3 from "./PopupButton3";
 
-const PopupButton2 = ({ onClose, onClose2 }) => {
+const PopupButton2 = ({ onClose, onClose2, jobId }) => {
   const [showPopup3, setShowPopup3] = useState(false);
   const buttonRef = useRef();
 
@@ -66,6 +66,7 @@ const PopupButton2 = ({ onClose, onClose2 }) => {
         // Render PopupButton3 when showPopup3 is true
         <PopupButton3
           onClose={() => setShowPopup3(false)} // Close Popup 3
+          jobId={jobId} // Pass jobId to PopupButton3
         />
       )}
     </>
