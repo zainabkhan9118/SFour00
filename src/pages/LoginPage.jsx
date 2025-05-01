@@ -372,12 +372,12 @@ export default function LoginPage() {
               <label className="flex items-center">
                 <input type="checkbox" className="mr-2" /> Remember Me
               </label>
-              <span
+              <a 
+                href="/ForgetPassword" 
                 className="text-orange-500 cursor-pointer"
-                onClick={() => navigate("/ForgetPassword")}
               >
                 Forgot password?
-              </span>
+              </a>
             </div>
 
             <button

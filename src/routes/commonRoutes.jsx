@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import CommonLayout from "../components/layouts/common/CommonLayout";
 
 // Lazy load all common components
 const Home = lazy(() => import("../pages/Home"));
@@ -18,14 +19,21 @@ const SuspenseWrapper = ({ children }) => (
   </Suspense>
 );
 
+// Layout wrapper for common pages
+const WithCommonLayout = ({ Component }) => (
+  <CommonLayout>
+    <Component />
+  </CommonLayout>
+);
+
 const commonRoutes = [
-  <Route key="home" path="/" element={<SuspenseWrapper><Home /></SuspenseWrapper>} />,
-  <Route key="forget-password" path="/ForgetPassword" element={<SuspenseWrapper><ForgetPassword /></SuspenseWrapper>} />,
-  <Route key="reset-password" path="/ResetPassword" element={<SuspenseWrapper><ResetPassword /></SuspenseWrapper>} />,
-  <Route key="dashboard" path="/dashboard" element={<SuspenseWrapper><Dashboard /></SuspenseWrapper>} />,
-  <Route key="login" path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />,
-  <Route key="create-account" path="/CreateAccount" element={<SuspenseWrapper><CreateAccount /></SuspenseWrapper>} />,
-  <Route key="email-verification" path="/email-verification" element={<SuspenseWrapper><EmailVerification /></SuspenseWrapper>} /> 
+  <Route key="home" path="/" element={<SuspenseWrapper><WithCommonLayout Component={Home} /></SuspenseWrapper>} />,
+  <Route key="forget-password" path="/ForgetPassword" element={<SuspenseWrapper><WithCommonLayout Component={ForgetPassword} /></SuspenseWrapper>} />,
+  <Route key="reset-password" path="/ResetPassword" element={<SuspenseWrapper><WithCommonLayout Component={ResetPassword} /></SuspenseWrapper>} />,
+  <Route key="dashboard" path="/dashboard" element={<SuspenseWrapper><WithCommonLayout Component={Dashboard} /></SuspenseWrapper>} />,
+  <Route key="login" path="/login" element={<SuspenseWrapper><WithCommonLayout Component={LoginPage} /></SuspenseWrapper>} />,
+  <Route key="create-account" path="/CreateAccount" element={<SuspenseWrapper><WithCommonLayout Component={CreateAccount} /></SuspenseWrapper>} />,
+  <Route key="email-verification" path="/email-verification" element={<SuspenseWrapper><WithCommonLayout Component={EmailVerification} /></SuspenseWrapper>} /> 
 ];
 
 export default commonRoutes;

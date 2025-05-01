@@ -108,16 +108,16 @@ export default function CreateAccount() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-col md:flex-row h-screen w-full">
       {/* Left Section */}
-      <div className="w-1/2 bg-white flex justify-center items-center px-12">
+      <div className="w-full md:w-1/2 bg-white flex flex-col justify-center items-center px-6 md:px-12 py-8">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-6">
-            <img src={logo} alt="Logo" className="h-12" />
+            <img src={logo} alt="Logo" className="h-[80px] md:h-12" />
           </div>
-          <div className="flex flex-row items-center space-x-10">
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-10 space-y-4 md:space-y-0">
             <div>
-              <h2 className="text-3xl font-semibold">Create account.</h2>
+              <h2 className="text-2xl md:text-3xl font-semibold">Create account.</h2>
               <p className="text-sm text-gray-500 mt-1">
                 Already have an account?{" "}
                 <span
@@ -128,9 +128,9 @@ export default function CreateAccount() {
                 </span>
               </p>
             </div>
-            <div>
+            <div className="self-start md:self-auto">
               <select
-                className="border px-4 py-2 rounded-[50px] text-sm focus:ring-2 focus:ring-gray-500"
+                className="border px-3 py-2 md:px-4 md:py-2 rounded-[50px] text-sm focus:ring-2 focus:ring-gray-500"
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
               >
@@ -161,12 +161,12 @@ export default function CreateAccount() {
                       type="text"
                       name="fullName"
                       placeholder="Full Name"
-                      className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                     />
                     <ErrorMessage
                       name="fullName"
                       component="div"
-                      className="text-red-500 text-sm mt-1"
+                      className="text-red-500 text-xs md:text-sm mt-1"
                     />
                   </div>
                 ) : (
@@ -175,12 +175,12 @@ export default function CreateAccount() {
                       type="text"
                       name="companyName"
                       placeholder="Company Name"
-                      className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                     />
                     <ErrorMessage
                       name="companyName"
                       component="div"
-                      className="text-red-500 text-sm mt-1"
+                      className="text-red-500 text-xs md:text-sm mt-1"
                     />
                   </div>
                 )}
@@ -190,12 +190,12 @@ export default function CreateAccount() {
                     type="email"
                     name="email"
                     placeholder="Email address"
-                    className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                   />
                   <ErrorMessage
                     name="email"
                     component="div"
-                    className="text-red-500 text-sm mt-1"
+                    className="text-red-500 text-xs md:text-sm mt-1"
                   />
                 </div>
 
@@ -204,12 +204,12 @@ export default function CreateAccount() {
                     type="text"
                     name="phone"
                     placeholder="Phone #"
-                    className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                   />
                   <ErrorMessage
                     name="phone"
                     component="div"
-                    className="text-red-500 text-sm mt-1"
+                    className="text-red-500 text-xs md:text-sm mt-1"
                   />
                 </div>
 
@@ -218,19 +218,19 @@ export default function CreateAccount() {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="Password"
-                    className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                   />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
                     type="button"
-                    className="absolute right-3 top-3 text-gray-500"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                   <ErrorMessage
                     name="password"
                     component="div"
-                    className="text-red-500 text-sm mt-1"
+                    className="text-red-500 text-xs md:text-sm mt-1"
                   />
                 </div>
 
@@ -239,25 +239,25 @@ export default function CreateAccount() {
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     placeholder="Confirm Password"
-                    className="w-full border px-4 py-2 rounded-md text-sm focus:ring-2 focus:ring-orange-500"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500"
                   />
                   <button
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     type="button"
-                    className="absolute right-3 top-3 text-gray-500"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                   >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                   <ErrorMessage
                     name="confirmPassword"
                     component="div"
-                    className="text-red-500 text-sm mt-1"
+                    className="text-red-500 text-xs md:text-sm mt-1"
                   />
                 </div>
 
                 <div className="mt-4 flex items-center">
                   <Field type="checkbox" name="terms" className="mr-2" />
-                  <label htmlFor="terms" className="text-sm text-gray-600">
+                  <label htmlFor="terms" className="text-xs md:text-sm text-gray-600">
                     I agree with your{" "}
                     <span className="text-orange-500 cursor-pointer">
                       Terms of Services
@@ -267,7 +267,7 @@ export default function CreateAccount() {
 
                 <button
                   type="submit"
-                  className="w-full bg-orange-500 text-white py-2 rounded-md text-sm font-semibold hover:bg-orange-600 transition mt-4"
+                  className="w-full bg-orange-500 text-white py-2 md:py-3 rounded-full text-sm font-semibold hover:bg-orange-600 transition mt-4"
                   disabled={loading}
                 >
                   {loading ? "Creating Account..." : "Create Account →"}
@@ -276,18 +276,19 @@ export default function CreateAccount() {
             )}
           </Formik>
 
-          <div className="mt-4 text-center text-sm text-gray-500">or</div>
-          <div className="flex justify-center gap-4 mt-4">
-            <button className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm hover:bg-gray-100">
-              <FaFacebook className="text-blue-600" /> Facebook
+          <div className="mt-4 text-center text-xs md:text-sm text-gray-500">or</div>
+          <div className="flex flex-col md:flex-row justify-center gap-3 mt-4">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 w-full">
+              <FaFacebook className="text-blue-600" /> Sign in with Facebook
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm hover:bg-gray-100">
-              <FcGoogle /> Google
+            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 w-full">
+              <FcGoogle /> Sign in with Google
             </button>
           </div>
         </div>
       </div>
 
+      {/* Right Section with Job Stats */}
       <JobStatsDisplay />
     </div>
   );
