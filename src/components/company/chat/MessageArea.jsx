@@ -171,7 +171,7 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
               >
                 <p className="text-xs md:text-sm">{message.message}</p>
                 <div className={`text-[10px] mt-1 ${message.isFromCurrentUser ? 'text-orange-100' : 'text-gray-400'}`}>
-                  {message.senderEmail}
+                {message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>

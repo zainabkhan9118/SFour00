@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FaUser, FaComments, FaBriefcase, FaBell, FaQrcode, FaSignOutAlt } from "react-icons/fa";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { toast } from "react-toastify";
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -96,13 +97,27 @@ export default function Sidebar() {
           </nav>
         )}
 
-        <div className="mt-auto pt-6">
-          <Link to="/login">
-            <div className="flex items-center px-6 py-2 text-lg text-gray-400 hover:bg-[#1F2A48] hover:text-white rounded-lg cursor-pointer">
-              <FaSignOutAlt className="mr-3 text-xl" /> Logout
-            </div>
-          </Link>
-        </div>
+<div className="mt-auto pt-6">
+  <Link
+    to=""
+    onClick={async () => {
+      try {
+        
+        localStorage.clear(); 
+        await signOut(auth);
+        toast.success("Logged out successfully!"); 
+        navigate("/login"); 
+      } catch (error) {
+        console.error("Error during logout:", error);
+        // toast.error("Failed to log out. Please try again."); 
+      }
+    }}
+  >
+    <div className="flex items-center px-6 py-2 text-lg text-gray-400 hover:bg-[#1F2A48] hover:text-white rounded-lg cursor-pointer">
+      <FaSignOutAlt className="mr-3 text-xl" /> Logout
+    </div>
+  </Link>
+</div>
       </div>
     </>
   );
