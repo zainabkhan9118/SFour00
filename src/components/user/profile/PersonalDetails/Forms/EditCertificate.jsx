@@ -2,8 +2,6 @@ import React, { useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight, FiUpload } from "react-icons/fi";
-import Header from "../../../Header";
-import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import axios from "axios";
@@ -18,6 +16,15 @@ const EditCertificate = () => {
   const [selectedFile, setSelectedFile] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [certificateId, setCertificateId] = React.useState(null);
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const storedCertId = localStorage.getItem("certificateId");
@@ -85,7 +92,6 @@ const EditCertificate = () => {
       }
 
       if (!certificateId) {
-        // For new certificate (POST request)
         const response = await axios.post(
           `${BASEURL}/certificate`,
           formData,
@@ -105,7 +111,6 @@ const EditCertificate = () => {
           }
         }
       } else {
-        // For updating existing certificate (PATCH request)
         await axios.patch(
           `${BASEURL}/certificate/${certificateId}`,
           formData,
@@ -133,7 +138,6 @@ const EditCertificate = () => {
     }
   };
 
-  // Reset function to clear form when adding new certificate
   const handleAddNew = () => {
     localStorage.removeItem("certificateId");
     setCertificateId(null);
@@ -143,111 +147,117 @@ const EditCertificate = () => {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden">
       {isLoading && <LoadingSpinner />}
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
-        <main className="flex-3 overflow-auto">
-          <div className="flex flex-row flex-1">
-            <UserSidebar />
-            <div className="p-4 flex-1 bg-gray-50">
-              <div className="flex items-center justify-between p-4">
-                <button onClick={() => navigate("/User-PersonalDetails")} className="text-gray-600 hover:text-gray-800 flex items-center">
-                  <FaArrowLeft className="mr-2" />
-                  <span className="font-medium text-black">
-                    {certificateId ? "Edit Certificate" : "Add Certificate"}
-                  </span>
-                </button>
-                {certificateId && (
-                  <button
-                    onClick={handleAddNew}
-                    className="text-orange-500 hover:text-orange-600"
-                  >
-                    Add New Certificate
-                  </button>
-                )}
+      
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <UserSidebar />
+        </div>
+      )}
+
+      <div className="flex flex-col flex-1">
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => navigate("/User-PersonalDetails")} className="text-gray-600 hover:text-gray-800 flex items-center">
+              <FaArrowLeft className="mr-2" />
+              <span className="font-medium text-black">
+                {certificateId ? "Edit Certificate" : "Add Certificate"}
+              </span>
+            </button>
+            {certificateId && (
+              <button
+                onClick={handleAddNew}
+                className="text-orange-500 hover:text-orange-600"
+              >
+                Add New Certificate
+              </button>
+            )}
+          </div>
+          
+          <div className="w-full max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
+              <div className="relative">
+                <input
+                  type="date"
+                  value={issueDate}
+                  onChange={(e) => setIssueDate(e.target.value)}
+                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  placeholder="Select Issue Date"
+                  required
+                />
               </div>
               
-              <div className="w-full max-w-2xl">
-                <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={issueDate}
-                      onChange={(e) => setIssueDate(e.target.value)}
-                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                      placeholder="Select Issue Date"
-                      required
-                    />
+              <input
+                type="text"
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
+                className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                placeholder="Enter Organization Name"
+                required
+              />
+              
+              <div 
+                className="border-2 border-dashed border-orange-300 rounded-lg p-8 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-40"
+                onClick={() => fileInputRef.current.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('bg-orange-100');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('bg-orange-100');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('bg-orange-100');
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    setSelectedFile(e.dataTransfer.files[0]);
+                  }
+                }}
+              >
+                {selectedFile ? (
+                  <div className="flex flex-col items-center">
+                    <div className="text-orange-500 font-medium mb-2">
+                      {selectedFile instanceof File ? selectedFile.name : selectedFile.name}
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      Click to change file
+                    </span>
                   </div>
-                  
-                  <input
-                    type="text"
-                    value={organization}
-                    onChange={(e) => setOrganization(e.target.value)}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Enter Organization Name"
-                    required
-                  />
-                  
-                  <div 
-                    className="border-2 border-dashed border-orange-300 rounded-lg p-8 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-40"
-                    onClick={() => fileInputRef.current.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.add('bg-orange-100');
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('bg-orange-100');
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('bg-orange-100');
-                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        setSelectedFile(e.dataTransfer.files[0]);
-                      }
-                    }}
-                  >
-                    {selectedFile ? (
-                      <div className="flex flex-col items-center">
-                        <div className="text-orange-500 font-medium mb-2">
-                          {selectedFile instanceof File ? selectedFile.name : selectedFile.name}
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          Click to change file
-                        </span>
-                      </div>
-                    ) : (
-                      <>
-                        <FiUpload className="h-8 w-8 text-orange-500 mb-2" />
-                        <span className="text-center text-gray-600">
-                          Upload Certificate
-                        </span>
-                      </>
-                    )}
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                    />
-                  </div>
-                  
-                  <button 
-                    type="submit" 
-                    className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
-                  >
-                    <span>{certificateId ? "Update Certificate" : "Save Certificate"}</span>
-                    <FiArrowRight className="ml-2" />
-                  </button>
-                </form>
+                ) : (
+                  <>
+                    <FiUpload className="h-8 w-8 text-orange-500 mb-2" />
+                    <span className="text-center text-gray-600">
+                      Upload Certificate
+                    </span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                />
               </div>
-            </div>
+              
+              <button 
+                type="submit" 
+                className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
+              >
+                <span>{certificateId ? "Update Certificate" : "Save Certificate"}</span>
+                <FiArrowRight className="ml-2" />
+              </button>
+            </form>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

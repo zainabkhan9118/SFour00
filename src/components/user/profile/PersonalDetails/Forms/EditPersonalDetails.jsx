@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
-import Header from "../../../Header";
-import Sidebar from "../../../SideBar";
+
 import UserSidebar from "../../UserSidebar";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
@@ -25,6 +24,15 @@ const EditPersonalDetails = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchExistingData = async () => {
@@ -80,7 +88,6 @@ const EditPersonalDetails = () => {
     newAddresses[index][field] = value;
 
     if (field === "isCurrent" && value === true) {
-      // Uncheck other addresses if this one is marked as current
       newAddresses.forEach((addr, i) => {
         if (i !== index) addr.isCurrent = false;
       });
@@ -135,21 +142,23 @@ const EditPersonalDetails = () => {
     const firebaseId = currentUser.uid;
 
     try {
-      // Create FormData to handle file upload
       const formDataToSend = new FormData();
-      formDataToSend.append('fullname', formData.name);
-      formDataToSend.append('shortBio', formData.bio);
-      
-      // Append addresses as JSON string
-      formDataToSend.append('address', JSON.stringify(formData.addresses.map((addr) => ({
-        address: addr.address,
-        duration: addr.duration,
-        isCurrent: addr.isCurrent,
-      }))));
+      formDataToSend.append("fullname", formData.name);
+      formDataToSend.append("shortBio", formData.bio);
 
-      // Handle profile picture
+      formDataToSend.append(
+        "address",
+        JSON.stringify(
+          formData.addresses.map((addr) => ({
+            address: addr.address,
+            duration: addr.duration,
+            isCurrent: addr.isCurrent,
+          }))
+        )
+      );
+
       if (profileImage instanceof File) {
-        formDataToSend.append('profilePic', profileImage);
+        formDataToSend.append("profilePic", profileImage);
       }
 
       if (isDataAlreadyPosted) {
@@ -165,8 +174,6 @@ const EditPersonalDetails = () => {
           setProfileDp(previewImage || profileImage);
         }
       } else {
-        console.log("Creating new profile data:", BASEURL);
-        
         const response = await axios.post(`${BASEURL}/job-seeker`, formDataToSend, {
           headers: {
             "firebase-id": firebaseId,
@@ -176,7 +183,6 @@ const EditPersonalDetails = () => {
 
         if (response.data.data && response.data.data._id) {
           localStorage.setItem("jobSeekerId", response.data.data._id);
-          console.log("saved to local storage:", response.data.data._id);
           if (setProfileName && setProfileDp) {
             setProfileName(formData.name);
             setProfileDp(previewImage || profileImage);
@@ -197,142 +203,132 @@ const EditPersonalDetails = () => {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
-      {/* Show loading spinner when loading */}
+    <div className="flex flex-col md:flex-row min-h-screen">
       {isLoading && <LoadingSpinner />}
 
-      {/* Sidebar */}
-      <Sidebar />
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <UserSidebar />
+        </div>
+      )}
 
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Header */}
-        <Header />
+      <div className="flex flex-col flex-1">
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
 
-        <main className="flex-3">
-          <div className="flex flex-row flex-1">
-            <div>
-              <UserSidebar />
-            </div>
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="flex items-center mb-4">
+            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+              <FaArrowLeft className="mr-2" />
+              <span className="font-medium text-black">Edit Personal Details</span>
+            </button>
+          </div>
 
-            <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
-              {/* Header with back button */}
-              <div className="flex items-center p-4">
-                <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
-                  <FaArrowLeft className="mr-2" />
-                  <span className="font-medium text-black">Edit Personal Details</span>
+          <div className="w-full max-w-2xl mx-auto">
+            <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
+              <div className="flex justify-center mb-2">
+                <div className="relative">
+                  <img
+                    src={previewImage || profileImage}
+                    alt="Profile"
+                    className="w-24 h-24 rounded-full object-cover cursor-pointer"
+                    onClick={handleImageClick}
+                  />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </div>
+              </div>
+
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                placeholder="Full Name"
+              />
+
+              <div className="space-y-4">
+                {formData.addresses.map((addressItem, index) => (
+                  <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium">Address {index + 1}</h3>
+                      {formData.addresses.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeAddress(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={addressItem.address}
+                        onChange={(e) => handleAddressChange(index, "address", e.target.value)}
+                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        placeholder="Address"
+                      />
+                      <input
+                        type="text"
+                        value={addressItem.duration}
+                        onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
+                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        placeholder="Duration (e.g., 2020-2022)"
+                      />
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={addressItem.isCurrent}
+                          onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">Current Address</label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addAddress}
+                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                >
+                  + Add Another Address
                 </button>
               </div>
 
-              {/* Edit Form */}
-              <div className="w-full max-w-2xl">
-                <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
-                  {/* Profile Picture */}
-                  <div className="flex justify-center mb-2">
-                    <div className="relative">
-                      <img
-                        src={previewImage || profileImage}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover cursor-pointer"
-                        onClick={handleImageClick}
-                      />
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                      />
-                    </div>
-                  </div>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                placeholder="Small bio"
+              ></textarea>
 
-                  {/* Form Inputs */}
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Full Name"
-                  />
-
-                  {/* Addresses Section */}
-                  <div className="space-y-4">
-                    {formData.addresses.map((addressItem, index) => (
-                      <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-medium">Address {index + 1}</h3>
-                          {formData.addresses.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeAddress(index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                        <div className="space-y-3">
-                          <input
-                            type="text"
-                            value={addressItem.address}
-                            onChange={(e) => handleAddressChange(index, "address", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                            placeholder="Address"
-                          />
-                          <input
-                            type="text"
-                            value={addressItem.duration}
-                            onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                            placeholder="Duration (e.g., 2020-2022)"
-                          />
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={addressItem.isCurrent}
-                              onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
-                              className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                            />
-                            <label className="ml-2 text-sm text-gray-600">Current Address</label>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={addAddress}
-                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
-                    >
-                      + Add Another Address
-                    </button>
-                  </div>
-
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                    placeholder="Small bio"
-                  ></textarea>
-
-                  {/* Save Button */}
-                  <button
-                    type="submit"
-                    className={`w-full text-white font-medium p-4 rounded-full transition flex items-center justify-center ${
-                      isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
-                    }`}
-                    disabled={isLoading} // Disable button during loading
-                  >
-                    <span>{isLoading ? "Loading..." : "Save Edits"}</span>
-                    {!isLoading && <FiArrowRight className="ml-2" />}
-                  </button>
-                </form>
-              </div>
-            </div>
+              <button
+                type="submit"
+                className={`w-full text-white font-medium p-4 rounded-full transition flex items-center justify-center ${
+                  isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
+                }`}
+                disabled={isLoading}
+              >
+                <span>{isLoading ? "Loading..." : "Save Edits"}</span>
+                {!isLoading && <FiArrowRight className="ml-2" />}
+              </button>
+            </form>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

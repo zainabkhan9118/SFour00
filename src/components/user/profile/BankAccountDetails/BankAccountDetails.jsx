@@ -11,6 +11,7 @@ const BankAccountDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [bankDetailId, setBankDetailId] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [formData, setFormData] = useState({
     accountName: "",
     bankName: "",
@@ -18,6 +19,16 @@ const BankAccountDetails = () => {
     accountNumber: "",
     ibanNumber: "",
   });
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Initial fetch of bank details
   useEffect(() => {
@@ -130,83 +141,93 @@ const BankAccountDetails = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       {isLoading && <LoadingSpinner />}
+
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <UserSidebar />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        <main className="flex-3"> 
-          <div className="flex flex-row flex-1">
-            <UserSidebar />
-            <div className="w-[60vw] ml-3 mx-auto p-6">
-              <div className="bg-white rounded-lg p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="accountName"
-                    value={formData.accountName}
-                    onChange={handleChange}
-                    placeholder="Account Name"
-                    className="p-4 border rounded-3xl bg-gray-200 w-full"
-                    disabled={!isEditing}
-                  />
-                  <input
-                    type="text"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleChange}
-                    placeholder="Bank Name"
-                    className="p-4 border rounded-3xl bg-gray-200 w-full"
-                    disabled={!isEditing}
-                  />
-                  <input
-                    type="text"
-                    name="accountType"
-                    value={formData.accountType}
-                    onChange={handleChange}
-                    placeholder="Account Type"
-                    className="p-4 border rounded-3xl  bg-gray-200 w-full"
-                    disabled={!isEditing}
-                  />
-                  <input
-                    type="text"
-                    name="accountNumber"
-                    value={formData.accountNumber}
-                    onChange={handleChange}
-                    placeholder="Account Number"
-                    className="p-4 border rounded-3xl bg-gray-200 w-full"
-                    disabled={!isEditing}
-                  />
-                  <input
-                    type="text"
-                    name="ibanNumber"
-                    value={formData.ibanNumber}
-                    onChange={handleChange}
-                    placeholder="IBAN Number"
-                    className="p-4 border rounded-3xl bg-gray-200 w-full col-span-2"
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="flex justify-end mt-4 space-x-4">
-                  <button
-                    onClick={handleEdit}
-                    className="bg-gray-900 text-white px-8 py-2 rounded-2xl"
-                  >
-                    {isEditing ? "Cancel" : "Edit"}
-                  </button>
-                  {isEditing && (
-                    <button 
-                      onClick={handleSave}
-                      className="bg-orange-500 text-white px-8 py-2 rounded-2xl"
-                    >
-                      Save
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Mobile Header with Sidebar - Shown only on Mobile */}
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto bg-white rounded-lg p-6">
+            <h2 className="text-2xl font-bold mb-6">Bank Account Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="accountName"
+                value={formData.accountName}
+                onChange={handleChange}
+                placeholder="Account Name"
+                className="p-4 border rounded-3xl bg-gray-200 w-full"
+                disabled={!isEditing}
+              />
+              <input
+                type="text"
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleChange}
+                placeholder="Bank Name"
+                className="p-4 border rounded-3xl bg-gray-200 w-full"
+                disabled={!isEditing}
+              />
+              <input
+                type="text"
+                name="accountType"
+                value={formData.accountType}
+                onChange={handleChange}
+                placeholder="Account Type"
+                className="p-4 border rounded-3xl bg-gray-200 w-full"
+                disabled={!isEditing}
+              />
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleChange}
+                placeholder="Account Number"
+                className="p-4 border rounded-3xl bg-gray-200 w-full"
+                disabled={!isEditing}
+              />
+              <input
+                type="text"
+                name="ibanNumber"
+                value={formData.ibanNumber}
+                onChange={handleChange}
+                placeholder="IBAN Number"
+                className="p-4 border rounded-3xl bg-gray-200 w-full md:col-span-2"
+                disabled={!isEditing}
+              />
+            </div>
+            <div className="flex justify-end mt-4 space-x-4">
+              <button
+                onClick={handleEdit}
+                className="bg-gray-900 text-white px-8 py-2 rounded-2xl"
+              >
+                {isEditing ? "Cancel" : "Edit"}
+              </button>
+              {isEditing && (
+                <button 
+                  onClick={handleSave}
+                  className="bg-orange-500 text-white px-8 py-2 rounded-2xl"
+                >
+                  Save
+                </button>
+              )}
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

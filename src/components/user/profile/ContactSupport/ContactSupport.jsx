@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import UserSidebar from "../UserSidebar";
 import { Chatbot } from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
@@ -7,6 +7,18 @@ import MessageParser from './MessageParser';
 import ActionProvider from './ActionProvider';
 
 const ContactSupport = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Enhanced custom styling to make the chatbot more attractive
   const chatbotStyles = `
     .react-chatbot-kit-chat-container {
@@ -126,30 +138,41 @@ const ContactSupport = () => {
   `;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       {/* Add the custom styles */}
       <style>{chatbotStyles}</style>
 
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <UserSidebar />
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        <main className="flex-1">
-          <div className="flex flex-row flex-1">
-            <UserSidebar />
-            <div className="w-full ml-3 mx-auto p-6">
-                {/* Chatbot Component */}
-                <div className="h-[calc(100vh-300px)]">
-                  <Chatbot
-                    config={config}
-                    messageParser={MessageParser}
-                    actionProvider={ActionProvider}
-                    headerText="S4 Support Chat"
-                    placeholderText="Type your message here..."
-                  />
-                </div>
-             
+        {/* Mobile Header with Sidebar - Shown only on Mobile */}
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6">Customer Support</h2>
+            {/* Chatbot Component */}
+            <div className="h-[calc(100vh-300px)]">
+              <Chatbot
+                config={config}
+                messageParser={MessageParser}
+                actionProvider={ActionProvider}
+                headerText="S4 Support Chat"
+                placeholderText="Type your message here..."
+              />
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

@@ -2,10 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
-import Header from "../../../Header";
-import Sidebar from "../../../SideBar";
 import UserSidebar from "../../UserSidebar";
-import { getAuth } from "firebase/auth";
 import axios from "axios";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 
@@ -15,6 +12,7 @@ const EditExperience = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [formData, setFormData] = useState({
     experiences: [
       { 
@@ -29,6 +27,14 @@ const EditExperience = () => {
       }
     ]
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchExperiences = async () => {
@@ -281,148 +287,153 @@ const EditExperience = () => {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden">
       {isLoading && <LoadingSpinner />}
       
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
-        <main className="flex-3">
-          <div className="flex flex-row flex-1">
-            <UserSidebar />
-            <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto">
-              <div className="flex items-center p-4">
-                <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
-                  <FaArrowLeft className="mr-2" />
-                  <span className="font-medium text-black">Experience</span>
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <UserSidebar />
+        </div>
+      )}
+
+      <div className="flex flex-col flex-1">
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="flex items-center mb-4">
+            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+              <FaArrowLeft className="mr-2" />
+              <span className="font-medium text-black">Experience</span>
+            </button>
+          </div>
+
+          <div className="w-full max-w-2xl mx-auto">
+            <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
+              <div className="space-y-4">
+                {formData.experiences.map((experience, index) => (
+                  <div key={experience.id} className="p-4 bg-white rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium">Experience {index + 1}</h3>
+                      {formData.experiences.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={experience.position}
+                        onChange={(e) => handleChange(index, "position", e.target.value)}
+                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        placeholder="Position"
+                        required
+                      />
+
+                      <input
+                        type="text"
+                        value={experience.companyName}
+                        onChange={(e) => handleChange(index, "companyName", e.target.value)}
+                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        placeholder="Company Name"
+                        required
+                      />
+
+                      <div className="flex flex-col space-y-3">
+                        <div className="relative">
+                          <label className="text-sm text-gray-600 mb-1">Start Date</label>
+                          <input
+                            type="date"
+                            value={experience.startDate}
+                            onChange={(e) => handleChange(index, "startDate", e.target.value)}
+                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            required
+                          />
+                        </div>
+
+                        <div className="relative">
+                          <label className="text-sm text-gray-600 mb-1">End Date</label>
+                          <input
+                            type="date"
+                            value={experience.endDate}
+                            onChange={(e) => handleChange(index, "endDate", e.target.value)}
+                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            disabled={experience.currentlyWorking}
+                            required={!experience.currentlyWorking}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={experience.currentlyWorking}
+                          onChange={(e) => handleChange(index, "currentlyWorking", e.target.checked)}
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">Currently Working</label>
+                      </div>
+
+                      <div className="relative">
+                        <label className="text-sm text-gray-600 mb-1">Experience Certificate</label>
+                        <div 
+                          className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 cursor-pointer"
+                          onClick={() => document.getElementById(`certificate-${index}`).click()}
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm text-gray-700">
+                              {experience.experienceCertificate instanceof File 
+                                ? experience.experienceCertificate.name 
+                                : experience.experienceCertificate
+                                ? experience.experienceCertificate.split('/').pop()
+                                : "Upload Experience Certificate"}
+                            </span>
+                          </div>
+                        </div>
+                        <input
+                          type="file"
+                          id={`certificate-${index}`}
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => handleFileChange(e, index)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={handleAddNew}
+                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                >
+                  + Add Another Experience
                 </button>
               </div>
 
-              <div className="w-full max-w-2xl">
-                <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
-                  <div className="space-y-4">
-                    {formData.experiences.map((experience, index) => (
-                      <div key={experience.id} className="p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-medium">Experience {index + 1}</h3>
-                          {formData.experiences.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="space-y-3">
-                          <input
-                            type="text"
-                            value={experience.position}
-                            onChange={(e) => handleChange(index, "position", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                            placeholder="Position"
-                            required
-                          />
-
-                          <input
-                            type="text"
-                            value={experience.companyName}
-                            onChange={(e) => handleChange(index, "companyName", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                            placeholder="Company Name"
-                            required
-                          />
-
-                          <div className="flex flex-col space-y-3">
-                            <div className="relative">
-                              <label className="text-sm text-gray-600 mb-1">Start Date</label>
-                              <input
-                                type="date"
-                                value={experience.startDate}
-                                onChange={(e) => handleChange(index, "startDate", e.target.value)}
-                                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
-                                required
-                              />
-                            </div>
-
-                            <div className="relative">
-                              <label className="text-sm text-gray-600 mb-1">End Date</label>
-                              <input
-                                type="date"
-                                value={experience.endDate}
-                                onChange={(e) => handleChange(index, "endDate", e.target.value)}
-                                className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
-                                disabled={experience.currentlyWorking}
-                                required={!experience.currentlyWorking}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={experience.currentlyWorking}
-                              onChange={(e) => handleChange(index, "currentlyWorking", e.target.checked)}
-                              className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                            />
-                            <label className="ml-2 text-sm text-gray-600">Currently Working</label>
-                          </div>
-
-                          <div className="relative">
-                            <label className="text-sm text-gray-600 mb-1">Experience Certificate</label>
-                            <div 
-                              className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 cursor-pointer"
-                              onClick={() => document.getElementById(`certificate-${index}`).click()}
-                            >
-                              <div className="flex items-center">
-                                <svg className="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span className="text-sm text-gray-700">
-                                  {experience.experienceCertificate instanceof File 
-                                    ? experience.experienceCertificate.name 
-                                    : experience.experienceCertificate
-                                    ? experience.experienceCertificate.split('/').pop()
-                                    : "Upload Experience Certificate"}
-                                </span>
-                              </div>
-                            </div>
-                            <input
-                              type="file"
-                              id={`certificate-${index}`}
-                              accept="image/*,.pdf"
-                              className="hidden"
-                              onChange={(e) => handleFileChange(e, index)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={handleAddNew}
-                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
-                    >
-                      + Add Another Experience
-                    </button>
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
-                    disabled={isLoading}
-                  >
-                    <span>{isLoading ? "Loading..." : "Save Edits"}</span>
-                    {!isLoading && <FiArrowRight className="ml-2" />}
-                  </button>
-                </form>
-              </div>
-            </div>
+              <button 
+                type="submit"
+                className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
+                disabled={isLoading}
+              >
+                <span>{isLoading ? "Loading..." : "Save Edits"}</span>
+                {!isLoading && <FiArrowRight className="ml-2" />}
+              </button>
+            </form>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
