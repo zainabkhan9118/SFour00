@@ -6,54 +6,63 @@ import { HiArrowRight } from 'react-icons/hi';
 import { auth } from "../config/firebaseConfig";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
 export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handlePasswordReset = async (e) => {
-    e.preventDefault();
+  const formik = useFormik({
+    initialValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    validationSchema: Yup.object({
+      oldPassword: Yup.string().required("Old password is required."),
+      newPassword: Yup.string()
+        .min(6, "Password must be at least 6 characters.")
+        .required("New password is required."),
+      confirmPassword: Yup.string()
+        .oneOf([Yup.ref("newPassword"), null], "Passwords must match.")
+        .required("Confirm password is required."),
+    }),
+    onSubmit: async (values) => {
+      setError(""); // Clear previous errors
+      setIsLoading(true); // Start loading
 
-    if (newPassword !== confirmPassword) {
-      setError("New password and confirm password do not match.");
-      return;
-    }
+      try {
+        const user = auth.currentUser;
 
-    setIsLoading(true); // Start loading
-    setError(""); // Clear previous errors
+        if (!user) {
+          setError("User is not logged in.");
+          setIsLoading(false); // Stop loading
+          return;
+        }
 
-    try {
-      const user = auth.currentUser;
+        // Re-authenticate the user with their old password
+        const credential = EmailAuthProvider.credential(user.email, values.oldPassword);
+        await reauthenticateWithCredential(user, credential);
 
-      if (!user) {
-        setError("User is not logged in.");
+        // Update the user's password
+        await updatePassword(user, values.newPassword);
+        setSuccess("Password updated successfully!");
+
+        // Clear localStorage and navigate to login
+        localStorage.clear();
+        navigate("/login");
+      } catch (err) {
+        setError(err.message);
+      } finally {
         setIsLoading(false); // Stop loading
-        return;
       }
-
-      // Re-authenticate the user with their old password
-      const credential = EmailAuthProvider.credential(user.email, oldPassword);
-      await reauthenticateWithCredential(user, credential);
-
-      // Update the user's password
-      await updatePassword(user, newPassword);
-      setSuccess("Password has been successfully updated!");
-
-      // Optionally navigate to another page
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false); // Stop loading
-    }
-  };
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -80,7 +89,7 @@ export default function ResetPassword() {
           Suspendisse ultrices viverra massa at amet mollis.
         </p>
 
-        <form className="mt-8 space-y-6" onSubmit={handlePasswordReset}>
+        <form className="mt-8 space-y-6" onSubmit={formik.handleSubmit}>
           {error && <p className="text-red-500 text-center">{error}</p>}
           {success && <p className="text-green-500 text-center">{success}</p>}
 
@@ -94,10 +103,12 @@ export default function ResetPassword() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Old Password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
+                  {...formik.getFieldProps("oldPassword")}
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
+                {formik.touched.oldPassword && formik.errors.oldPassword ? (
+                  <p className="text-red-500 text-sm">{formik.errors.oldPassword}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -111,10 +122,12 @@ export default function ResetPassword() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  {...formik.getFieldProps("newPassword")}
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
+                {formik.touched.newPassword && formik.errors.newPassword ? (
+                  <p className="text-red-500 text-sm">{formik.errors.newPassword}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -128,10 +141,12 @@ export default function ResetPassword() {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...formik.getFieldProps("confirmPassword")}
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
+                {formik.touched.confirmPassword && formik.errors.confirmPassword ? (
+                  <p className="text-red-500 text-sm">{formik.errors.confirmPassword}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
