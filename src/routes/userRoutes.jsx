@@ -43,7 +43,7 @@ const UserRoutes = [
   <Route key="User-WorkCompleted" path="/User-WorkCompleted" element={<UserCompleted/>} />,
   <Route key="User-workInprogess" path="/User-workInprogess" element={<UserWorkInprogess />} />,
   <Route key="User-UserNotification" path="/User-UserNotification" element={<UserNotification />} />,
-  <Route key="User-UserProfile" path="/User-UserProfile" element={<UserProfile />} />,
+  // <Route key="User-UserProfile" path="/User-UserProfile" element={<UserProfile />} />,
   <Route key="User-UserSidebar" path="/User-UserSidebar" element={<UserSidebar />} />,
   <Route key="User-PersonalDetails" path="/User-PersonalDetails" element={<PersonalDetails />} />,
   <Route key="edit-personal-details" path="/edit-personal-details" element={<EditPersonalDetails />} />,
