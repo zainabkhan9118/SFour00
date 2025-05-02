@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import { getCompanyProfile, updateCompanyManager } from "../../../api/companyApi";
 
 const EditManagerForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
@@ -38,14 +37,12 @@ const EditManagerForm = () => {
       }
 
       try {
-        const response = await axios.get('/api/company', {
-          headers: {
-            "firebase-id": user.uid,
-          },
-        });
+        // Use the imported API function
+        const response = await getCompanyProfile(user.uid);
+        console.log("Company data fetched:", response);
 
-        if (response.data && response.data.data) {
-          const companyData = response.data.data;
+        if (response && response.data) {
+          const companyData = response.data;
           
           // Check if manager data exists in the response
           if (companyData.manager) {
@@ -55,8 +52,6 @@ const EditManagerForm = () => {
               managerPhone: companyData.manager.managerPhone || ''
             });
           }
-          
-          setIsDataAlreadyPosted(true);
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
@@ -68,7 +63,6 @@ const EditManagerForm = () => {
     setIsLoading(true);
     const auth = getAuth();
     
-    // Use Firebase's auth state listener instead of immediately checking currentUser
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchExistingData(user);
@@ -78,7 +72,6 @@ const EditManagerForm = () => {
       }
     });
 
-    // Clean up the auth state listener on component unmount
     return () => unsubscribe();
   }, []);
 
@@ -104,32 +97,10 @@ const EditManagerForm = () => {
     }
 
     try {
-      const endpoint = '/api/company';
-      const method = isDataAlreadyPosted ? 'patch' : 'post';
-      
-      // Prepare the data with manager object structure that matches the API
-      const requestData = {
-        manager: {
-          managerName: managerData.managerName,
-          managerEmail: managerData.managerEmail,
-          managerPhone: managerData.managerPhone
-        }
-      };
-      
-      const response = await axios[method](endpoint, 
-        requestData,
-        {
-          headers: {
-            "firebase-id": currentUser.uid,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data) {
-        console.log("Manager information updated successfully");
-        navigate(-1);
-      }
+      // Use the imported API function
+      const response = await updateCompanyManager(currentUser.uid, managerData);
+      console.log("Manager information updated successfully:", response);
+      navigate(-1);
     } catch (error) {
       console.error("Error updating manager information:", error);
     } finally {
@@ -172,8 +143,9 @@ const EditManagerForm = () => {
             <div className="w-full max-w-2xl mx-auto">
               <form onSubmit={handleSubmit} className="flex flex-col space-y-6 p-4">
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">Manager Name</label>
+                  <label htmlFor="manager-name" className="block text-gray-700 text-sm font-medium mb-2">Manager Name</label>
                   <input
+                    id="manager-name"
                     type="text"
                     name="managerName"
                     value={managerData.managerName}
@@ -184,8 +156,9 @@ const EditManagerForm = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">Manager Email</label>
+                  <label htmlFor="manager-email" className="block text-gray-700 text-sm font-medium mb-2">Manager Email</label>
                   <input
+                    id="manager-email"
                     type="email"
                     name="managerEmail"
                     value={managerData.managerEmail}
@@ -196,8 +169,9 @@ const EditManagerForm = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">Manager Phone</label>
+                  <label htmlFor="manager-phone" className="block text-gray-700 text-sm font-medium mb-2">Manager Phone</label>
                   <input
+                    id="manager-phone"
                     type="tel"
                     name="managerPhone"
                     value={managerData.managerPhone}

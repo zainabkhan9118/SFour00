@@ -3,17 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
-import axios from 'axios';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import { getCompanyProfile, updateCompanyProfile, createCompanyProfile } from "../../../api/companyApi";
 
 const EditCompanyForm = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
-  // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const [formData, setFormData] = useState({
@@ -49,14 +48,11 @@ const EditCompanyForm = () => {
       }
 
       try {
-        const response = await axios.get(`/api/company`, {
-          headers: {
-            "firebase-id": user.uid,
-          },
-        });
+        const response = await getCompanyProfile(user.uid);
+        console.log("Company data fetched:", response);
 
-        if (response.data && response.data.data) {
-          const data = response.data.data;
+        if (response && response.data) {
+          const data = response.data;
           setFormData({
             companyName: data.companyName || '',
             companyContact: data.companyContact || '',
@@ -84,7 +80,6 @@ const EditCompanyForm = () => {
     setIsLoading(true);
     const auth = getAuth();
     
-    // Use Firebase's auth state listener instead of immediately checking currentUser
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchExistingData(user);
@@ -94,7 +89,6 @@ const EditCompanyForm = () => {
       }
     });
 
-    // Clean up the auth state listener on component unmount
     return () => unsubscribe();
   }, []);
 
@@ -107,13 +101,10 @@ const EditCompanyForm = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        // For preview only - don't store base64 in state
         setPreviewImage(reader.result);
-        
-        // Send raw file to backend for S3 upload
         setFormData(prev => ({
           ...prev,
-          companyLogo: file // Send raw file instead of base64
+          companyLogo: file
         }));
       };
       reader.readAsDataURL(file);
@@ -134,48 +125,37 @@ const EditCompanyForm = () => {
     }
 
     try {
-      const endpoint = '/api/company';
-      const method = isDataAlreadyPosted ? 'patch' : 'post';
-
-      // Create FormData to send file
       const formDataToSend = new FormData();
-      
-      // Handle flat fields
       formDataToSend.append('companyName', formData.companyName);
       formDataToSend.append('companyContact', formData.companyContact);
       formDataToSend.append('companyEmail', formData.companyEmail);
       formDataToSend.append('address', formData.address);
       formDataToSend.append('bio', formData.bio);
       
-      // Handle file field
       if (formData.companyLogo instanceof File) {
         formDataToSend.append('companyLogo', formData.companyLogo);
       }
       
-      // Handle manager nested object
       formDataToSend.append('manager[managerName]', formData.manager.managerName);
       formDataToSend.append('manager[managerEmail]', formData.manager.managerEmail);
       formDataToSend.append('manager[managerPhone]', formData.manager.managerPhone);
       
-      const response = await axios[method](endpoint, formDataToSend, {
-        headers: {
-          "firebase-id": currentUser.uid,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      if (response.data) {
-        console.log(`Company data ${isDataAlreadyPosted ? 'updated' : 'saved'} successfully`);
-        
-        // Store company profile data in localStorage, including _id
-        if (response.data.data) {
-          localStorage.setItem('companyProfile', JSON.stringify(response.data.data));
-          localStorage.setItem('companyId', response.data.data._id);
-          console.log('Company profile stored in localStorage with ID:', response.data.data._id);
-        }
-        
-        navigate(-1);
+      let response;
+      if (isDataAlreadyPosted) {
+        response = await updateCompanyProfile(currentUser.uid, formDataToSend);
+      } else {
+        response = await createCompanyProfile(currentUser.uid, formDataToSend);
       }
+
+      console.log(`Company data ${isDataAlreadyPosted ? 'updated' : 'saved'} successfully:`, response);
+      
+      if (response && response.data) {
+        localStorage.setItem('companyProfile', JSON.stringify(response.data));
+        localStorage.setItem('companyId', response.data._id);
+        console.log('Company profile stored in localStorage with ID:', response.data._id);
+      }
+      
+      navigate(-1);
     } catch (error) {
       console.error("Error saving company data:", error);
     } finally {
@@ -183,25 +163,17 @@ const EditCompanyForm = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-  
-
   return (
     <>
       {isLoading && <LoadingSpinner />}
       <div className="flex flex-col md:flex-row w-full">
-        {/* Desktop Sidebar - Hidden on Mobile */}
         {!isMobile && (
           <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
             <CompanySideBar />
           </div>
         )}
 
-        {/* Main Content */}
         <div className="flex flex-col flex-1">
-          {/* Mobile Header with Sidebar - Shown only on Mobile */}
           {isMobile && (
             <div className="md:hidden">
               <CompanySideBar isMobile={true} />
@@ -220,6 +192,9 @@ const EditCompanyForm = () => {
               <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
                 <div className="flex justify-center mb-2">
                   <div className="relative">
+                    <label htmlFor="company-logo" className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                      Company Logo
+                    </label>
                     <img
                       src={previewImage || company}
                       alt="Company Logo"
@@ -228,37 +203,115 @@ const EditCompanyForm = () => {
                     />
                     <input
                       type="file"
+                      id="company-logo"
                       ref={fileInputRef}
                       className="hidden"
                       accept="image/*"
                       onChange={handleImageChange}
                     />
+                    <p className="text-xs text-gray-500 mt-1 text-center">Click to change logo</p>
                   </div>
                 </div>
 
-                <input
-                  type="text"
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                  placeholder="Company Name"
-                />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-name" className="font-medium text-gray-700">Company Name</label>
+                  <input
+                    id="company-name"
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Enter company name"
+                  />
+                </div>
 
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                  placeholder="Address"
-                />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-address" className="font-medium text-gray-700">Address</label>
+                  <input
+                    id="company-address"
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Enter company address"
+                  />
+                </div>
 
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                  className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                  placeholder="About Company"
-                  rows="4"
-                />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-bio" className="font-medium text-gray-700">About Company</label>
+                  <textarea
+                    id="company-bio"
+                    value={formData.bio}
+                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                    className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Describe your company"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-email" className="font-medium text-gray-700">Company Email</label>
+                  <input
+                    id="company-email"
+                    type="email"
+                    value={formData.companyEmail}
+                    onChange={(e) => setFormData({...formData, companyEmail: e.target.value})}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Enter company email"
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-contact" className="font-medium text-gray-700">Company Contact</label>
+                  <input
+                    id="company-contact"
+                    type="text"
+                    value={formData.companyContact}
+                    onChange={(e) => setFormData({...formData, companyContact: e.target.value})}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Enter company contact number"
+                  />
+                </div>
+
+                <div className="border-t border-gray-200 pt-4 my-2">
+                  <h3 className="font-medium text-gray-800 mb-3">Manager Details</h3>
+                  
+                  <div className="flex flex-col space-y-1 mt-2">
+                    <label htmlFor="manager-name" className="font-medium text-gray-700">Manager Name</label>
+                    <input
+                      id="manager-name"
+                      type="text"
+                      value={formData.manager.managerName}
+                      onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerName: e.target.value}})}
+                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="Enter manager name"
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1 mt-2">
+                    <label htmlFor="manager-email" className="font-medium text-gray-700">Manager Email</label>
+                    <input
+                      id="manager-email"
+                      type="email"
+                      value={formData.manager.managerEmail}
+                      onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerEmail: e.target.value}})}
+                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="Enter manager email"
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1 mt-2">
+                    <label htmlFor="manager-phone" className="font-medium text-gray-700">Manager Phone</label>
+                    <input
+                      id="manager-phone"
+                      type="text"
+                      value={formData.manager.managerPhone}
+                      onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerPhone: e.target.value}})}
+                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      placeholder="Enter manager phone number"
+                    />
+                  </div>
+                </div>
 
                 <button
                   type="submit"

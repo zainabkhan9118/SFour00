@@ -13,25 +13,19 @@ console.log('API Base URL:', BASE_URL); // For debugging
  */
 export const getCompanyProfile = async (firebaseId) => {
   try {
-    // Get the company ID from localStorage
-    const companyId = localStorage.getItem('companyId');
+    // According to the API docs, we use the base /company endpoint with firebase-id header
+    console.log('Fetching company data with Firebase ID:', firebaseId);
     
-    // If we have a companyId, use the /{id} endpoint format
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
-    
-    console.log('Fetching company with endpoint:', endpoint);
-    console.log('Using Firebase ID:', firebaseId);
-    
-    const response = await axios.get(`${BASE_URL}${endpoint}`, {
+    const response = await axios.get(`${BASE_URL}/company`, {
       headers: {
         "firebase-id": firebaseId,
       },
     });
     
-    // If we get data and don't have a companyId stored yet, store it
-    if (response.data?.data?._id && !companyId) {
+    // If we get data with an ID, store it in localStorage
+    if (response.data?.data?._id) {
       localStorage.setItem('companyId', response.data.data._id);
-      console.log('Stored new company ID:', response.data.data._id);
+      console.log('Stored company ID:', response.data.data._id);
     }
     
     return response.data;
@@ -44,20 +38,24 @@ export const getCompanyProfile = async (firebaseId) => {
 /**
  * Update company profile
  * @param {string} firebaseId - The Firebase ID of the company
- * @param {Object} data - Data to update
+ * @param {Object|FormData} data - Data to update
  * @returns {Promise} - Promise with the response data
  */
 export const updateCompanyProfile = async (firebaseId, data) => {
   try {
-    const companyId = localStorage.getItem('companyId');
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
+    const isFormData = data instanceof FormData;
     
-    const response = await axios.patch(`${BASE_URL}${endpoint}`, data, {
+    console.log('Updating company with Firebase ID:', firebaseId);
+    console.log('Update data:', isFormData ? 'FormData object' : data);
+    
+    // According to API docs, PATCH to /company with firebase-id header
+    const response = await axios.patch(`${BASE_URL}/company`, data, {
       headers: {
         "firebase-id": firebaseId,
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
       },
     });
+    
     return response.data;
   } catch (error) {
     console.error('Error updating company data:', error);
@@ -75,15 +73,23 @@ export const createCompanyProfile = async (firebaseId, data) => {
   const isFormData = data instanceof FormData;
   
   try {
-    const companyId = localStorage.getItem('companyId');
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
+    console.log('Creating company profile with Firebase ID:', firebaseId);
+    console.log('Profile data:', isFormData ? 'FormData object' : data);
     
-    const response = await axios.post(`${BASE_URL}${endpoint}`, data, {
+    // According to API docs, POST to /company with firebase-id header
+    const response = await axios.post(`${BASE_URL}/company`, data, {
       headers: {
         "firebase-id": firebaseId,
-        "Content-Type": isFormData ? "multipart/form-data" : "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
       },
     });
+    
+    // Store company ID if available
+    if (response.data?.data?._id) {
+      localStorage.setItem('companyId', response.data.data._id);
+      console.log('Stored new company ID:', response.data.data._id);
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error creating company profile:', error);
@@ -99,10 +105,10 @@ export const createCompanyProfile = async (firebaseId, data) => {
  */
 export const updateCompanyContact = async (firebaseId, contact) => {
   try {
-    const companyId = localStorage.getItem('companyId');
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
+    console.log('Updating company contact with Firebase ID:', firebaseId);
     
-    const response = await axios.patch(`${BASE_URL}${endpoint}`, 
+    // According to API docs, we use PATCH to /company
+    const response = await axios.patch(`${BASE_URL}/company`, 
       { companyContact: contact },
       {
         headers: {
@@ -126,10 +132,10 @@ export const updateCompanyContact = async (firebaseId, contact) => {
  */
 export const updateCompanyEmail = async (firebaseId, email) => {
   try {
-    const companyId = localStorage.getItem('companyId');
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
+    console.log('Updating company email with Firebase ID:', firebaseId);
     
-    const response = await axios.patch(`${BASE_URL}${endpoint}`, 
+    // According to API docs, we use PATCH to /company
+    const response = await axios.patch(`${BASE_URL}/company`, 
       { companyEmail: email },
       {
         headers: {
@@ -153,10 +159,11 @@ export const updateCompanyEmail = async (firebaseId, email) => {
  */
 export const updateCompanyManager = async (firebaseId, managerData) => {
   try {
-    const companyId = localStorage.getItem('companyId');
-    const endpoint = companyId ? `/company/${companyId}` : '/company';
+    console.log('Updating company manager with Firebase ID:', firebaseId);
+    console.log('Manager data:', managerData);
     
-    const response = await axios.patch(`${BASE_URL}${endpoint}`, 
+    // According to API docs, we use PATCH to /company
+    const response = await axios.patch(`${BASE_URL}/company`, 
       { manager: managerData },
       {
         headers: {

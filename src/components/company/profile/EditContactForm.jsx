@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
+import LoadingSpinner from "../../common/LoadingSpinner";
+import { getCompanyProfile, updateCompanyContact } from "../../../api/companyApi";
 
 const EditContactForm = () => {
   const navigate = useNavigate();
   const [contact, setContact] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
-  // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -31,15 +30,11 @@ const EditContactForm = () => {
       }
 
       try {
-        const response = await axios.get('/api/company', {
-          headers: {
-            "firebase-id": user.uid,
-          },
-        });
+        const response = await getCompanyProfile(user.uid);
+        console.log("Company data fetched:", response);
 
-        if (response.data && response.data.data) {
-          setContact(response.data.data.companyContact || '');
-          setIsDataAlreadyPosted(true);
+        if (response && response.data) {
+          setContact(response.data.companyContact || '');
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
@@ -51,7 +46,6 @@ const EditContactForm = () => {
     setIsLoading(true);
     const auth = getAuth();
     
-    // Use Firebase's auth state listener instead of immediately checking currentUser
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchExistingData(user);
@@ -61,7 +55,6 @@ const EditContactForm = () => {
       }
     });
 
-    // Clean up the auth state listener on component unmount
     return () => unsubscribe();
   }, []);
 
@@ -79,23 +72,9 @@ const EditContactForm = () => {
     }
 
     try {
-      const endpoint = '/api/company';
-      const method = isDataAlreadyPosted ? 'patch' : 'post';
-      
-      const response = await axios[method](endpoint, 
-        { companyContact: contact },
-        {
-          headers: {
-            "firebase-id": currentUser.uid,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data) {
-        console.log("Company contact updated successfully");
-        navigate(-1);
-      }
+      const response = await updateCompanyContact(currentUser.uid, contact);
+      console.log("Company contact updated successfully:", response);
+      navigate(-1);
     } catch (error) {
       console.error("Error updating company contact:", error);
     } finally {
@@ -109,16 +88,15 @@ const EditContactForm = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Desktop Sidebar - Hidden on Mobile */}
+      {isLoading && <LoadingSpinner />}
+      
       {!isMobile && (
         <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
           <CompanySideBar />
         </div>
       )}
 
-      {/* Main Content */}
       <div className="flex flex-col flex-1">
-        {/* Mobile Header with Sidebar - Shown only on Mobile */}
         {isMobile && (
           <div className="md:hidden">
             <CompanySideBar isMobile={true} />

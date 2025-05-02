@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import { getCompanyProfile, updateCompanyEmail } from "../../../api/companyApi";
 
 const EditEmailForm = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
 
   useEffect(() => {
     const fetchExistingData = async (user) => {
@@ -22,15 +21,12 @@ const EditEmailForm = () => {
       }
 
       try {
-        const response = await axios.get('/api/company', {
-          headers: {
-            "firebase-id": user.uid,
-          },
-        });
+        // Use the imported API function
+        const response = await getCompanyProfile(user.uid);
+        console.log("Company data fetched:", response);
 
-        if (response.data && response.data.data) {
-          setEmail(response.data.data.companyEmail || '');
-          setIsDataAlreadyPosted(true);
+        if (response && response.data) {
+          setEmail(response.data.companyEmail || '');
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
@@ -70,23 +66,10 @@ const EditEmailForm = () => {
     }
 
     try {
-      const endpoint = '/api/company';
-      const method = isDataAlreadyPosted ? 'patch' : 'post';
-      
-      const response = await axios[method](endpoint, 
-        { companyEmail: email },
-        {
-          headers: {
-            "firebase-id": currentUser.uid,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data) {
-        console.log("Company email updated successfully");
-        navigate(-1);
-      }
+      // Use the imported API function
+      const response = await updateCompanyEmail(currentUser.uid, email);
+      console.log("Company email updated successfully:", response);
+      navigate(-1);
     } catch (error) {
       console.error("Error updating company email:", error);
     } finally {
