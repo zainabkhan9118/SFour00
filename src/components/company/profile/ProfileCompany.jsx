@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from 'axios';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import Header from "../Header";
+import { getCompanyProfile } from "../../../api/companyApi"; // Import the API function
+
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import LazyImage from "../../common/LazyImage";
@@ -37,18 +37,15 @@ const ProfileCompany = () => {
       }
 
       try {
-        const response = await axios.get('/api/company', {
-          headers: {
-            "firebase-id": user.uid
-          }
-        });
-        if (response.data && response.data.data) {
-          setCompanyData(response.data.data);
+        // Use the imported API function instead of direct axios call
+        const response = await getCompanyProfile(user.uid);
+        if (response && response.data) {
+          setCompanyData(response.data);
           
           // Store company profile in localStorage for use across the application
-          localStorage.setItem('companyProfile', JSON.stringify(response.data.data));
-          localStorage.setItem('companyId', response.data.data._id);
-          console.log('Company profile stored in localStorage with ID:', response.data.data._id);
+          localStorage.setItem('companyProfile', JSON.stringify(response.data));
+          localStorage.setItem('companyId', response.data._id);
+          console.log('Company profile stored in localStorage with ID:', response.data._id);
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
