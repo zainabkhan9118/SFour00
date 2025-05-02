@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import Headerjob from "./Headerjob";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
@@ -191,10 +189,10 @@ const AssignedJob = () => {
   
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="w-full lg:w-1/4" />
+     
 
       <div className="flex flex-col gap-4 md:gap-6 flex-1 p-3 sm:p-4 md:p-6">
-        <Header />
+        
         <Headerjob />
 
         {loading ? (

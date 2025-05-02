@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
@@ -87,9 +85,9 @@ const JobDetail = () => {
     if (loading) {
         return (
             <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-                <Sidebar className="lg:block lg:w-1/4" />
+              
                 <div className="flex flex-col flex-1 overflow-x-hidden">
-                    <Header />
+                   
                     <div className="flex justify-center items-center h-full">
                         <LoadingSpinner />
                     </div>
@@ -102,9 +100,9 @@ const JobDetail = () => {
     if (error || !job) {
         return (
             <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-                <Sidebar className="lg:block lg:w-1/4" />
+                
                 <div className="flex flex-col flex-1 overflow-x-hidden">
-                    <Header />
+                   
                     <div className="flex justify-center items-center h-full">
                         <p className="text-xl text-red-500">Error loading job details. Please try again.</p>
                     </div>
@@ -115,10 +113,10 @@ const JobDetail = () => {
 
     return (
         <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-            <Sidebar className="lg:block lg:w-1/4" />
+           
 
             <div className="flex flex-col flex-1 overflow-x-hidden">
-                <Header />
+              
 
                 <div className="flex justify-end px-4 lg:px-8">
                     <p className="text-gray-400 mt-4 lg:mt-6 text-sm">

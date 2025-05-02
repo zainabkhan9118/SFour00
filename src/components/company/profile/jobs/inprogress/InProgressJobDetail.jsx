@@ -4,8 +4,6 @@ import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
 import time from "../../../../../assets/images/time.png";
 import qr from "../../../../../assets/images/qr-code.png";
-import Sidebar from "../../../Sidebar";
-import Header from "../../../Header";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../../constants/enums";
 
@@ -138,9 +136,7 @@ const InProgressJobDetail = () => {
   if (loading) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="w-full lg:w-1/4" />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner />
           </div>
@@ -152,9 +148,7 @@ const InProgressJobDetail = () => {
   if (error || !job) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="w-full lg:w-1/4" />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="flex justify-center items-center h-64">
             <p className="text-xl text-red-500">Error: {error || "Job not found"}</p>
           </div>
@@ -165,10 +159,8 @@ const InProgressJobDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="w-full lg:w-1/4" />
 
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="flex justify-end px-4 sm:px-6 md:px-8">
           <p className="text-sm text-gray-400 mt-4 sm:mt-6">
             Find Job / {jobData.jobDuration} / Job Details

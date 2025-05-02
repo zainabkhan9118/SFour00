@@ -4,8 +4,6 @@ import axios from 'axios';
 import { getAuth } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
-import Header from "../Header";
-import Sidebar from "../Sidebar";
 import CompanySideBar from "./CompanySideBar";
 import LoadingSpinner from "../../common/LoadingSpinner";
 
@@ -89,57 +87,57 @@ const EditEmailForm = () => {
   return (
     <>
       {isLoading && <LoadingSpinner />}
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex flex-col flex-grow">
-          <Header />
-          <div className="flex min-h-[calc(100vh-64px)]">
-            <div className="w-64 bg-white border-r">
+      <div className="flex min-h-screen overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <main className="flex-3">
+            <div className="flex flex-row flex-1">
+              {/* CompanySideBar now handles its own responsiveness */}
               <CompanySideBar />
-            </div>
-            <div className="flex-grow p-8">
-              <div className="max-w-3xl">
-                {/* Back button */}
-                <button
-                  onClick={() => navigate(-1)}
-                  className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
-                >
-                  <FaArrowLeft className="mr-2" />
-                  <span>Back</span>
-                </button>
+              
+              <div className="p-4 flex-1 bg-gray-50 h-[100vh] overflow-auto md:ml-64">
+                <div className="flex items-center p-4">
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
+                  >
+                    <FaArrowLeft className="mr-2" />
+                    <span>Back</span>
+                  </button>
+                </div>
+                <div className="max-w-3xl">
+                  <h1 className="text-2xl font-bold mb-8">Update Company Email</h1>
 
-                <h1 className="text-2xl font-bold mb-8">Update Company Email</h1>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                        Company Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="company@example.com"
+                        required
+                      />
+                    </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="company@example.com"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex items-center px-6 py-3 bg-[#1F2B44] text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      <span>Save Changes</span>
-                      <FiArrowRight className="ml-2" />
-                    </button>
-                  </div>
-                </form>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="flex items-center px-6 py-3 bg-[#1F2B44] text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      >
+                        <span>Save Changes</span>
+                        <FiArrowRight className="ml-2" />
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </>

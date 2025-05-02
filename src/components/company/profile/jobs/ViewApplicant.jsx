@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -161,9 +159,9 @@ const ViewApplicant = () => {
     if (loading) {
         return (
             <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+                
                 <div className="flex flex-col flex-1 w-full">
-                    <Header />
+                   
                     <LoadingSpinner />
                 </div>
             </div>
@@ -174,9 +172,9 @@ const ViewApplicant = () => {
     if (error || !job) {
         return (
             <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+            
                 <div className="flex flex-col flex-1 w-full">
-                    <Header />
+                  
                     <div className="flex justify-center items-center h-full">
                         <p className="text-xl text-red-500">Error loading job details. Please try again.</p>
                     </div>
@@ -187,10 +185,10 @@ const ViewApplicant = () => {
 
     return (
         <div className="flex flex-col md:flex-row min-h-screen">
-            <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+            
 
             <div className="flex flex-col flex-1 w-full">
-                <Header />
+                
                 <div className="flex justify-end px-4 md:px-8">
                     <p className="text-gray-400 mt-4 md:mt-6 text-sm md:text-base">
                         Find Job / {job.jobDuration || "Job Duration"} / Job Applicants

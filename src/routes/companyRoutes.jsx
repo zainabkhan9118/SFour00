@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import CompanyLayout from "../components/layouts/CompanyLayout";
 
 // Lazy load all components
 const ProfileCompany = lazy(() => import("../components/company/profile/ProfileCompany"));
@@ -36,32 +37,41 @@ const SuspenseWrapper = ({ children }) => (
   </Suspense>
 );
 
+// Layout wrapper component
+const CompanyLayoutWrapper = ({ component: Component }) => (
+  <SuspenseWrapper>
+    <CompanyLayout>
+      <Component />
+    </CompanyLayout>
+  </SuspenseWrapper>
+);
+
 const CompanyRoutes = [
-  <Route key="company-profile" path="/company-profile" element={<SuspenseWrapper><ProfileCompany /></SuspenseWrapper>} />,
-  <Route key="map-example" path="/test" element={<SuspenseWrapper><MapExample /></SuspenseWrapper>} />,
-  <Route key="edit-company-profile" path="/edit-company-profile" element={<SuspenseWrapper><EditCompanyForm /></SuspenseWrapper>} />,
-  <Route key="edit-company-contact" path="/edit-company-contact" element={<SuspenseWrapper><EditContactForm /></SuspenseWrapper>} />,
-  <Route key="edit-company-email" path="/edit-company-email" element={<SuspenseWrapper><EditEmailForm /></SuspenseWrapper>} />,
-  <Route key="edit-company-manager" path="/edit-company-manager" element={<SuspenseWrapper><EditManagerForm /></SuspenseWrapper>} />,
-  <Route key="problems-reported" path="/problems-reported" element={<SuspenseWrapper><ProblemChat /></SuspenseWrapper>} />,
-  <Route key="job-posting" path="/job-posting" element={<SuspenseWrapper><JobPosting /></SuspenseWrapper>} />,
-  <Route key="recents-jobs" path="/recents-jobs" element={<SuspenseWrapper><RecentJob /></SuspenseWrapper>} />,
-  <Route key="job-detail" path="/job-detail/:jobId" element={<SuspenseWrapper><JobDetail /></SuspenseWrapper>} />,
-  <Route key="view-applicant" path="/view-applicant/:jobId" element={<SuspenseWrapper><ViewApplicant /></SuspenseWrapper>} />,
-  <Route key="applicant-profile" path="/applicant-profile" element={<SuspenseWrapper><ApplicantProfile /></SuspenseWrapper>} />,
-  <Route key="assign-jobDetail" path="/assign-jobDetail/:jobId" element={<SuspenseWrapper><AssignedJobDetail /></SuspenseWrapper>} />,
-  <Route key="chat" path="/chat" element={<SuspenseWrapper><Chat /></SuspenseWrapper>} />,
-  <Route key="job-assigned" path="/job-assigned" element={<SuspenseWrapper><AssignedJob /></SuspenseWrapper>} />,
-  <Route key="rota-management" path="/rota-management" element={<SuspenseWrapper><RotaManagement /></SuspenseWrapper>} />,
-  <Route key="chat-support" path="/chat-support" element={<SuspenseWrapper><ChatSupport /></SuspenseWrapper>} />,
-  <Route key="in-progress" path="/in-progress" element={<SuspenseWrapper><Inprogess /></SuspenseWrapper>} />,
-  <Route key="inProgress-jobDetail" path="/inProgress-jobDetail/:jobId" element={<SuspenseWrapper><InProgressJobDetail /></SuspenseWrapper>} />,
-  <Route key="completed-job" path="/completed-job" element={<SuspenseWrapper><Completed /></SuspenseWrapper>} />,
-  <Route key="completed-jobDetail" path="/completed-jobDetail/:jobId" element={<SuspenseWrapper><CompletedJobDetail /></SuspenseWrapper>} />,
-  <Route key="faq" path="/faq" element={<SuspenseWrapper><FAQ /></SuspenseWrapper>} />,
-  <Route key="notification" path="/notification" element={<SuspenseWrapper><Notification /></SuspenseWrapper>} />,
-  <Route key="qrcode" path="/qr-code" element={<SuspenseWrapper><Qrcode/></SuspenseWrapper>} />,
-  <Route key="alert-log" path="/alert-log" element={<SuspenseWrapper><AlertLog/></SuspenseWrapper>} />
+  <Route key="company-profile" path="/company-profile" element={<CompanyLayoutWrapper component={ProfileCompany} />} />,
+  <Route key="map-example" path="/test" element={<CompanyLayoutWrapper component={MapExample} />} />,
+  <Route key="edit-company-profile" path="/edit-company-profile" element={<CompanyLayoutWrapper component={EditCompanyForm} />} />,
+  <Route key="edit-company-contact" path="/edit-company-contact" element={<CompanyLayoutWrapper component={EditContactForm} />} />,
+  <Route key="edit-company-email" path="/edit-company-email" element={<CompanyLayoutWrapper component={EditEmailForm} />} />,
+  <Route key="edit-company-manager" path="/edit-company-manager" element={<CompanyLayoutWrapper component={EditManagerForm} />} />,
+  <Route key="problems-reported" path="/problems-reported" element={<CompanyLayoutWrapper component={ProblemChat} />} />,
+  <Route key="job-posting" path="/job-posting" element={<CompanyLayoutWrapper component={JobPosting} />} />,
+  <Route key="recents-jobs" path="/recents-jobs" element={<CompanyLayoutWrapper component={RecentJob} />} />,
+  <Route key="job-detail" path="/job-detail/:jobId" element={<CompanyLayoutWrapper component={JobDetail} />} />,
+  <Route key="view-applicant" path="/view-applicant/:jobId" element={<CompanyLayoutWrapper component={ViewApplicant} />} />,
+  <Route key="applicant-profile" path="/applicant-profile" element={<CompanyLayoutWrapper component={ApplicantProfile} />} />,
+  <Route key="assign-jobDetail" path="/assign-jobDetail/:jobId" element={<CompanyLayoutWrapper component={AssignedJobDetail} />} />,
+  <Route key="chat" path="/chat" element={<CompanyLayoutWrapper component={Chat} />} />,
+  <Route key="job-assigned" path="/job-assigned" element={<CompanyLayoutWrapper component={AssignedJob} />} />,
+  <Route key="rota-management" path="/rota-management" element={<CompanyLayoutWrapper component={RotaManagement} />} />,
+  <Route key="chat-support" path="/chat-support" element={<CompanyLayoutWrapper component={ChatSupport} />} />,
+  <Route key="in-progress" path="/in-progress" element={<CompanyLayoutWrapper component={Inprogess} />} />,
+  <Route key="inProgress-jobDetail" path="/inProgress-jobDetail/:jobId" element={<CompanyLayoutWrapper component={InProgressJobDetail} />} />,
+  <Route key="completed-job" path="/completed-job" element={<CompanyLayoutWrapper component={Completed} />} />,
+  <Route key="completed-jobDetail" path="/completed-jobDetail/:jobId" element={<CompanyLayoutWrapper component={CompletedJobDetail} />} />,
+  <Route key="faq" path="/faq" element={<CompanyLayoutWrapper component={FAQ} />} />,
+  <Route key="notification" path="/notification" element={<CompanyLayoutWrapper component={Notification} />} />,
+  <Route key="qrcode" path="/qr-code" element={<CompanyLayoutWrapper component={Qrcode} />} />,
+  <Route key="alert-log" path="/alert-log" element={<CompanyLayoutWrapper component={AlertLog} />} />
 ];
 
 export default CompanyRoutes;

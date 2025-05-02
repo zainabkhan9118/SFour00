@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -84,7 +82,7 @@ const AssignedJobDetail = () => {
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+        
         <div className="flex flex-col flex-1 justify-center items-center">
           <LoadingSpinner />
         </div>
@@ -95,7 +93,7 @@ const AssignedJobDetail = () => {
   if (error || !job) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+       
         <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-red-500 text-xl">{error || "Job not found"}</p>
         </div>
@@ -145,10 +143,10 @@ const AssignedJobDetail = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+      
 
       <div className="flex flex-col flex-1">
-        <Header />
+      
         <div className="flex justify-end px-4 md:px-8">
           <p className="text-gray-400 mt-4 md:mt-6 text-sm md:text-base">
             Find Job / {jobData.jobDuration || "Job"} / Job Details

@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import Sidebar from "../Sidebar";
-import Header from "../Header";
 import { IoIosTimer } from "react-icons/io";
 import { FaQrcode } from "react-icons/fa";
 import { FaCalendarAlt } from "react-icons/fa"; 
@@ -1067,12 +1065,10 @@ const JobPosting = () => {
 
   return (
     <div className="flex flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar className="w-full md:w-1/3 lg:w-1/4" />
+    
 
       <div className="flex flex-col flex-1 p-6">
-        {/* Header */}
-        <Header/>
+        
 
         <div className="rounded-lg p-6">
           <h1 className="text-3xl font-bold mb-4">Post a Job</h1>
