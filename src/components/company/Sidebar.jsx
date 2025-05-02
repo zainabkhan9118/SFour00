@@ -5,11 +5,13 @@ import { signOut } from "firebase/auth";
 import { auth } from "../../config/firebaseConfig";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
+import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [routes, setRoutes] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
   const navigate = useNavigate();
@@ -55,12 +57,20 @@ export default function Sidebar() {
       localStorage.clear();
       // Sign out from Firebase
       await signOut(auth);
-      navigate("/login");
+      // Show success popup instead of redirecting immediately
+      setShowLogoutPopup(true);
     } catch (error) {
       console.error("Error during logout:", error);
       // Still navigate to login page if there's an error
       navigate("/login");
     }
+  };
+
+  // Handle closing the logout popup
+  const handleCloseLogoutPopup = () => {
+    setShowLogoutPopup(false);
+    // Navigate to login page after closing the popup
+    navigate("/login");
   };
 
   return (
@@ -145,6 +155,11 @@ export default function Sidebar() {
           </div>
         </Link>
       </div>
+
+      {/* Logout Success Popup */}
+      {showLogoutPopup && (
+        <LogoutSuccessPopup onClose={handleCloseLogoutPopup} />
+      )}
     </>
   );
 }
