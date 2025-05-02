@@ -136,13 +136,17 @@ const EditContactForm = () => {
           <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center">
             <div className="w-full max-w-2xl">
               <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
-                <input
-                  type="tel"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                  placeholder="Company Contact Number"
-                />
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="company-contact" className="font-medium text-gray-700">Company Contact Number</label>
+                  <input
+                    id="company-contact"
+                    type="tel"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Company Contact Number"
+                  />
+                </div>
 
                 <button
                   type="submit"
