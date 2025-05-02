@@ -331,6 +331,7 @@ const EditPersonalDetails = () => {
                     alt="Profile"
                     className="w-24 h-24 rounded-full object-cover cursor-pointer"
                     onClick={handleImageClick}
+                    aria-label="Click to change profile picture"
                   />
                   <input
                     type="file"
@@ -338,20 +339,34 @@ const EditPersonalDetails = () => {
                     className="hidden"
                     accept="image/*"
                     onChange={handleImageChange}
+                    aria-label="Upload profile picture"
                   />
+                  <label className="text-xs text-center block mt-2 text-gray-500">
+                    Click to update photo
+                  </label>
                 </div>
               </div>
 
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                placeholder="Full Name"
-              />
+              <div className="space-y-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  placeholder="Full Name"
+                  required
+                />
+              </div>
 
               <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Address Information
+                </label>
                 {formData.addresses.map((addressItem, index) => (
                   <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-2">
@@ -361,34 +376,52 @@ const EditPersonalDetails = () => {
                           type="button"
                           onClick={() => removeAddress(index)}
                           className="text-red-500 hover:text-red-700"
+                          aria-label={`Remove address ${index + 1}`}
                         >
                           Remove
                         </button>
                       )}
                     </div>
                     <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={addressItem.address}
-                        onChange={(e) => handleAddressChange(index, "address", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Address"
-                      />
-                      <input
-                        type="text"
-                        value={addressItem.duration}
-                        onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Duration (e.g., 2020-2022)"
-                      />
+                      <div className="space-y-1">
+                        <label htmlFor={`address-${index}`} className="block text-xs text-gray-600">
+                          Address Line
+                        </label>
+                        <input
+                          id={`address-${index}`}
+                          type="text"
+                          value={addressItem.address}
+                          onChange={(e) => handleAddressChange(index, "address", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="Enter your address"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label htmlFor={`duration-${index}`} className="block text-xs text-gray-600">
+                          Duration
+                        </label>
+                        <input
+                          id={`duration-${index}`}
+                          type="text"
+                          value={addressItem.duration}
+                          onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="Duration (e.g., 2020-2022)"
+                        />
+                      </div>
+                      
                       <div className="flex items-center">
                         <input
+                          id={`current-${index}`}
                           type="checkbox"
                           checked={addressItem.isCurrent}
                           onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
                           className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                         />
-                        <label className="ml-2 text-sm text-gray-600">Current Address</label>
+                        <label htmlFor={`current-${index}`} className="ml-2 text-sm text-gray-600">
+                          Current Address
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -398,18 +431,29 @@ const EditPersonalDetails = () => {
                   type="button"
                   onClick={addAddress}
                   className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                  aria-label="Add another address"
                 >
                   + Add Another Address
                 </button>
               </div>
 
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                placeholder="Small bio"
-              ></textarea>
+              <div className="space-y-2">
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                  Short Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  placeholder="Write a short bio about yourself"
+                  aria-describedby="bioHelp"
+                ></textarea>
+                <p id="bioHelp" className="text-xs text-gray-500">
+                  Brief description about yourself that will be visible on your profile
+                </p>
+              </div>
 
               <button
                 type="submit"
@@ -417,6 +461,7 @@ const EditPersonalDetails = () => {
                   isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
                 }`}
                 disabled={isLoading}
+                aria-label="Save profile changes"
               >
                 <span>{isLoading ? "Loading..." : "Save Edits"}</span>
                 {!isLoading && <FiArrowRight className="ml-2" />}

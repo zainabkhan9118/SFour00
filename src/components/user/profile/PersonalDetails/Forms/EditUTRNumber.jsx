@@ -114,13 +114,23 @@ const EditUTRNumber = () => {
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               {/* UTR Number Input */}
-              <input
-                type="text"
-                value={utrNumber}
-                onChange={handleChange}
-                className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                placeholder="e.g. KNJ44334433443"
-              />
+              <div className="space-y-2">
+                <label htmlFor="utrNumber" className="block text-sm font-medium text-gray-700">
+                  UTR Number (Unique Taxpayer Reference)
+                </label>
+                <input
+                  id="utrNumber"
+                  type="text"
+                  value={utrNumber}
+                  onChange={handleChange}
+                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  placeholder="e.g. KNJ44334433443"
+                  aria-describedby="utrNumberHelp"
+                />
+                <p id="utrNumberHelp" className="text-xs text-gray-500">
+                  Your UTR number is a unique 10-digit identifier issued by HMRC.
+                </p>
+              </div>
               
               {/* Save Button */}
               <button 

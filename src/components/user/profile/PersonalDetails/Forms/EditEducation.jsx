@@ -343,58 +343,91 @@ const EditEducation = () => {
                     </div>
 
                     <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={education.degree}
-                        onChange={(e) => handleChange(index, "degree", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Degree"
-                        required
-                      />
+                      <div className="space-y-1">
+                        <label htmlFor={`degree-${index}`} className="block text-sm font-medium text-gray-700">
+                          Degree / Qualification
+                        </label>
+                        <input
+                          id={`degree-${index}`}
+                          type="text"
+                          value={education.degree}
+                          onChange={(e) => handleChange(index, "degree", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="e.g., Bachelor of Science, Certificate in Security"
+                          required
+                        />
+                      </div>
 
-                      <input
-                        type="text"
-                        value={education.institution}
-                        onChange={(e) => handleChange(index, "institution", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Institution"
-                        required
-                      />
+                      <div className="space-y-1">
+                        <label htmlFor={`institution-${index}`} className="block text-sm font-medium text-gray-700">
+                          Institution
+                        </label>
+                        <input
+                          id={`institution-${index}`}
+                          type="text"
+                          value={education.institution}
+                          onChange={(e) => handleChange(index, "institution", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="School, college or university name"
+                          required
+                        />
+                      </div>
 
                       <div className="flex flex-col space-y-3">
-                        <div className="relative">
-                          <label className="text-sm text-gray-600 mb-1">Start Date</label>
+                        <div className="relative space-y-1">
+                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700">
+                            Start Date
+                          </label>
                           <input
+                            id={`start-date-${index}`}
                             type="date"
                             value={education.startDate}
                             onChange={(e) => handleChange(index, "startDate", e.target.value)}
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             required
+                            aria-describedby={`start-date-help-${index}`}
                           />
+                          <p id={`start-date-help-${index}`} className="text-xs text-gray-500 mt-1">
+                            When did you start this education?
+                          </p>
                         </div>
 
-                        <div className="relative">
-                          <label className="text-sm text-gray-600 mb-1">End Date</label>
+                        <div className="relative space-y-1">
+                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700">
+                            End Date
+                          </label>
                           <input
+                            id={`end-date-${index}`}
                             type="date"
                             value={education.endDate}
                             onChange={(e) => handleChange(index, "endDate", e.target.value)}
                             className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             disabled={education.currentlyStudying}
                             required={!education.currentlyStudying}
+                            aria-describedby={`end-date-help-${index}`}
                           />
+                          <p id={`end-date-help-${index}`} className="text-xs text-gray-500 mt-1">
+                            {education.currentlyStudying ? "End date not required for current studies" : "When did you complete this education?"}
+                          </p>
                         </div>
                       </div>
 
                       <div className="flex items-center">
                         <input
+                          id={`currently-studying-${index}`}
                           type="checkbox"
                           checked={education.currentlyStudying}
                           onChange={(e) => handleChange(index, "currentlyStudying", e.target.checked)}
                           className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                          aria-describedby={`currently-studying-help-${index}`}
                         />
-                        <label className="ml-2 text-sm text-gray-600">Currently Studying</label>
+                        <label htmlFor={`currently-studying-${index}`} className="ml-2 text-sm text-gray-600">
+                          Currently Studying
+                        </label>
                       </div>
+                      <p id={`currently-studying-help-${index}`} className="text-xs text-gray-500 mt-1">
+                        Check this box if you are still enrolled in this program
+                      </p>
                     </div>
                   </div>
                 ))}

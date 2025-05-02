@@ -226,77 +226,109 @@ const EditLicense = () => {
 
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
-              <input
-                type="text"
-                value={licenseNumber}
-                onChange={(e) => setLicenseNumber(e.target.value)}
-                className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                placeholder="Add License Number"
-                required
-              />
-
-              <div className="relative">
+              <div className="space-y-2">
+                <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700">
+                  License Number
+                </label>
                 <input
-                  type="date"
-                  value={dateOfExpiry}
-                  onChange={(e) => setDateOfExpiry(e.target.value)}
+                  id="licenseNumber"
+                  type="text"
+                  value={licenseNumber}
+                  onChange={(e) => setLicenseNumber(e.target.value)}
                   className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                  placeholder="Enter Date of Expiry"
+                  placeholder="Add License Number"
                   required
+                  aria-describedby="licenseNumberHelp"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                <p id="licenseNumberHelp" className="text-xs text-gray-500">
+                  Enter your security license identification number
+                </p>
               </div>
 
-              <div 
-                className={`border-2 border-dashed border-orange-300 rounded-lg p-6 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-32`}
-                onClick={() => fileInputRef.current.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.add('bg-orange-100');
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('bg-orange-100');
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('bg-orange-100');
-                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    setSelectedFile(e.dataTransfer.files[0]);
-                  }
-                }}
-              >
-                {selectedFile ? (
-                  <div className="flex flex-col items-center">
-                    <div className="text-orange-500 font-medium mb-2">
-                      {selectedFile instanceof File ? selectedFile.name : selectedFile.name}
+              <div className="space-y-2">
+                <label htmlFor="dateOfExpiry" className="block text-sm font-medium text-gray-700">
+                  Date of Expiry
+                </label>
+                <div className="relative">
+                  <input
+                    id="dateOfExpiry"
+                    type="date"
+                    value={dateOfExpiry}
+                    onChange={(e) => setDateOfExpiry(e.target.value)}
+                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Enter Date of Expiry"
+                    required
+                    aria-describedby="expiryDateHelp"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <p id="expiryDateHelp" className="text-xs text-gray-500">
+                  The date when your license will expire
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="licensePicPdf" className="block text-sm font-medium text-gray-700">
+                  License Document
+                </label>
+                <div 
+                  className="border-2 border-dashed border-orange-300 rounded-lg p-6 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-32"
+                  onClick={() => fileInputRef.current.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('bg-orange-100');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('bg-orange-100');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('bg-orange-100');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setSelectedFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  aria-describedby="licenseFileHelp"
+                >
+                  {selectedFile ? (
+                    <div className="flex flex-col items-center">
+                      <div className="text-orange-500 font-medium mb-2">
+                        {selectedFile instanceof File ? selectedFile.name : selectedFile.name}
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        Click to change file
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-500">
-                      Click to change file
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <FiUpload className="h-5 w-5 text-gray-600 mr-2" />
-                    <span className="text-gray-600">Upload License</span>
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  onChange={handleFileChange}
-                />
+                  ) : (
+                    <div className="flex items-center">
+                      <FiUpload className="h-5 w-5 text-gray-600 mr-2" />
+                      <span className="text-gray-600">Upload License</span>
+                    </div>
+                  )}
+                  <input 
+                    id="licensePicPdf"
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleFileChange}
+                    aria-label="Upload license document"
+                  />
+                </div>
+                <p id="licenseFileHelp" className="text-xs text-gray-500">
+                  Upload a scan or photo of your security license document
+                </p>
               </div>
 
               <button 
                 type="submit" 
                 className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
+                aria-label={licenseId ? "Update license information" : "Submit license for verification"}
               >
                 <span>{licenseId ? "Update License" : "Submit For Verification"}</span>
                 <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

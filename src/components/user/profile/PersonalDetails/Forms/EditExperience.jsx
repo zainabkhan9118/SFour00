@@ -362,28 +362,43 @@ const EditExperience = () => {
                     </div>
 
                     <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={experience.position}
-                        onChange={(e) => handleChange(index, "position", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Position"
-                        required
-                      />
+                      <div className="space-y-1">
+                        <label htmlFor={`position-${index}`} className="block text-sm font-medium text-gray-700">
+                          Position
+                        </label>
+                        <input
+                          id={`position-${index}`}
+                          type="text"
+                          value={experience.position}
+                          onChange={(e) => handleChange(index, "position", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="Job title"
+                          required
+                        />
+                      </div>
 
-                      <input
-                        type="text"
-                        value={experience.companyName}
-                        onChange={(e) => handleChange(index, "companyName", e.target.value)}
-                        className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
-                        placeholder="Company Name"
-                        required
-                      />
+                      <div className="space-y-1">
+                        <label htmlFor={`company-${index}`} className="block text-sm font-medium text-gray-700">
+                          Company Name
+                        </label>
+                        <input
+                          id={`company-${index}`}
+                          type="text"
+                          value={experience.companyName}
+                          onChange={(e) => handleChange(index, "companyName", e.target.value)}
+                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          placeholder="Company Name"
+                          required
+                        />
+                      </div>
 
                       <div className="flex flex-col space-y-3">
-                        <div className="relative">
-                          <label className="text-sm text-gray-600 mb-1">Start Date</label>
+                        <div className="relative space-y-1">
+                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700">
+                            Start Date
+                          </label>
                           <input
+                            id={`start-date-${index}`}
                             type="date"
                             value={experience.startDate}
                             onChange={(e) => handleChange(index, "startDate", e.target.value)}
@@ -392,9 +407,12 @@ const EditExperience = () => {
                           />
                         </div>
 
-                        <div className="relative">
-                          <label className="text-sm text-gray-600 mb-1">End Date</label>
+                        <div className="relative space-y-1">
+                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700">
+                            End Date
+                          </label>
                           <input
+                            id={`end-date-${index}`}
                             type="date"
                             value={experience.endDate}
                             onChange={(e) => handleChange(index, "endDate", e.target.value)}
@@ -407,16 +425,21 @@ const EditExperience = () => {
 
                       <div className="flex items-center">
                         <input
+                          id={`currently-working-${index}`}
                           type="checkbox"
                           checked={experience.currentlyWorking}
                           onChange={(e) => handleChange(index, "currentlyWorking", e.target.checked)}
                           className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                         />
-                        <label className="ml-2 text-sm text-gray-600">Currently Working</label>
+                        <label htmlFor={`currently-working-${index}`} className="ml-2 text-sm text-gray-600">
+                          Currently Working
+                        </label>
                       </div>
 
-                      <div className="relative">
-                        <label className="text-sm text-gray-600 mb-1">Experience Certificate</label>
+                      <div className="relative space-y-1">
+                        <label htmlFor={`certificate-${index}`} className="block text-sm font-medium text-gray-700">
+                          Experience Certificate
+                        </label>
                         <div 
                           className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 cursor-pointer"
                           onClick={() => document.getElementById(`certificate-${index}`).click()}
@@ -433,13 +456,17 @@ const EditExperience = () => {
                                 : "Upload Experience Certificate"}
                             </span>
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Upload work reference document (optional)
+                          </p>
                         </div>
                         <input
-                          type="file"
                           id={`certificate-${index}`}
+                          type="file"
                           accept="image/*,.pdf"
                           className="hidden"
                           onChange={(e) => handleFileChange(e, index)}
+                          aria-label="Upload experience certificate"
                         />
                       </div>
                     </div>
