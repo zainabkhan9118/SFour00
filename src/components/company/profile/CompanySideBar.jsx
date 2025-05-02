@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import vector1 from "../../../assets/images/vector1.png";
 import s4 from "../../../assets/images/s4.png";
@@ -14,6 +14,7 @@ import { auth } from "../../../config/firebaseConfig";
 const CompanySideBar = ({ isMobile = false }) => {
   const [companyData, setCompanyData] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -29,19 +30,17 @@ const CompanySideBar = ({ isMobile = false }) => {
   };
 
   useEffect(() => {
-    const fetchCompanyData = async () => {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
+    const fetchCompanyData = async (user) => {
+      if (!user) {
         console.error("User not authenticated");
+        setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get('api/company', {
+        const response = await axios.get('/api/company', {
           headers: {
-            "firebase-id": currentUser.uid
+            "firebase-id": user.uid
           }
         });
         if (response.data && response.data.data) {
@@ -49,10 +48,26 @@ const CompanySideBar = ({ isMobile = false }) => {
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchCompanyData();
+    setIsLoading(true);
+    const auth = getAuth();
+    
+    // Use Firebase's auth state listener instead of immediately checking currentUser
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchCompanyData(user);
+      } else {
+        console.error("User not authenticated");
+        setIsLoading(false);
+      }
+    });
+
+    // Clean up the auth state listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   // Navigation links component - reused in both desktop and mobile views

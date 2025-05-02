@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Header from "../Header";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
@@ -29,20 +29,17 @@ const ProfileCompany = () => {
   }, []);
 
   useEffect(() => {
-    const fetchCompanyData = async () => {
-      setIsLoading(true);
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
+    const fetchCompanyData = async (user) => {
+      if (!user) {
         console.error("User not authenticated");
+        setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get('api/company', {
+        const response = await axios.get('/api/company', {
           headers: {
-            "firebase-id": currentUser.uid
+            "firebase-id": user.uid
           }
         });
         if (response.data && response.data.data) {
@@ -60,7 +57,21 @@ const ProfileCompany = () => {
       }
     };
 
-    fetchCompanyData();
+    setIsLoading(true);
+    const auth = getAuth();
+    
+    // Use Firebase's auth state listener instead of immediately checking currentUser
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchCompanyData(user);
+      } else {
+        console.error("User not authenticated");
+        setIsLoading(false);
+      }
+    });
+
+    // Clean up the auth state listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   const handleEdit = () => {

@@ -4,14 +4,14 @@ import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
 import axios from 'axios';
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
 
 const EditCompanyForm = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -41,21 +41,17 @@ const EditCompanyForm = () => {
   }, []);
 
   useEffect(() => {
-    const fetchExistingData = async () => {
-      setIsLoading(true);
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
+    const fetchExistingData = async (user) => {
+      if (!user) {
         console.error("User not authenticated");
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`api/company`, {
+        const response = await axios.get(`/api/company`, {
           headers: {
-            "firebase-id": currentUser.uid,
+            "firebase-id": user.uid,
           },
         });
 
@@ -85,7 +81,21 @@ const EditCompanyForm = () => {
       }
     };
 
-    fetchExistingData();
+    setIsLoading(true);
+    const auth = getAuth();
+    
+    // Use Firebase's auth state listener instead of immediately checking currentUser
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchExistingData(user);
+      } else {
+        console.error("User not authenticated");
+        setIsLoading(false);
+      }
+    });
+
+    // Clean up the auth state listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   const handleImageClick = () => {
@@ -124,7 +134,7 @@ const EditCompanyForm = () => {
     }
 
     try {
-      const endpoint = 'api/company';
+      const endpoint = '/api/company';
       const method = isDataAlreadyPosted ? 'patch' : 'post';
 
       // Create FormData to send file
