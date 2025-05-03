@@ -126,7 +126,7 @@ const RecentJob = () => {
   // Display loading state
   if (loading) {
     return (
-      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
         
         <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
         
@@ -138,18 +138,18 @@ const RecentJob = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
       
 
       <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
         
         <Headerjob />
 
-        <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg">
+        <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg">
           {noCompanyId ? (
             <div className="text-center py-6">
-              <p className="text-gray-500 mb-2">No company profile found</p>
-              <p className="text-sm text-gray-400 mb-4">Please complete your company profile to post and view jobs</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-2">No company profile found</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Please complete your company profile to post and view jobs</p>
               <Link 
                 to="/company-profile" 
                 className="inline-block bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
@@ -161,12 +161,6 @@ const RecentJob = () => {
             <div className="text-center py-6">
               <p className="text-gray-500 mb-2">No jobs found</p>
               <p className="text-sm text-gray-400 mb-4">Create your first job posting</p>
-              <Link 
-                to="/job-posting" 
-                className="inline-block bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
-              >
-                Post a Job
-              </Link>
             </div>
           ) : (
             companyJobs.map((job, index) => (
@@ -187,14 +181,15 @@ const RecentJob = () => {
                   </div>
 
                   <div className="flex-grow sm:w-[300px]">
-                    <h2 className="text-lg font-semibold text-gray-900">{job.jobTitle}</h2>
-                    <div className="flex flex-wrap items-center text-gray-600 text-sm gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{job.jobTitle}</h2>
+                    <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-300 text-sm gap-2">
                       <div className="flex items-center">
-                        <FaMapMarkerAlt className="text-gray-500 mr-1" />
+                        <FaMapMarkerAlt className="text-gray-500 dark:text-gray-400 mr-1" />
                         <span>{job.companyId?.address || "Location not specified"}</span>
                       </div>
                       <span>• ${job.pricePerHour}/hr</span>
                     </div>
+
                   </div>
                 </div>
 

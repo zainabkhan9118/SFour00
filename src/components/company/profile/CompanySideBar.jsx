@@ -202,7 +202,7 @@ const CompanySideBar = ({ isMobile = false }) => {
   // Mobile version of the sidebar
   if (isMobile) {
     return (
-      <div className="bg-white dark:bg-gray-800 w-full transition-colors duration-200">
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden transition-colors duration-200">
         {/* Mobile header with menu button */}
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
           <div className="flex items-center">
@@ -211,15 +211,15 @@ const CompanySideBar = ({ isMobile = false }) => {
               alt="Company Logo"
               className="w-8 h-8 rounded-full object-cover"
             />
-            <span className="ml-2 font-medium text-sm text-gray-800 truncate">
+            <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
               {companyData?.companyName || "Company Name"}
             </span>
           </div>
           <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-600 focus:outline-none"
+            onClick={toggleSidebar}
+            className="text-gray-600 dark:text-gray-400 focus:outline-none"
           >
-            {isMenuOpen ? <MdLogout size={20} /> : <MdOutlineHome size={20} />}
+            {isMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
           </button>
         </div>
 
@@ -245,24 +245,26 @@ const CompanySideBar = ({ isMobile = false }) => {
 
   // Desktop version of the sidebar
   return (
-    <div className="h-full bg-white dark:bg-gray-800 py-4 px-3 transition-colors duration-200">
+    <div className="h-full bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden transition-colors duration-200">
       {/* Profile quick info - smaller height */}
-      <div className="flex items-center mb-6 px-2">
+      <div className="flex items-center p-4 border-b dark:border-gray-700">
         <img
           src={companyData?.companyLogo || company}
           alt="Company Logo"
           className="w-8 h-8 rounded-full object-cover"
         />
-        <span className="ml-2 font-medium text-sm text-gray-800 truncate">
+        <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
           {companyData?.companyName || "Company Name"}
         </span>
       </div>
       
       {/* Navigation links - more compact */}
-      <NavigationLinks />
+      <div className="p-4">
+        <NavigationLinks />
+      </div>
       
       {/* Footer text - more compact */}
-      <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 px-2">
+      <div className="mt-auto p-4 text-xs text-gray-500 dark:text-gray-400">
         <p>Terms and conditions of use:</p>
         <div className="flex space-x-1">
           <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Privacy policy</a>

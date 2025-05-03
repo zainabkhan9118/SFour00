@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import logo1 from "../../../../../assets/images/EmployersLogo1.png";
-import logo2 from "../../../../../assets/images/EmployersLogo2.png";
-import {FaClock } from "react-icons/fa";
-
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import Headerjob from "../Headerjob";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
-import { JobStatus } from "../../../../../constants/enums";
+import logo1 from "../../../../../assets/images/EmployersLogo1.png";
+import logo2 from "../../../../../assets/images/EmployersLogo2.png";
+import { FaMapMarkerAlt, FaCheck, FaRegBookmark, FaClock } from "react-icons/fa";
 import { getJobsByStatus } from "../../../../../api/jobsApi";
+import { JobStatus } from "../../../../../constants/enums";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 // Sample data for fallback if needed
 const sampleJobs = [
@@ -63,7 +63,8 @@ const Inprogess = () => {
   const [inProgressJobs, setInProgressJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
   const handleJobClick = (jobId) => {
     navigate(`/inProgress-jobDetail/${jobId}`);
   };
@@ -132,80 +133,100 @@ const Inprogess = () => {
       minute: '2-digit'
     });
   };
-  
-  return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-     
 
-      <div className="flex flex-col gap-4 sm:gap-6 flex-1 p-3 sm:p-4 md:p-6">
-        
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Get assigned jobseeker name
+  const getAssignedJobseekerName = (job) => {
+    return job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId
+      ? job.userJobRel[0].userId.fullname
+      : "Not Assigned";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
+          <Headerjob />
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
         <Headerjob />
 
-        {loading ? (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-red-500">Error: {error}</p>
+        {error ? (
+          <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
+            <p className="text-xl text-red-500 dark:text-red-400">Error: {error}</p>
           </div>
         ) : (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg">
+          <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg">
             {inProgressJobs.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-xl text-gray-500">No in-progress jobs found</p>
+                <p className="text-xl text-gray-500 dark:text-gray-400">No in-progress jobs found</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {inProgressJobs.map((job, index) => {
-                  console.log(`Job ${index}:`, job);
-                  
-                  // Set a default logo or alternate between the two sample logos
-                  const companyLogo = job.companyLogo || (index % 2 === 0 ? logo1 : logo2);
-                  
-                  return (
-                    <div
-                      key={job._id || index}
-                      className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => handleJobClick(job._id)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="w-12 h-12 mr-4 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
-                            <img 
-                              src={companyLogo} 
-                              alt="Company Logo" 
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = index % 2 === 0 ? logo1 : logo2;
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-1">
-                              {job.jobTitle || "Untitled Job"}
-                            </h2>
-                            <p className="text-teal-700 font-semibold">${job.pricePerHour || "300.0"}/hr</p>
-                          </div>
+              inProgressJobs.map((job, index) => (
+                <div
+                  key={job._id}
+                  className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between py-4 border-b cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    index === inProgressJobs.length - 1 ? "border-none" : "border-gray-200 dark:border-gray-700"
+                  }`}
+                  onClick={() => handleJobClick(job._id)}
+                >
+                  <div className="flex items-center space-x-3 md:space-x-4 w-full sm:w-auto mb-3 sm:mb-0">
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={job.companyLogo || (index % 2 === 0 ? logo1 : logo2)} 
+                        alt={job.jobTitle} 
+                        className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded" 
+                      />
+                    </div>
+
+                    <div className="flex-grow sm:w-[200px] md:w-[300px]">
+                      <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{job.jobTitle}</h2>
+                      <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm gap-2">
+                        <div className="flex items-center gap-1">
+                          <FaMapMarkerAlt className="text-gray-500 dark:text-gray-400" />
+                          <span>{job.location || "Location not specified"}</span>
                         </div>
-                        
-                        <div className="flex flex-col items-end">
-                          <div className="flex items-center text-gray-500 text-sm">
-                            <FaClock className="mr-1" />
-                            <span>Accepted {formatTime(job.startTime || job.updatedAt)}</span>
-                          </div>
-                          <div className="bg-teal-900 text-white px-3 py-1 rounded-full text-sm mt-1">
-                            Accepted By: {job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId
-                              ? job.userJobRel[0].userId.fullname
-                              : "Successggg"}
-                          </div>
-                        </div>
+                        <span className="hidden sm:inline">•</span>
+                        <span>${job.pricePerHour || 0}/hr</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center w-full sm:w-auto gap-2 sm:gap-6 mb-3 sm:mb-0">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 w-full sm:w-auto">
+                      {formatDate(job.startTime || job.updatedAt)}
+                    </div>
+                    <div className="flex items-center text-blue-500 dark:text-blue-400 font-medium text-xs sm:text-sm">
+                      <FaCheck className="mr-1" />
+                      In Progress
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
+                    <FaRegBookmark className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-lg sm:text-xl" />
+                    <button className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full text-xs sm:text-sm font-medium">
+                      {getAssignedJobseekerName(job)}
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}

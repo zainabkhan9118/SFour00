@@ -5,22 +5,22 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import axios from "axios";
 import logo from "../assets/images/logo.png";
+import AuthLayout from "../components/layouts/common/AuthLayout";
 import { AppContext } from "../context/AppContext";
+import { ThemeContext } from "../context/ThemeContext";
 import { auth } from "../config/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import AuthLayout from "../components/layouts/common/AuthLayout";
-import { ThemeContext } from "../context/ThemeContext";
 
 export default function CreateAccount() {
   const { BASEURL, setUser, setRole } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userType, setUserType] = useState("company");
   const [loading, setLoading] = useState(false);
-  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -112,23 +112,18 @@ export default function CreateAccount() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-full">
       {/* Left Section */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center bg-white dark:bg-gray-900 px-8 md:px-16 lg:px-20 py-10">
-        <div className="mb-8 mt-6 items-center justify-center">
-          <img
-            src={logo}
-            alt="Logo"
-            className="h-[70px] w-[70px] object-fill"
-          />
-        </div>
-
+      <div className="w-full md:w-1/2 bg-white dark:bg-gray-900 flex flex-col justify-center items-center px-6 md:px-12 py-8 transition-colors duration-200">
         <div className="w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Logo" className="h-[80px] md:h-12" />
+          </div>
           <div className="flex flex-col md:flex-row md:items-center md:space-x-10 space-y-4 md:space-y-0">
             <div>
               <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">Create account.</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Already have an account?{" "}
                 <span
-                  className="text-orange-500 cursor-pointer"
+                  className="text-orange-500 cursor-pointer hover:text-orange-600 dark:hover:text-orange-400"
                   onClick={() => navigate("/user-login")}
                 >
                   Log In
@@ -137,7 +132,7 @@ export default function CreateAccount() {
             </div>
             <div className="self-start md:self-auto">
               <select
-                className="border px-3 py-2 md:px-4 md:py-2 rounded-[50px] text-sm focus:ring-2 focus:ring-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                className="border px-3 py-2 md:px-4 md:py-2 rounded-[50px] text-sm focus:ring-2 focus:ring-gray-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
               >
@@ -156,11 +151,9 @@ export default function CreateAccount() {
               phone: "",
               fullName: "",
               companyName: "",
-              userType: userType,
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
-            enableReinitialize={true}
           >
             {({ values }) => (
               <Form className="mt-6 space-y-4">
@@ -170,7 +163,7 @@ export default function CreateAccount() {
                       type="text"
                       name="fullName"
                       placeholder="Full Name"
-                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     />
                     <ErrorMessage
                       name="fullName"
@@ -184,7 +177,7 @@ export default function CreateAccount() {
                       type="text"
                       name="companyName"
                       placeholder="Company Name"
-                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     />
                     <ErrorMessage
                       name="companyName"
@@ -199,7 +192,7 @@ export default function CreateAccount() {
                     type="email"
                     name="email"
                     placeholder="Email address"
-                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                   <ErrorMessage
                     name="email"
@@ -213,7 +206,7 @@ export default function CreateAccount() {
                     type="text"
                     name="phone"
                     placeholder="Phone #"
-                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                   <ErrorMessage
                     name="phone"
@@ -227,7 +220,7 @@ export default function CreateAccount() {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="Password"
-                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
@@ -248,7 +241,7 @@ export default function CreateAccount() {
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     placeholder="Confirm Password"
-                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                    className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                   <button
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -265,10 +258,10 @@ export default function CreateAccount() {
                 </div>
 
                 <div className="mt-4 flex items-center">
-                  <Field type="checkbox" name="terms" className="mr-2" />
-                  <label htmlFor="terms" className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  <Field type="checkbox" name="terms" className="mr-2 accent-orange-500" />
+                  <label htmlFor="terms" className="text-xs md:text-sm text-gray-600 dark:text-gray-300">
                     I agree with your{" "}
-                    <span className="text-orange-500 cursor-pointer">
+                    <span className="text-orange-500 cursor-pointer hover:text-orange-600 dark:hover:text-orange-400">
                       Terms of Services
                     </span>
                   </label>
@@ -287,17 +280,17 @@ export default function CreateAccount() {
 
           <div className="mt-4 text-center text-xs md:text-sm text-gray-500 dark:text-gray-400">or</div>
           <div className="flex flex-col md:flex-row justify-center gap-3 mt-4">
-            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 dark:hover:bg-gray-800 w-full border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
               <FaFacebook className="text-blue-600" /> Sign in with Facebook
             </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-full text-xs md:text-sm hover:bg-gray-100 dark:hover:bg-gray-800 w-full border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
               <FcGoogle /> Sign in with Google
             </button>
           </div>
         </div>
       </div>
 
-      {/* Right Section */}
+      {/* Right Section with Job Stats */}
       <AuthLayout />
     </div>
   );

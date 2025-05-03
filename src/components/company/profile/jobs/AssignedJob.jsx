@@ -1,73 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import Headerjob from "./Headerjob";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
-import { JobStatus } from "../../../../constants/enums";
 import { getJobsByStatus } from "../../../../api/jobsApi";
-
-// Sample data for fallback
-const sampleJobs = [
-  {
-    id: 1,
-    logo: logo1,
-    title: "Networking Engineer",
-    location: "Washington",
-    rate: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 2,
-    logo: logo2,
-    title: "Product Designer",
-    location: "Dhaka",
-    rate: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 3,
-    logo: logo1,
-    title: "Junior Graphic Designer",
-    location: "Brazil",
-    rate: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Active",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 4,
-    logo: logo2,
-    title: "Visual Designer",
-    location: "Wisconsin",
-    rate: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Active",
-    assignedto: "Jorden Mendaz",
-  },
-  {
-    id: 5,
-    logo: logo2,
-    title: "Marketing Officer",
-    location: "United States",
-    rate: "$12/hr",
-    date: "Dec 4, 2019 21:42",
-    status: "Active",
-    assignedto: "Jorden Mendaz",
-  },
-];
+import { JobStatus } from "../../../../constants/enums";
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 const AssignedJob = () => {
   const navigate = useNavigate();
   const [assignedJobs, setAssignedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
   const handleJobClick = (jobId) => {
     navigate(`/assign-jobDetail/${jobId}`);
   };
@@ -77,22 +25,16 @@ const AssignedJob = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Get company ID from localStorage or use a default for testing
+
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
-        
-        // Call the API with the status parameter from JobStatus enum using our new API function
+
         const result = await getJobsByStatus(companyId, JobStatus.ASSIGNED);
-        
+
         if (result.statusCode === 200 && Array.isArray(result.data)) {
-          console.log("Assigned jobs data:", result.data);
-          
-          // Process the data with complete jobseeker information
           const processedJobs = result.data.map(job => {
-            // Make sure to access the job information correctly
             const jobData = job.jobId || job;
             const companyData = jobData.companyId || {};
-            
+
             return {
               _id: job._id,
               jobId: jobData._id,
@@ -101,20 +43,16 @@ const AssignedJob = () => {
               createdAt: job.createdAt,
               updatedAt: job.updatedAt,
               jobStatus: job.status || JobStatus.ASSIGNED,
-              
-              // Preserve all possible jobseeker information fields
               userJobRel: job.userJobRel || [],
               jobSeekerId: job.jobSeekerId || null,
               applicantsList: jobData.applicantsList || [],
-              
               companyId: {
                 companyLogo: companyData.companyLogo,
                 address: companyData.address || "Location not specified"
               }
             };
           });
-          
-          console.log("Processed jobs with jobseeker info:", processedJobs);
+
           setAssignedJobs(processedJobs);
         } else {
           throw new Error("Invalid response format");
@@ -122,7 +60,6 @@ const AssignedJob = () => {
       } catch (err) {
         console.error("Failed to fetch assigned jobs:", err);
         setError(err.message);
-        // Use empty array instead of sample data in production
         setAssignedJobs([]);
       } finally {
         setLoading(false);
@@ -132,7 +69,6 @@ const AssignedJob = () => {
     fetchAssignedJobs();
   }, []);
 
-  // Format date function
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -145,71 +81,68 @@ const AssignedJob = () => {
       minute: '2-digit'
     });
   };
-  
-  // Get the assigned jobseeker's name from the job
+
   const getAssignedJobseekerName = (job) => {
-    // Check for userJobRel first (most recent API structure)
     if (job.userJobRel && job.userJobRel.length > 0) {
       if (job.userJobRel[0].userId && job.userJobRel[0].userId.fullname) {
         return job.userJobRel[0].userId.fullname;
       }
-      
-      // Sometimes userId might be just the ID, not an object
+
       if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
         return job.userJobRel[0].jobSeekerId.fullname || "Jobseeker";
       }
     }
-    
-    // Check for direct jobSeekerId reference
+
     if (job.jobSeekerId) {
-      // If jobSeekerId is an object with fullname
       if (typeof job.jobSeekerId === 'object' && job.jobSeekerId.fullname) {
         return job.jobSeekerId.fullname;
       }
     }
-    
-    // Fall back to applicantsList structure
+
     if (job.applicantsList && job.applicantsList.length > 0) {
-      // Find the assigned applicant
       const assignedApplicant = job.applicantsList.find(applicant => 
         applicant.status === JobStatus.ASSIGNED || 
         applicant.status === "ASSIGNED"
       ) || job.applicantsList[0];
-      
+
       return assignedApplicant.fullname || "Jobseeker";
     }
-    
+
     return "Not assigned";
   };
-  
-  return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-     
 
-      <div className="flex flex-col gap-4 md:gap-6 flex-1 p-3 sm:p-4 md:p-6">
-        
+  if (loading) {
+    return (
+      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
+          <Headerjob />
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
         <Headerjob />
 
-        {loading ? (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
-            <p className="text-xl text-red-500">Error: {error}</p>
+        {error ? (
+          <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg flex justify-center items-center h-64">
+            <p className="text-xl text-red-500 dark:text-red-400">Error: {error}</p>
           </div>
         ) : (
-          <div className="w-full bg-white p-3 sm:p-4 md:p-6 shadow-md rounded-lg">
+          <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg">
             {assignedJobs.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-xl text-gray-500">No assigned jobs found</p>
+                <p className="text-xl text-gray-500 dark:text-gray-400">No assigned jobs found</p>
               </div>
             ) : (
               assignedJobs.map((job, index) => (
                 <div
                   key={job._id}
-                  className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                    index === assignedJobs.length - 1 ? "border-none" : "border-gray-200"
+                  className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between py-4 border-b cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    index === assignedJobs.length - 1 ? "border-none" : "border-gray-200 dark:border-gray-700"
                   }`}
                   onClick={() => handleJobClick(job._id)}
                 >
@@ -223,10 +156,10 @@ const AssignedJob = () => {
                     </div>
 
                     <div className="flex-grow sm:w-[200px] md:w-[300px]">
-                      <h2 className="text-base sm:text-lg font-semibold text-gray-900">{job.jobTitle}</h2>
-                      <div className="flex flex-wrap items-center text-gray-600 text-xs sm:text-sm gap-2">
+                      <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{job.jobTitle}</h2>
+                      <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm gap-2">
                         <div className="flex items-center gap-1">
-                          <FaMapMarkerAlt className="text-gray-500" />
+                          <FaMapMarkerAlt className="text-gray-500 dark:text-gray-400" />
                           <span>{job.companyId?.address || "Location not specified"}</span>
                         </div>
                         <span className="hidden sm:inline">•</span>
@@ -236,17 +169,17 @@ const AssignedJob = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center w-full sm:w-auto gap-2 sm:gap-6 mb-3 sm:mb-0">
-                    <div className="text-xs sm:text-sm text-gray-500 w-full sm:w-auto">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 w-full sm:w-auto">
                       {formatDate(job.createdAt || job.updatedAt)}
                     </div>
-                    <div className="flex items-center text-green-500 font-medium text-xs sm:text-sm">
+                    <div className="flex items-center text-green-500 dark:text-green-400 font-medium text-xs sm:text-sm">
                       <FaCheck className="mr-1" />
                       {job.jobStatus || "Assigned"}
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
-                    <FaRegBookmark className="text-gray-400 cursor-pointer hover:text-gray-600 text-lg sm:text-xl" />
+                    <FaRegBookmark className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-lg sm:text-xl" />
                     <button className="bg-[#1F2B44] text-white px-4 sm:px-7 py-2 sm:py-4 rounded-full text-xs sm:text-sm font-medium w-full sm:w-auto">
                       <span className="font-semibold">Assigned To: </span>
                       <span className="text-xs sm:text-sm">

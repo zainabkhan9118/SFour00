@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
@@ -12,6 +12,7 @@ import { getWorkerLocation } from "../../../../api/locationApi";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -31,10 +32,10 @@ const MapModal = ({ isOpen, onClose, location }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Worker Location</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Worker Location</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 text-xl">
             &times;
           </button>
         </div>
@@ -72,6 +73,7 @@ const AssignedJobDetail = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const { jobId } = useParams();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Format date function for workDate
   const formatWorkDate = (dateString) => {
@@ -208,7 +210,7 @@ const AssignedJobDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         
         <div className="flex flex-col flex-1 justify-center items-center">
           <LoadingSpinner />
@@ -219,7 +221,7 @@ const AssignedJobDetail = () => {
 
   if (error || !job) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
        
         <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-red-500 text-xl">{error || "Job not found"}</p>
@@ -269,13 +271,13 @@ const AssignedJobDetail = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       
 
       <div className="flex flex-col flex-1">
       
         <div className="flex justify-end px-4 md:px-8">
-          <p className="text-gray-400 mt-4 md:mt-6 text-sm md:text-base">
+          <p className="text-gray-400 dark:text-gray-300 mt-4 md:mt-6 text-sm md:text-base">
             Find Job / {jobData.jobDuration || "Job"} / Job Details
           </p>
         </div>
@@ -294,17 +296,17 @@ const AssignedJobDetail = () => {
                 />
               </div>
               <div>
-                <h2 className="text-2xl text-gray-700 font-semibold">
+                <h2 className="text-2xl text-gray-700 dark:text-gray-200 font-semibold">
                   {jobData.jobTitle || "Job Title"}
                 </h2>
                 <div className="flex flex-wrap gap-2 mt-2 text-sm">
                   {companyData.address && (
-                    <span className="px-3 py-1 border border-gray-500 rounded-full">
+                    <span className="px-3 py-1 border border-gray-500 dark:border-gray-400 rounded-full text-gray-700 dark:text-gray-300">
                       {companyData.address}
                     </span>
                   )}
                   {jobData._id && (
-                    <span className="px-3 py-1 border border-gray-500 rounded-full">
+                    <span className="px-3 py-1 border border-gray-500 dark:border-gray-400 rounded-full text-gray-700 dark:text-gray-300">
                       ID: {jobData._id.substring(0, 6)}
                     </span>
                   )}
@@ -313,31 +315,31 @@ const AssignedJobDetail = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 md:flex md:flex-row md:items-center md:space-x-6 mt-4 md:mt-0">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-200 flex items-center justify-center rounded-full">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-200 dark:bg-orange-300/20 flex items-center justify-center rounded-full">
                   <img src={salary} className="w-6 h-6 md:w-8 md:h-8" alt="" />
                 </div>
                 <div>
-                  <p className="text-gray-600 text-xs md:text-sm">Salary</p>
-                  <p className="font-semibold text-sm md:text-base">${jobData.pricePerHour || 0}/hr</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs md:text-sm">Salary</p>
+                  <p className="font-semibold text-sm md:text-base text-gray-800 dark:text-gray-200">${jobData.pricePerHour || 0}/hr</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-200 flex items-center justify-center rounded-full">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-200 dark:bg-orange-300/20 flex items-center justify-center rounded-full">
                   <img src={time} className="w-6 h-6 md:w-8 md:h-8" alt="" />
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-gray-900 font-semibold text-xs md:text-sm">Timings</p>
+                  <p className="text-gray-900 dark:text-gray-200 font-semibold text-xs md:text-sm">Timings</p>
                   <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                     <div className="flex flex-col">
-                      <p className="text-xs md:text-sm font-medium text-gray-700">Start date & Time</p>
-                      <p className="text-[10px] md:text-[12px]">
+                      <p className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Start date & Time</p>
+                      <p className="text-[10px] md:text-[12px] text-gray-600 dark:text-gray-400">
                         {jobData.workDate ? `${formatWorkDate(jobData.workDate)} ${formatTime(jobData.startTime)}` : "Not specified"}
                       </p>
                     </div>
                     <div className="flex flex-col">
-                      <p className="text-xs md:text-sm font-medium text-gray-700">End date & Time:</p>
-                      <p className="text-[10px] md:text-[12px]">
+                      <p className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">End date & Time:</p>
+                      <p className="text-[10px] md:text-[12px] text-gray-600 dark:text-gray-400">
                         {jobData.workDate ? `${formatWorkDate(jobData.workDate)} ${formatTime(jobData.endTime)}` : "Not specified"}
                       </p>
                     </div>
@@ -357,32 +359,32 @@ const AssignedJobDetail = () => {
               }}
             />
             <div className="flex flex-col gap-3 w-full sm:w-auto">
-              <div className="border-2 border-dashed border-gray-400 px-3 md:px-4 py-2 rounded-full text-gray-800 text-sm md:text-base">
-                <span className="font-bold text-gray-700">Assigned To: </span>
+              <div className="border-2 border-dashed border-gray-400 dark:border-gray-300 px-3 md:px-4 py-2 rounded-full text-gray-800 dark:text-gray-200 text-sm md:text-base">
+                <span className="font-bold text-gray-700 dark:text-gray-300">Assigned To: </span>
                 <span>{getAssignedWorkerName()}</span>
               </div>
-              <div className="border-2 border-dashed border-[#FD7F00] px-3 md:px-4 py-2 rounded-full text-[#FD7F00] text-sm md:text-base">
+              <div className="border-2 border-dashed border-[#FD7F00] dark:border-orange-500 px-3 md:px-4 py-2 rounded-full text-[#FD7F00] dark:text-orange-500 text-sm md:text-base">
                 <span className="font-semibold">Status: </span>
                 <span>{job.status || JobStatus.ASSIGNED}</span>
               </div>
             </div>
           </div>
           <div className="p-4 md:p-6 w-full max-w-[1110px] mx-auto">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">
               Job Description
             </h2>
-            <p className="text-sm md:text-base text-gray-700 leading-relaxed">
+            <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
               {jobData.jobDescription || "No job description available."}
             </p>
             <div className="flex flex-col sm:flex-row mt-4 gap-3">
               <button
                 onClick={() => trackWorker()}
-                className="bg-[#FD7F00] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 transition">
+                className="bg-[#FD7F00] dark:bg-orange-500 w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 dark:hover:bg-orange-600 transition">
                 Track Worker
               </button>
               <button 
                 onClick={handleMessageWorker}
-                className="bg-[#1F2B44] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-gray-800 transition">
+                className="bg-[#1F2B44] dark:bg-gray-700 w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-gray-800 dark:hover:bg-gray-800 transition">
                 Message Worker
               </button>
             </div>

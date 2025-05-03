@@ -29,12 +29,20 @@ const CompanyLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+    <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+      {/* Sidebar - fixed position on desktop, conditionally showing on mobile */}
+      <div 
+        className={`${isMobile ? (isMenuOpen ? "block fixed" : "hidden") : "block"} z-30`}
+        style={{ height: '100vh' }}
+      >
+        <Sidebar />
+      </div>
+
       {/* Mobile Menu Toggle Button - Only visible on mobile */}
       {isMobile && (
         <button
           onClick={toggleMenu}
-          className="fixed top-4 left-4 z-[60] p-2 bg-[#121D34] dark:bg-gray-800 rounded-md text-white md:hidden"
+          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] dark:bg-gray-800 rounded-md text-white md:hidden"
           aria-label="Toggle Menu"
         >
           <svg
@@ -61,19 +69,13 @@ const CompanyLayout = ({ children }) => {
       {/* Overlay for Mobile */}
       {isMobile && isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar - fixed position on desktop, conditionally showing on mobile */}
-      {/* On mobile, Sidebar component handles its own fixed positioning */}
-      <div className={isMobile ? (isMenuOpen ? "block" : "hidden") : "block"}>
-        <Sidebar />
-      </div>
-
-      {/* Main Content - with proper margin to avoid overlap with sidebar */}
-      <div className="flex-grow flex flex-col md:ml-64 w-full transition-all duration-300 ease-in-out">
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 overflow-hidden md:ml-64">
         <Header />
         <main className="flex-1 overflow-auto p-4 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
           {children}
