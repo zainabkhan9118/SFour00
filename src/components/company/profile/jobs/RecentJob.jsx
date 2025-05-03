@@ -6,6 +6,7 @@ import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 
 import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
+import { getCompanyJobs } from "../../../../api/jobsApi";
 
 // Sample data as fallback
 const jobs = [
@@ -74,13 +75,9 @@ const RecentJob = () => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/jobs/company/${companyId}`);
         
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        
-        const result = await response.json();
+        // Use the new API function
+        const result = await getCompanyJobs(companyId);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           setCompanyJobs(result.data);

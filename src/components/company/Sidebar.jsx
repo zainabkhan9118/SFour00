@@ -28,20 +28,20 @@ export default function Sidebar() {
   };
 
   useEffect(() => {
-    // Simulate loading routes from a config or API
+    // Load routes configuration
     setLoading(true);
     
-    // This would typically be an API call to fetch routes
-    setTimeout(() => {
-      setRoutes({
-        profile: "/company-profile",
-        chat: "/chat",
-        work: "/my-work", 
-        notifications: "/notification",
-        qrCode: "/qr-code"
-      });
-      setLoading(false);
-    }, 300);
+    // Define routes for the sidebar navigation
+    const sidebarRoutes = {
+      profile: "/company-profile",
+      chat: "/chat",
+      work: "/my-work", 
+      notifications: "/notification",
+      qrCode: "/qr-code"
+    };
+    
+    setRoutes(sidebarRoutes);
+    setLoading(false);
   }, []);
 
   // Toggle menu visibility on mobile
@@ -49,24 +49,26 @@ export default function Sidebar() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Handler for logout functionality
+  // Handler for logout functionality using structured approach
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      // Clear local storage
+      // Clear local storage first to remove all stored data
       localStorage.clear();
-      // Sign out from Firebase
+      
+      // Sign out from Firebase authentication
       await signOut(auth);
-      // Show success popup instead of redirecting immediately
+      
+      // Show success popup before redirecting
       setShowLogoutPopup(true);
     } catch (error) {
       console.error("Error during logout:", error);
-      // Still navigate to login page if there's an error
+      // Navigate to login page even if there's an error
       navigate("/login");
     }
   };
 
-  // Handle closing the logout popup
+  // Handle closing the logout popup and navigate to login
   const handleCloseLogoutPopup = () => {
     setShowLogoutPopup(false);
     // Navigate to login page after closing the popup

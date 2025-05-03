@@ -7,6 +7,7 @@ import {FaClock } from "react-icons/fa";
 import Headerjob from "../Headerjob";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../../constants/enums";
+import { getJobsByStatus } from "../../../../../api/jobsApi";
 
 // Sample data for fallback if needed
 const sampleJobs = [
@@ -76,14 +77,8 @@ const Inprogess = () => {
         // Get company ID from localStorage or use a default for testing
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
         
-        // Call the API with the status parameter from JobStatus enum
-        const response = await fetch(`/api/apply/company/${companyId}?status=${JobStatus.IN_PROGRESS}`);
-        
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        // Call the API with the status parameter from JobStatus enum using our new API function
+        const result = await getJobsByStatus(companyId, JobStatus.IN_PROGRESS);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           console.log("In-progress jobs data:", result.data);
