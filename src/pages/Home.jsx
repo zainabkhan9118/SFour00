@@ -2,7 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUserTie, FaBuilding } from "react-icons/fa";
 import logo from "../assets/images/logo.png";
-import JobStatsDisplay from "../components/common/JobStatsDisplay";
+import AuthLayout from "../components/layouts/common/AuthLayout";
+
 
 const Home = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ Please post jobs, review applications, and recruit top candidates with ease.
         </button>
       </div>
 
-      <JobStatsDisplay />
+      <AuthLayout />
     </div>
   );
 };
