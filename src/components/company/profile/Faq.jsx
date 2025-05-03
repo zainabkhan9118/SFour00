@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import CompanySideBar from "./CompanySideBar";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const faqs = [
   {
@@ -49,6 +50,7 @@ const FAQs = () => {
   const [openIndex, setOpenIndex] = useState(null);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Monitor screen size for responsive layout
   useEffect(() => {
@@ -64,10 +66,10 @@ const FAQs = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row w-full">
+    <div className="flex flex-col md:flex-row w-full min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Desktop Sidebar - Hidden on Mobile */}
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 bg-white dark:bg-gray-800 shadow-sm">
           <CompanySideBar />
         </div>
       )}
@@ -82,26 +84,26 @@ const FAQs = () => {
         )}
         
         <div className="p-4 md:p-6 overflow-auto">
-          <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
+          <h1 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white">Frequently Asked Questions</h1>
           <div className="space-y-4 max-w-4xl mx-auto">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-[#E5E7EB] rounded-lg overflow-hidden"
+                className="bg-[#E5E7EB] dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm border border-transparent dark:border-gray-700"
               >
                 <button
-                  className="w-full flex justify-between items-center p-4 text-left"
+                  className="w-full flex justify-between items-center p-4 text-left transition-colors"
                   onClick={() => toggleFAQ(index)}
                 >
-                  <span className="text-gray-900">{faq.question}</span>
+                  <span className="text-gray-900 dark:text-gray-200 font-medium">{faq.question}</span>
                   {openIndex === index ? (
-                    <FaMinus className="text-gray-700" />
+                    <FaMinus className="text-gray-700 dark:text-gray-400" />
                   ) : (
-                    <FaPlus className="text-gray-700 " />
+                    <FaPlus className="text-gray-700 dark:text-gray-400" />
                   )}
                 </button>
                 {openIndex === index && (
-                  <div className="px-4 pb-4 text-blue-900 ">
+                  <div className="px-4 pb-4 text-blue-900 dark:text-blue-300 border-t border-gray-300 dark:border-gray-700">
                     {faq.answer}
                   </div>
                 )}

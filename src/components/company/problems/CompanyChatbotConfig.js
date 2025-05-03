@@ -1,16 +1,16 @@
-// ChatbotConfig.js - Configuration for the React Chatbot Kit
+// CompanyChatbotConfig.js - Configuration for the Company React Chatbot Kit
 import { createChatBotMessage } from 'react-chatbot-kit';
-import BotAvatar from './BotAvatar';
-import UserAvatar from './UserAvatar';
-import Options from './Options';
+import BotAvatar from '../../user/profile/ContactSupport/BotAvatar';
+import UserAvatar from '../../user/profile/ContactSupport/UserAvatar';
+import CompanyOptions from './CompanyOptions';
 
 const config = {
   initialMessages: [
-    createChatBotMessage("Hello! Welcome to S4 Support. How can I help you today?", {
-      widget: "options",
+    createChatBotMessage("Welcome to S4 Business Support! How can I assist your company today?", {
+      widget: "companyOptions",
     }),
   ],
-  botName: "S4 Support",
+  botName: "S4 Business Support",
   customStyles: {
     botMessageBox: {
       backgroundColor: "var(--bot-message-bg, #fff)",
@@ -27,8 +27,8 @@ const config = {
   },
   widgets: [
     {
-      widgetName: "options",
-      widgetFunc: Options,
+      widgetName: "companyOptions",
+      widgetFunc: CompanyOptions,
     },
   ],
 };

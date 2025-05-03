@@ -7,6 +7,7 @@ import UserSidebar from "../../UserSidebar";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import { AppContext } from "../../../../../context/AppContext";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
 import { createNewJobSeekerProfile, updatePersonalDetails } from "../../../../../api/profileApi";
 import { useToast } from "../../../../notifications/ToastManager";
@@ -21,6 +22,7 @@ const EditPersonalDetails = () => {
   const { setProfileName, setProfileDp } = useContext(AppContext);
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
     addresses: [{ address: "", duration: "", isCurrent: false }],
@@ -298,11 +300,11 @@ const EditPersonalDetails = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
 
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -316,9 +318,9 @@ const EditPersonalDetails = () => {
 
         <div className="p-4 md:p-6 overflow-auto">
           <div className="flex items-center mb-4">
-            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">Edit Personal Details</span>
+              <span className="font-medium text-black dark:text-white">Edit Personal Details</span>
             </button>
           </div>
 
@@ -341,14 +343,14 @@ const EditPersonalDetails = () => {
                     onChange={handleImageChange}
                     aria-label="Upload profile picture"
                   />
-                  <label className="text-xs text-center block mt-2 text-gray-500">
+                  <label className="text-xs text-center block mt-2 text-gray-500 dark:text-gray-400">
                     Click to update photo
                   </label>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Full Name
                 </label>
                 <input
@@ -357,25 +359,25 @@ const EditPersonalDetails = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="Full Name"
                   required
                 />
               </div>
 
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Address Information
                 </label>
                 {formData.addresses.map((addressItem, index) => (
-                  <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div key={index} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Address {index + 1}</h3>
+                      <h3 className="font-medium dark:text-white">Address {index + 1}</h3>
                       {formData.addresses.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeAddress(index)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                           aria-label={`Remove address ${index + 1}`}
                         >
                           Remove
@@ -384,7 +386,7 @@ const EditPersonalDetails = () => {
                     </div>
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <label htmlFor={`address-${index}`} className="block text-xs text-gray-600">
+                        <label htmlFor={`address-${index}`} className="block text-xs text-gray-600 dark:text-gray-400">
                           Address Line
                         </label>
                         <input
@@ -392,13 +394,13 @@ const EditPersonalDetails = () => {
                           type="text"
                           value={addressItem.address}
                           onChange={(e) => handleAddressChange(index, "address", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="Enter your address"
                         />
                       </div>
                       
                       <div className="space-y-1">
-                        <label htmlFor={`duration-${index}`} className="block text-xs text-gray-600">
+                        <label htmlFor={`duration-${index}`} className="block text-xs text-gray-600 dark:text-gray-400">
                           Duration
                         </label>
                         <input
@@ -406,7 +408,7 @@ const EditPersonalDetails = () => {
                           type="text"
                           value={addressItem.duration}
                           onChange={(e) => handleAddressChange(index, "duration", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="Duration (e.g., 2020-2022)"
                         />
                       </div>
@@ -417,9 +419,9 @@ const EditPersonalDetails = () => {
                           type="checkbox"
                           checked={addressItem.isCurrent}
                           onChange={(e) => handleAddressChange(index, "isCurrent", e.target.checked)}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded"
                         />
-                        <label htmlFor={`current-${index}`} className="ml-2 text-sm text-gray-600">
+                        <label htmlFor={`current-${index}`} className="ml-2 text-sm text-gray-600 dark:text-gray-400">
                           Current Address
                         </label>
                       </div>
@@ -430,7 +432,7 @@ const EditPersonalDetails = () => {
                 <button
                   type="button"
                   onClick={addAddress}
-                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                  className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-orange-500 hover:text-orange-500 dark:hover:text-orange-400 transition"
                   aria-label="Add another address"
                 >
                   + Add Another Address
@@ -438,7 +440,7 @@ const EditPersonalDetails = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Short Bio
                 </label>
                 <textarea
@@ -446,11 +448,11 @@ const EditPersonalDetails = () => {
                   name="bio"
                   value={formData.bio}
                   onChange={handleChange}
-                  className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="Write a short bio about yourself"
                   aria-describedby="bioHelp"
                 ></textarea>
-                <p id="bioHelp" className="text-xs text-gray-500">
+                <p id="bioHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Brief description about yourself that will be visible on your profile
                 </p>
               </div>

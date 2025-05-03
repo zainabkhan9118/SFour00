@@ -9,7 +9,9 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import jsQR from "jsqr";
 import { createJob } from "../../../api/jobsApi";
+
 import CompanyProfileCompletionCheck from "./CompanyProfileCompletionCheck";
+
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;

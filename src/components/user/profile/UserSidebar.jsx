@@ -11,9 +11,11 @@ import {
   FaTimes
 } from "react-icons/fa";
 import { AppContext } from "../../../context/AppContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const UserSidebar = ({ isMobile = false }) => {
   const { profileName, profileDp } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,12 +47,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/User-PersonalDetails"
         className={`flex items-center p-2 rounded-md ${
           isActive("/User-PersonalDetails")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaUser className="text-orange-500 mr-3" size={14} />
+        <FaUser className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>Personal Details</span>
       </Link>
       
@@ -58,12 +60,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/User-BankDetails"
         className={`flex items-center p-2 rounded-md ${
           isActive("/User-BankDetails")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaUniversity className="text-orange-500 mr-3" size={14} />
+        <FaUniversity className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>Bank Details</span>
       </Link>
       
@@ -71,12 +73,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/ResetPassword"
         className={`flex items-center p-2 rounded-md ${
           isActive("/ResetPassword")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaLock className="text-orange-500 mr-3" size={14} />
+        <FaLock className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>Reset Password</span>
       </Link>
       
@@ -84,12 +86,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/User-InvoiceList"
         className={`flex items-center p-2 rounded-md ${
           isActive("/User-InvoiceList")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaFileInvoice className="text-orange-500 mr-3" size={14} />
+        <FaFileInvoice className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>My Invoices</span>
       </Link>
       
@@ -97,12 +99,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/User-ContactSupport"
         className={`flex items-center p-2 rounded-md ${
           isActive("/User-ContactSupport")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaHeadset className="text-orange-500 mr-3" size={14} />
+        <FaHeadset className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>Contact S4 Support</span>
       </Link>
       
@@ -110,12 +112,12 @@ const UserSidebar = ({ isMobile = false }) => {
         to="/User-FAQSection"
         className={`flex items-center p-2 rounded-md ${
           isActive("/User-FAQSection")
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         }`}
         onClick={() => isMobile && setIsMenuOpen(false)}
       >
-        <FaQuestionCircle className="text-orange-500 mr-3" size={14} />
+        <FaQuestionCircle className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
         <span>FAQ's</span>
       </Link>
     </nav>
@@ -124,22 +126,22 @@ const UserSidebar = ({ isMobile = false }) => {
   // Mobile version of the sidebar
   if (isMobile) {
     return (
-      <div className="bg-white w-full">
+      <div className="bg-white dark:bg-gray-800 w-full transition-colors duration-200">
         {/* Mobile header with menu button */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
           <div className="flex items-center">
             <img
               src={profileDp || fallbackProfileDp}
               alt="profile"
               className="w-8 h-8 rounded-full object-cover"
             />
-            <span className="ml-2 font-medium text-sm text-gray-800 truncate">
+            <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
               {profileName?.trim() ? profileName : fallbackProfileName}
             </span>
           </div>
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-600 focus:outline-none"
+            className="text-gray-600 dark:text-gray-300 focus:outline-none"
           >
             {isMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
           </button>
@@ -151,12 +153,12 @@ const UserSidebar = ({ isMobile = false }) => {
             <NavigationLinks />
             
             {/* Footer text */}
-            <div className="mt-6 text-xs text-gray-500 px-2">
+            <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 px-2">
               <p>Terms and conditions of use:</p>
               <div className="flex space-x-1">
-                <a href="#" className="text-blue-500 hover:underline">Privacy policy</a>
+                <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Privacy policy</a>
                 <span>,</span>
-                <a href="#" className="text-blue-500 hover:underline">Cookie policy</a>
+                <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Cookie policy</a>
               </div>
             </div>
           </div>
@@ -167,7 +169,7 @@ const UserSidebar = ({ isMobile = false }) => {
 
   // Desktop version of the sidebar (original implementation)
   return (
-    <div className="h-full bg-white py-4 px-3">
+    <div className="h-full bg-white dark:bg-gray-800 py-4 px-3 transition-colors duration-200">
       {/* Profile quick info - smaller height */}
       <div className="flex items-center mb-6 px-2">
         <img
@@ -175,7 +177,7 @@ const UserSidebar = ({ isMobile = false }) => {
           alt="profile"
           className="w-8 h-8 rounded-full object-cover"
         />
-        <span className="ml-2 font-medium text-sm text-gray-800 truncate">
+        <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
           {profileName?.trim() ? profileName : fallbackProfileName}
         </span>
       </div>
@@ -184,12 +186,12 @@ const UserSidebar = ({ isMobile = false }) => {
       <NavigationLinks />
       
       {/* Footer text - more compact */}
-      <div className="mt-6 text-xs text-gray-500 px-2">
+      <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 px-2">
         <p>Terms and conditions of use:</p>
         <div className="flex space-x-1">
-          <a href="#" className="text-blue-500 hover:underline">Privacy policy</a>
+          <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Privacy policy</a>
           <span>,</span>
-          <a href="#" className="text-blue-500 hover:underline">Cookie policy</a>
+          <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Cookie policy</a>
         </div>
       </div>
     </div>

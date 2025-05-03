@@ -1,46 +1,100 @@
-import { FaFacebook, FaGoogle } from "react-icons/fa";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../config/firebaseConfig";
+import { toast } from "react-toastify";
 import logo from "../assets/images/logo.png";
-import JobStatsDisplay from "../components/common/JobStatsDisplay"; 
+import AuthLayout from "../components/layouts/common/AuthLayout";
+import { ThemeContext } from "../context/ThemeContext";
 
 export default function ForgetPassword() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+
+  const resetPassword = async (e) => {
+    e.preventDefault();
     
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent! Check your inbox.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      if (error.code === "auth/user-not-found") {
+        toast.error("No account found with this email address.");
+      } else {
+        toast.error("Failed to send reset email. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen w-full">
       {/* Left Section */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center bg-white px-10 text-center md:text-left">
-        <div className="mb-6">
-          <img src={logo} alt="Logo" className="h-20" />
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center bg-white dark:bg-gray-900 px-8 md:px-16 lg:px-20 py-10">
+        <div className="mb-8 mt-6 justify-center items-center">
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-[70px] w-[70px] object-fill"
+          />
         </div>
-        <h2 className="text-2xl font-semibold mb-2">Forget Password</h2>
-        <p className="text-gray-500">Go back to <span className="text-orange-500 cursor-pointer" onClick={() => navigate("/login")}>Sign In</span></p>
-        <p className="text-gray-500">Don't have an account? <span className="text-orange-500 cursor-pointer" onClick={() => navigate("/CreateAccount")}>Create Account</span></p>
-        
-        <div className="w-full mt-6 max-w-md">
-          <input type="email" placeholder="Email address" className="w-full border px-4 py-2 rounded-full mb-4" />
-          <button 
-            className="w-full bg-orange-500 text-white py-2 rounded-full hover:bg-orange-600 transition" 
-            onClick={() => navigate("/ResetPassword")}
+
+        <h2 className="text-[32px] md:text-2xl font-bold mb-3 text-[#1F2B44] dark:text-white">
+          Forgot Password?
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base mb-8">
+          Enter your email address and we'll send you a link to reset your password.
+        </p>
+
+        <form onSubmit={resetPassword} className="w-full max-w-md">
+          <input
+            type="email"
+            value={email}
+            onChange={handleEmailChange}
+            placeholder="Email address"
+            className="w-full border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-full mb-4 text-sm md:text-base focus:outline-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-orange-500 text-white py-3 rounded-full text-sm md:text-base hover:bg-orange-600 transition font-medium"
+            disabled={loading}
           >
-            Reset Password
+            {loading ? "Sending..." : "Send Reset Link"}
           </button>
-        </div>
-        
-        <p className="text-gray-500 my-4">or</p>
-        
-        <div className="flex flex-col md:flex-row gap-3 w-full max-w-md">
-          <button className="flex items-center justify-center px-4 py-2 border rounded-full w-full text-sm md:text-base">
-            <FaFacebook className="text-blue-600 mr-2" /> Sign in with Facebook
-          </button>
-          <button className="flex items-center justify-center px-4 py-2 border rounded-full w-full text-sm md:text-base">
-            <FaGoogle className="text-red-500 mr-2" /> Sign in with Google
-          </button>
-        </div>
+
+          <div className="text-center mt-6">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-sm text-orange-500 hover:text-orange-700"
+            >
+              Back to Login
+            </button>
+          </div>
+        </form>
       </div>
-      
+
       {/* Right Section */}
-      <JobStatsDisplay />
+      <AuthLayout />
     </div>
   );
 }

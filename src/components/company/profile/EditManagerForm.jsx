@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
@@ -6,12 +6,14 @@ import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { getCompanyProfile, updateCompanyManager } from "../../../api/companyApi";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const EditManagerForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   
   // Manager information state
   const [managerData, setManagerData] = useState({
@@ -115,10 +117,10 @@ const EditManagerForm = () => {
   return (
     <>
       {isLoading && <LoadingSpinner />}
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         {/* Desktop Sidebar - Hidden on Mobile */}
         {!isMobile && (
-          <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
             <CompanySideBar />
           </div>
         )}
@@ -132,51 +134,51 @@ const EditManagerForm = () => {
             </div>
           )}
           
-          <div className="p-4 md:p-6 overflow-auto">
+          <div className="p-4 md:p-6 overflow-auto dark:bg-gray-900">
             <div className="flex items-center mb-6">
-              <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+              <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
                 <FaArrowLeft className="mr-2" />
-                <span className="font-medium text-black">Edit Manager Information</span>
+                <span className="font-medium text-black dark:text-white">Edit Manager Information</span>
               </button>
             </div>
 
             <div className="w-full max-w-2xl mx-auto">
-              <form onSubmit={handleSubmit} className="flex flex-col space-y-6 p-4">
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-700/10">
                 <div>
-                  <label htmlFor="manager-name" className="block text-gray-700 text-sm font-medium mb-2">Manager Name</label>
+                  <label htmlFor="manager-name" className="block text-gray-700 dark:text-gray-200 text-sm font-medium mb-2">Manager Name</label>
                   <input
                     id="manager-name"
                     type="text"
                     name="managerName"
                     value={managerData.managerName}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-gray-900 dark:text-white border border-transparent dark:border-gray-600"
                     placeholder="Manager Name"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="manager-email" className="block text-gray-700 text-sm font-medium mb-2">Manager Email</label>
+                  <label htmlFor="manager-email" className="block text-gray-700 dark:text-gray-200 text-sm font-medium mb-2">Manager Email</label>
                   <input
                     id="manager-email"
                     type="email"
                     name="managerEmail"
                     value={managerData.managerEmail}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-gray-900 dark:text-white border border-transparent dark:border-gray-600"
                     placeholder="Manager Email"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="manager-phone" className="block text-gray-700 text-sm font-medium mb-2">Manager Phone</label>
+                  <label htmlFor="manager-phone" className="block text-gray-700 dark:text-gray-200 text-sm font-medium mb-2">Manager Phone</label>
                   <input
                     id="manager-phone"
                     type="tel"
                     name="managerPhone"
                     value={managerData.managerPhone}
                     onChange={handleChange}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-gray-900 dark:text-white border border-transparent dark:border-gray-600"
                     placeholder="Manager Phone"
                   />
                 </div>

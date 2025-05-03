@@ -19,10 +19,10 @@ const CommonLayout = ({ children }) => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Header for mobile devices (optional) */}
       {isMobile && (
-        <header className="bg-white shadow-sm py-3 px-4 flex items-center justify-between">
+        <header className="bg-white dark:bg-gray-800 shadow-sm py-3 px-4 flex items-center justify-between">
           <div className="flex items-center">
             <img 
               src="/src/assets/images/logo.png" 
@@ -34,7 +34,7 @@ const CommonLayout = ({ children }) => {
       )}
 
       {/* Main Content without extra padding */}
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full dark:text-gray-100">
         {children}
       </main>
     </div>

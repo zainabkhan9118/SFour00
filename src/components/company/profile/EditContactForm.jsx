@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { FaArrowLeft } from "react-icons/fa";
@@ -6,12 +6,14 @@ import { FiArrowRight } from "react-icons/fi";
 import CompanySideBar from "./CompanySideBar";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { getCompanyProfile, updateCompanyContact } from "../../../api/companyApi";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const EditContactForm = () => {
   const navigate = useNavigate();
   const [contact, setContact] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     const handleResize = () => {
@@ -87,11 +89,11 @@ const EditContactForm = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       {isLoading && <LoadingSpinner />}
       
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <CompanySideBar />
         </div>
       )}
@@ -103,25 +105,25 @@ const EditContactForm = () => {
           </div>
         )}
         
-        <div className="p-4 md:p-6 overflow-auto">
+        <div className="p-4 md:p-6 overflow-auto dark:bg-gray-900">
           <div className="flex items-center mb-6">
-            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">Edit Company Contact</span>
+              <span className="font-medium text-black dark:text-white">Edit Company Contact</span>
             </button>
           </div>
 
           <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center">
             <div className="w-full max-w-2xl">
-              <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-700/10">
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-contact" className="font-medium text-gray-700">Company Contact Number</label>
+                  <label htmlFor="company-contact" className="font-medium text-gray-700 dark:text-gray-200">Company Contact Number</label>
                   <input
                     id="company-contact"
                     type="tel"
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none text-gray-900 dark:text-white border border-transparent dark:border-gray-600"
                     placeholder="Company Contact Number"
                   />
                 </div>

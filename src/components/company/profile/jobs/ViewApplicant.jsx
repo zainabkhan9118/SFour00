@@ -10,15 +10,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../constants/enums";
 import { getJobById, checkJobAssignmentStatus, enableJobAssignment } from "../../../../api/jobsApi";
+import AlreadyAssignedPopup from "../../../user/popupModel/AlreadyAssignedPopup";
 
 const ViewApplicant = () => {
     const [showButton, setShowButton] = useState(false);
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [assignError, setAssignError] = useState(null);
+    const [error, setError] = useState(null); // Keep this for general errors
+    // Remove the assignError state since we'll use the popup for assignment errors
     const [selectedApplicant, setSelectedApplicant] = useState(null);
     const [assignLoading, setAssignLoading] = useState(false);
+    const [showAlreadyAssignedPopup, setShowAlreadyAssignedPopup] = useState(false);
+    const [alreadyAssignedMessage, setAlreadyAssignedMessage] = useState("This job is already assigned to a jobseeker. You cannot assign it again.");
     
     const { jobId } = useParams();
     const navigate = useNavigate();
@@ -90,8 +93,6 @@ const ViewApplicant = () => {
     };
 
     const handleAssignJob = async (applicant) => {
-        // Clear any previous errors
-        setAssignError(null);
         setSelectedApplicant(applicant);
         setAssignLoading(true);
         
@@ -100,8 +101,9 @@ const ViewApplicant = () => {
             const isAssigned = await checkJobAssignmentStatus(jobId);
             
             if (isAssigned) {
-                // If job is already assigned, show error and don't proceed
-                setAssignError(`This job is already assigned to a jobseeker. You cannot assign it again.`);
+                // If job is already assigned, show popup instead of text error
+                setAlreadyAssignedMessage("This job is already assigned to a jobseeker. You cannot assign it again.");
+                setShowAlreadyAssignedPopup(true);
                 setAssignLoading(false);
                 return;
             }
@@ -116,19 +118,18 @@ const ViewApplicant = () => {
                 // After successful API call, show the assign job modal
                 setShowButton(true);
             } else {
-                throw new Error(result.message || "Failed to enable assignment");
+                // Show the error in popup instead of text at the top
+                setAlreadyAssignedMessage(result.message || "Failed to enable assignment. Please try again.");
+                setShowAlreadyAssignedPopup(true);
             }
         } catch (err) {
             console.error("Error enabling assignment:", err);
-            setAssignError(err.message || "Failed to enable assignment. Please try again.");
+            // Show the error in popup instead of text at the top
+            setAlreadyAssignedMessage(err.message || "An error occurred while assigning the job. Please try again.");
+            setShowAlreadyAssignedPopup(true);
         } finally {
             setAssignLoading(false);
         }
-    };
-    
-    // Close error notification
-    const closeErrorNotification = () => {
-        setAssignError(null);
     };
     
     // Display loading state
@@ -172,23 +173,6 @@ const ViewApplicant = () => {
                 </div>
 
                 <div className="flex flex-col px-4 md:px-8 space-y-4 md:space-y-6">
-                    {/* Assignment Error Alert */}
-                    {assignError && (
-                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm relative" role="alert">
-                            <div className="flex items-start">
-                                <div className="flex-grow">
-                                    <p className="font-bold">Assignment Error</p>
-                                    <p className="text-sm">{assignError}</p>
-                                </div>
-                                <button 
-                                    onClick={closeErrorNotification}
-                                    className="text-red-500 hover:text-red-700 transition-colors"
-                                >
-                                    <IoMdClose size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="flex flex-col md:flex-row p-4 md:p-6 justify-between rounded-lg w-full bg-white shadow-sm">
                         <div className="flex items-center space-x-4 mb-6 md:mb-0">
@@ -314,6 +298,14 @@ const ViewApplicant = () => {
                     </div>
                 </div>
                 {showButton && <AssignJobButton onClose={() => setShowButton(false)} applicant={selectedApplicant} job={job} />}
+                
+                {/* Already Assigned Popup */}
+                {showAlreadyAssignedPopup && (
+                    <AlreadyAssignedPopup 
+                        message={alreadyAssignedMessage}
+                        onClose={() => setShowAlreadyAssignedPopup(false)}
+                    />
+                )}
             </div>
         </div>
     );

@@ -26,3 +26,13 @@
   height: 80vh;
   position: relative;
 }
+
+/* Dark mode styles */
+.dark .map-modal {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .leaflet-container {
+  filter: brightness(0.8) contrast(1.2);
+}

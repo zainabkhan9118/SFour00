@@ -27,12 +27,12 @@ const UserLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
       {/* Mobile Menu Toggle Button */}
       {isMobile && (
         <button
           onClick={toggleMenu}
-          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] rounded-md text-white md:hidden"
+          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] dark:bg-[#0c1628] rounded-md text-white md:hidden"
           aria-label="Toggle Menu"
         >
           <svg
@@ -76,7 +76,7 @@ const UserLayout = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         <Header />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto dark:bg-gray-900 dark:text-gray-100">
           {children}
         </main>
       </div>

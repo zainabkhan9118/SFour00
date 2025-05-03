@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -7,12 +7,70 @@ import qr from "../../../../assets/images/qr-code.png";
 import QRCodeModal from "./popupsButtons/QRCodeModal";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../constants/enums";
+import { getJobsByStatus } from "../../../../api/jobsApi";
+import { getWorkerLocation } from "../../../../api/locationApi";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// Map modal component to display worker location
+const MapModal = ({ isOpen, onClose, location }) => {
+  if (!isOpen) return null;
+  
+  // Default coordinates if no location data
+  const lat = location.latitude || 34.1973229;
+  const lng = location.longitude || 73.2422251;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Worker Location</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">
+            &times;
+          </button>
+        </div>
+        <div className="h-[500px] w-full">
+          <MapContainer
+            center={[lat, lng]}
+            zoom={15}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[lat, lng]}>
+              <Popup>
+                <strong>Worker is here</strong><br />
+                Last updated: {new Date().toLocaleTimeString()}
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AssignedJobDetail = () => {
-  const [showButton, setShowButton] = useState(false);
+  const navigate = useNavigate();
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [workerLocation, setWorkerLocation] = useState({ latitude: null, longitude: null });
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState(null);
   const { jobId } = useParams();
 
   // Format date function for workDate
@@ -41,14 +99,8 @@ const AssignedJobDetail = () => {
         // Get company ID from localStorage or use a default for testing
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
         
-        // Call the API to get all assigned jobs for the company
-        const response = await fetch(`/api/apply/company/${companyId}?status=${JobStatus.ASSIGNED}`);
-        
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        // Use the getJobsByStatus API function instead of direct fetch
+        const result = await getJobsByStatus(companyId, JobStatus.ASSIGNED);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           console.log("API response:", result.data);
@@ -79,6 +131,81 @@ const AssignedJobDetail = () => {
     fetchJobDetails();
   }, [jobId]);
   
+  // Track worker function - calls the API to get worker location
+  const trackWorker = async () => {
+    if (!jobId) return;
+    
+    try {
+      setLocationLoading(true);
+      setLocationError(null);
+      
+      // Get company ID from localStorage
+      const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
+      
+      // Use the getWorkerLocation function from locationApi.js
+      const result = await getWorkerLocation(companyId, jobId);
+      
+      console.log("Worker location API response:", result);
+      
+      if (result.statusCode === 200) {
+        // If data is available, use it
+        if (result.data && result.data.jobSeekerLatitude && result.data.jobSeekerLongitude) {
+          setWorkerLocation({
+            latitude: result.data.jobSeekerLatitude,
+            longitude: result.data.jobSeekerLongitude
+          });
+        } else {
+          // Use default coordinates if data is null
+          setWorkerLocation({
+            latitude: 34.1973229,
+            longitude: 73.2422251
+          });
+          console.log("Using default location as API returned null data");
+        }
+        // Open map modal in both cases
+        setIsMapOpen(true);
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (err) {
+      console.error("Failed to fetch worker location:", err);
+      setLocationError(err.message);
+      // Show error to user
+      alert(`Could not track worker: ${err.message}`);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+  
+  // Handle click on message worker button
+  const handleMessageWorker = () => {
+    if (!job) return;
+    
+    // Get assigned worker's firebase ID if available
+    let workerFirebaseId = null;
+    
+    // Extract the firebase ID from the relationship data
+    if (job.userJobRel && job.userJobRel.length > 0) {
+      // Check for direct firebase ID in userJobRel
+      if (job.userJobRel[0].userId && job.userJobRel[0].userId.firebaseId) {
+        workerFirebaseId = job.userJobRel[0].userId.firebaseId;
+      }
+      // Check for firebase ID in jobSeekerId object
+      else if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
+        workerFirebaseId = job.userJobRel[0].jobSeekerId.firebaseId;
+      }
+    }
+    
+    // Check if we found a firebase ID, if not, just redirect to the general chat
+    if (workerFirebaseId) {
+      // Navigate to chat with the specific worker
+      navigate(`/chat?workerId=${workerFirebaseId}`);
+    } else {
+      // No specific worker ID found, just go to the chat page
+      navigate('/chat');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
@@ -249,17 +376,25 @@ const AssignedJobDetail = () => {
             </p>
             <div className="flex flex-col sm:flex-row mt-4 gap-3">
               <button
-                onClick={() => setShowButton(true)}
+                onClick={() => trackWorker()}
                 className="bg-[#FD7F00] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 transition">
                 Track Worker
               </button>
-              <button className="bg-[#1F2B44] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-gray-800 transition">
+              <button 
+                onClick={handleMessageWorker}
+                className="bg-[#1F2B44] w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-gray-800 transition">
                 Message Worker
               </button>
             </div>
           </div>
         </div>
-        {showButton && <QRCodeModal onClose={() => setShowButton(false)} />}
+        {showQRModal && <QRCodeModal onClose={() => setShowQRModal(false)} />}
+        {/* Map Modal for worker location */}
+        <MapModal 
+          isOpen={isMapOpen} 
+          onClose={() => setIsMapOpen(false)} 
+          location={workerLocation} 
+        />
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import LoadingSpinner from "../../common/LoadingSpinner";
 import LazyImage from "../../common/LazyImage";
 import ProfileSuccessPopup from "../../user/popupModel/ProfileSuccessPopup";
 import ProfileErrorPopup from "../../user/popupModel/ProfileErrorPopup";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 export default function JobDetails() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function JobDetails() {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Handle applying for the job
   const handleApplyForJob = async (e) => {
@@ -157,7 +159,7 @@ export default function JobDetails() {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
           <LoadingSpinner />
         </div>
@@ -167,9 +169,9 @@ export default function JobDetails() {
 
   if (error) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="bg-red-100 text-red-700 p-6 rounded-lg shadow-sm max-w-md">
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-6 rounded-lg shadow-sm max-w-md">
             <p className="font-medium text-lg">Error</p>
             <p>{error}</p>
             <button 
@@ -186,9 +188,9 @@ export default function JobDetails() {
 
   if (!job) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="bg-gray-100 text-gray-700 p-6 rounded-lg shadow-sm max-w-md">
+          <div className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-6 rounded-lg shadow-sm max-w-md">
             <p>No job details available</p>
             <button 
               onClick={() => navigate('/User-Job')} 
@@ -203,7 +205,7 @@ export default function JobDetails() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Content Container */}
       <div className="container mx-auto py-6 px-4 md:px-8 lg:px-12 max-w-6xl">
         {/* Back to Jobs button */}
@@ -230,16 +232,16 @@ export default function JobDetails() {
         </div>
 
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-8 flex justify-end">
-          <span className="hover:text-gray-700 cursor-pointer">Find Job</span> 
+        <div className="text-sm text-gray-500 dark:text-gray-400 mb-8 flex justify-end">
+          <span className="hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer">Find Job</span> 
           <span className="mx-2">/</span>
-          <span className="hover:text-gray-700 cursor-pointer">Categories</span>
+          <span className="hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer">Categories</span>
           <span className="mx-2">/</span>
-          <span className="text-gray-700 font-medium">Job Details</span>
+          <span className="text-gray-700 dark:text-gray-300 font-medium">Job Details</span>
         </div>
 
         {/* Job Header Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8 transition-colors duration-200">
           {/* Header with logo, title, and apply button */}
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
             <div className="flex gap-5">
@@ -274,15 +276,15 @@ export default function JobDetails() {
 
               {/* Job title and tags */}
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-3">{job.jobTitle || "Senior UX Designer"}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{job.jobTitle || "Senior UX Designer"}</h1>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 text-gray-700">
+                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                     {job.noOfApplicants || 0} Applications
                   </span>
-                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 text-gray-700">
+                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                     {job.companyId?.address || 'Remote'}
                   </span>
-                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 text-gray-700">
+                  <span className="text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                     {job.jobStatus || 'WFH'}
                   </span>
                 </div>
@@ -292,7 +294,7 @@ export default function JobDetails() {
             {/* Action buttons */}
             <div className="flex flex-col items-end mt-4 md:mt-0 w-full md:w-auto">
               <div className="flex gap-2 mb-3 w-full md:w-auto">
-                <button className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                <button className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                   <Bookmark className="w-5 h-5 text-orange-500" />
                 </button>
                 <button
@@ -303,9 +305,9 @@ export default function JobDetails() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-gray-600 dark:text-gray-400">
                 Job expires in{" "}
-                <span className="text-orange-500 font-medium">
+                <span className="text-orange-500 dark:text-orange-400 font-medium">
                   {job.workDate ? formatDate(job.workDate) : 'June 30, 2025'}
                 </span>
               </div>
@@ -315,8 +317,8 @@ export default function JobDetails() {
           {/* Info cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Salary card */}
-            <div className="flex items-center gap-4 bg-orange-50 p-4 rounded-xl">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl">
+              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -334,14 +336,14 @@ export default function JobDetails() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Salary</div>
-                <div className="font-bold text-gray-900">${job.pricePerHour || "35"}/hr</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Salary</div>
+                <div className="font-bold text-gray-900 dark:text-white">${job.pricePerHour || "35"}/hr</div>
               </div>
             </div>
 
             {/* Timings card */}
-            <div className="flex items-center gap-4 bg-orange-50 p-4 rounded-xl">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl">
+              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -358,17 +360,17 @@ export default function JobDetails() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Timings</div>
-                <div className="font-bold text-gray-900">Fixed date & time</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Timings</div>
+                <div className="font-bold text-gray-900 dark:text-white">Fixed date & time</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {job.startTime && job.endTime ? `${job.startTime} - ${job.endTime}` : 'Mon-Fri, 9am-5pm'}
                 </div>
               </div>
             </div>
             
             {/* Location card */}
-            <div className="flex items-center gap-4 bg-orange-50 p-4 rounded-xl">
-              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl">
+              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -385,17 +387,17 @@ export default function JobDetails() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Location</div>
-                <div className="font-bold text-gray-900">{job.companyId?.address || "Remote"}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Location</div>
+                <div className="font-bold text-gray-900 dark:text-white">{job.companyId?.address || "Remote"}</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Job Description Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Job Description</h2>
-          <div className="space-y-4 text-gray-700 text-sm leading-relaxed">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8 transition-colors duration-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Job Description</h2>
+          <div className="space-y-4 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
             {job.jobDescription ? (
               <p>{job.jobDescription}</p>
             ) : (
@@ -424,9 +426,9 @@ export default function JobDetails() {
 
         {/* Checkpoints Card (if applicable) */}
         {job.checkpoints && job.checkpoints.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Checkpoints</h2>
-            <ul className="list-disc list-inside space-y-2 text-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8 transition-colors duration-200">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Checkpoints</h2>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
               {job.checkpoints.map((checkpoint, index) => (
                 <li key={index} className="pl-2">
                   <span className="font-medium">{checkpoint.name}</span>
@@ -437,23 +439,23 @@ export default function JobDetails() {
         )}
 
         {/* Share Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 transition-colors duration-200">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-900">Share this job:</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Share this job:</span>
             <div className="flex gap-3">
-              <button className="flex items-center gap-1 text-blue-600 text-sm hover:text-blue-800 transition-colors">
+              <button className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-sm hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                 </svg>
                 Facebook
               </button>
-              <button className="flex items-center gap-1 text-blue-400 text-sm hover:text-blue-600 transition-colors">
+              <button className="flex items-center gap-1 text-blue-400 text-sm hover:text-blue-600 dark:hover:text-blue-300 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
                 </svg>
                 Twitter
               </button>
-              <button className="flex items-center gap-1 text-red-500 text-sm hover:text-red-700 transition-colors">
+              <button className="flex items-center gap-1 text-red-500 text-sm hover:text-red-700 dark:hover:text-red-400 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0a12 12 0 0 0-3.8 23.4c-.1-1.1-.2-2.7 0-3.9.2-1.1 1.4-7 1.4-7s-.3-.7-.3-1.7c0-1.6.9-2.8 2.1-2.8 1 0 1.5.7 1.5 1.6 0 1-.6 2.5-.9 3.8-.3 1.2.6 2.1 1.7 2.1 2 0 3.6-2.1 3.6-5.1 0-2.7-1.9-4.6-4.6-4.6-3.1 0-5 2.3-5 4.7 0 .9.3 1.9.8 2.4.1.1.1.2.1.3-.1.3-.2 1.1-.3 1.3-.1.2-.2.3-.4.2-1.5-.7-2.4-2.9-2.4-4.6 0-3.8 2.8-7.2 7.9-7.2 4.2 0 7.4 3 7.4 6.9 0 4.1-2.6 7.5-6.2 7.5-1.2 0-2.4-.6-2.8-1.4 0 0-.6 2.3-.7 2.9-.3 1-1 2.3-1.5 3.1 1.1.3 2.3.5 3.5.5 8.3 0 15-6.7 15-15S20.3 0 12 0z"></path>
                 </svg>
@@ -468,26 +470,26 @@ export default function JobDetails() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
           {/* Modal */}
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md relative">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md relative">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-0 right-0 mt-4 mr-4 text-gray-500 hover:text-gray-800 transition-colors"
+              className="absolute top-0 right-0 mt-4 mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
             <div className="p-6">
               {/* Modal Header */}
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-medium text-gray-900">Apply Job: {job.jobTitle || 'Senior UX Designer'}</h3>
+                <h3 className="text-xl font-medium text-gray-900 dark:text-white">Apply Job: {job.jobTitle || 'Senior UX Designer'}</h3>
               </div>
 
               {/* Modal Body */}
               <form className="space-y-5" onSubmit={handleApplyForJob}>
                 {/* Resume Upload */}
-                <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50">
-                  <div className="flex items-center gap-2 text-gray-500">
+                <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <Upload className="w-5 h-5 text-blue-500" />
-                    <span onClick={handleUpload} className="cursor-pointer hover:text-gray-700 transition-colors">
+                    <span onClick={handleUpload} className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                       Upload Resume
                     </span>
                     <input
@@ -499,7 +501,7 @@ export default function JobDetails() {
                     />
                   </div>
                   {selectedFile && (
-                    <div className="mt-3 text-sm text-green-600 flex items-center">
+                    <div className="mt-3 text-sm text-green-600 dark:text-green-400 flex items-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-4 w-4 mr-1"
@@ -521,55 +523,55 @@ export default function JobDetails() {
 
                 {/* Form Fields */}
                 <div>
-                  <label htmlFor="name1" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name1" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Your First Name
                   </label>
                   <input
                     type="text"
                     id="name1"
                     placeholder="Name..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="name2" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name2" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Your Last Name
                   </label>
                   <input
                     type="text"
                     id="name2"
                     placeholder="Name..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phone Number
                   </label>
                   <input
                     type="tel"
                     id="phone"
                     placeholder="Phone Number..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
 
                 {/* Job PIN */}
                 {job.jobPin && (
                   <div>
-                    <label htmlFor="jobPin" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="jobPin" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Job PIN
                     </label>
                     <input
                       type="text"
                       id="jobPin"
                       value={job.jobPin}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-xl focus:outline-none"
                       readOnly
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       You'll need this PIN to confirm your attendance
                     </p>
                   </div>
@@ -580,7 +582,7 @@ export default function JobDetails() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition-colors"
+                    className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-xl text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
                     Cancel
                   </button>
@@ -594,12 +596,12 @@ export default function JobDetails() {
                 </div>
               </form>
               {applyError && (
-                <div className="mt-4 text-sm text-red-600">
+                <div className="mt-4 text-sm text-red-600 dark:text-red-400">
                   {applyError}
                 </div>
               )}
               {applySuccess && (
-                <div className="mt-4 text-sm text-green-600">
+                <div className="mt-4 text-sm text-green-600 dark:text-green-400">
                   Successfully applied for the job!
                 </div>
               )}

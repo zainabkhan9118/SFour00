@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import Sidebar from "../company/Sidebar";
 import Header from "../company/Header";
 import PropTypes from "prop-types";
+import { ThemeContext } from "../../context/ThemeContext";
 
-const UserLayout = ({ children }) => {
+const CompanyLayout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Handle window resize
   useEffect(() => {
@@ -27,12 +29,12 @@ const UserLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      {/* Mobile Menu Toggle Button */}
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+      {/* Mobile Menu Toggle Button - Only visible on mobile */}
       {isMobile && (
         <button
           onClick={toggleMenu}
-          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] rounded-md text-white md:hidden"
+          className="fixed top-4 left-4 z-[60] p-2 bg-[#121D34] dark:bg-gray-800 rounded-md text-white md:hidden"
           aria-label="Toggle Menu"
         >
           <svg
@@ -59,24 +61,21 @@ const UserLayout = ({ children }) => {
       {/* Overlay for Mobile */}
       {isMobile && isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
 
-      {/* Main Sidebar - Global Navigation */}
-      <div
-        className={`fixed md:sticky top-0 left-0 bottom-0 z-50 h-screen transition-all duration-300 ease-in-out 
-          ${isMobile && !isMenuOpen ? "-translate-x-full" : "translate-x-0"} 
-          md:translate-x-0 md:flex md:flex-shrink-0`}
-      >
+      {/* Sidebar - fixed position on desktop, conditionally showing on mobile */}
+      {/* On mobile, Sidebar component handles its own fixed positioning */}
+      <div className={isMobile ? (isMenuOpen ? "block" : "hidden") : "block"}>
         <Sidebar />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
+      {/* Main Content - with proper margin to avoid overlap with sidebar */}
+      <div className="flex-grow flex flex-col md:ml-64 w-full transition-all duration-300 ease-in-out">
         <Header />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto p-4 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
           {children}
         </main>
       </div>
@@ -84,8 +83,8 @@ const UserLayout = ({ children }) => {
   );
 };
 
-UserLayout.propTypes = {
+CompanyLayout.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default UserLayout;
+export default CompanyLayout;

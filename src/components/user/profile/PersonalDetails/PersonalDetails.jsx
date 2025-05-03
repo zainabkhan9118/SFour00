@@ -15,6 +15,7 @@ import {
 import UserSidebar from "../UserSidebar";
 import { onAuthStateChanged } from "firebase/auth";
 import { AppContext } from "../../../../context/AppContext";
+import { ThemeContext } from "../../../../context/ThemeContext";
 import LazyImage from "../../../../components/common/LazyImage";
 import profilePic from "../../../../assets/images/profile.jpeg";
 import LoadingSpinner from "../../../../components/common/LoadingSpinner";
@@ -26,6 +27,7 @@ import { getPersonalDetails, getExperience, getEducation } from "../../../../api
 const PersonalDetails = () => {
   const navigate = useNavigate();
   const { setProfileName, setProfileDp } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [userData, setUserData] = useState({
     fullname: "",
     shortBio: "",
@@ -186,13 +188,13 @@ const PersonalDetails = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row w-full">
+    <div className="flex flex-col md:flex-row w-full bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Show loading spinner when loading or saving */}
       {(isLoading || isSaving) && <LoadingSpinner />}
 
       {/* Desktop Sidebar - Hidden on Mobile */}
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -207,7 +209,7 @@ const PersonalDetails = () => {
         )}
         
         <div className="p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto bg-white p-4 md:p-6 rounded-lg shadow-lg">
+          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
             {/* Profile Section */}
             <div className="flex flex-col md:flex-row">
               <div className="relative flex-shrink-0">
@@ -221,20 +223,20 @@ const PersonalDetails = () => {
               </div>
               <div className="mt-4 md:mt-0 md:ml-6 flex-1">
                 <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-bold">About {userData.fullname}</h2>
+                  <h2 className="text-2xl font-bold dark:text-white">About {userData.fullname}</h2>
                   <FaEdit
-                    className="text-gray-500 cursor-pointer"
+                    className="text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                     onClick={handleEditProfile}
                   />
                 </div>
-                <p className="mt-2 text-gray-600 w-full md:w-[600px]">{userData.shortBio}</p>
+                <p className="mt-2 text-gray-600 dark:text-gray-300 w-full md:w-[600px]">{userData.shortBio}</p>
               </div>
             </div>
 
             {/* Address Section */}
             <div className="mt-6">
-              <h3 className="text-xl font-bold">{userData.fullname}</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-bold dark:text-white">{userData.fullname}</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 {userData.address.map((addr, index) => (
                   <span key={index}>
                     {addr.address} {addr.isCurrent && "(Current)"}
@@ -248,9 +250,9 @@ const PersonalDetails = () => {
               {/* Experience */}
               <div>
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Experience</h3>
+                  <h3 className="text-xl font-bold dark:text-white">Experience</h3>
                   <FaEdit
-                    className="text-gray-500 cursor-pointer"
+                    className="text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                     onClick={handleEditExperience}
                   />
                 </div>
@@ -260,18 +262,18 @@ const PersonalDetails = () => {
                       <div className="flex justify-between" key={exp._id || i}>
                         <div className="flex items-start">
                           {i === 0 ? (
-                            <FaBriefcase className="text-gray-600 mt-1" />
+                            <FaBriefcase className="text-gray-600 dark:text-gray-400 mt-1" />
                           ) : (
-                            <FaRegSquare className="text-gray-600 mt-1" />
+                            <FaRegSquare className="text-gray-600 dark:text-gray-400 mt-1" />
                           )}
                           <div className="ml-2">
-                            <h4 className="font-bold">{exp.position}</h4>
-                            <p className="text-gray-600">{exp.companyName}</p>
-                            <p className="text-gray-600">
+                            <h4 className="font-bold dark:text-white">{exp.position}</h4>
+                            <p className="text-gray-600 dark:text-gray-300">{exp.companyName}</p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
                             </p>
                             {exp.experienceCertificate && (
-                              <p className="text-orange-500 text-sm">Work Reference</p>
+                              <p className="text-orange-500 dark:text-orange-400 text-sm">Work Reference</p>
                             )}
                           </div>
                         </div>
@@ -281,10 +283,10 @@ const PersonalDetails = () => {
                     // Fallback for no experience data
                     <div className="flex justify-between">
                       <div className="flex items-start">
-                        <FaBriefcase className="text-gray-600 mt-1" />
+                        <FaBriefcase className="text-gray-600 dark:text-gray-400 mt-1" />
                         <div className="ml-2">
-                          <h4 className="font-bold">No experience added yet</h4>
-                          <p className="text-gray-600">Click edit to add your work experience</p>
+                          <h4 className="font-bold dark:text-white">No experience added yet</h4>
+                          <p className="text-gray-600 dark:text-gray-300">Click edit to add your work experience</p>
                         </div>
                       </div>
                     </div>
@@ -295,9 +297,9 @@ const PersonalDetails = () => {
               {/* Education */}
               <div>
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Education</h3>
+                  <h3 className="text-xl font-bold dark:text-white">Education</h3>
                   <FaEdit
-                    className="text-gray-500 cursor-pointer"
+                    className="text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                     onClick={handleEditEducation}
                   />
                 </div>
@@ -307,17 +309,17 @@ const PersonalDetails = () => {
                       <div className="flex justify-between items-start" key={edu._id || i}>
                         <div className="flex">
                           {i === 0 ? (
-                            <FaGraduationCap className="text-gray-600 mt-1" />
+                            <FaGraduationCap className="text-gray-600 dark:text-gray-400 mt-1" />
                           ) : (
-                            <FaRegSquare className="text-gray-600 mt-1" />
+                            <FaRegSquare className="text-gray-600 dark:text-gray-400 mt-1" />
                           )}
                           <div className="ml-2">
-                            <h4 className="font-bold">{edu.degree}</h4>
-                            <p className="text-gray-600">{edu.institution}</p>
-                            <p className="text-gray-600">
+                            <h4 className="font-bold dark:text-white">{edu.degree}</h4>
+                            <p className="text-gray-600 dark:text-gray-300">{edu.institution}</p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               {formatDate(edu.startDate)} - {edu.currentlyStudying ? 'Present' : formatDate(edu.endDate)}
                             </p>
-                            {edu.currentlyStudying && <p className="text-orange-500 text-sm">Currently Enrolled</p>}
+                            {edu.currentlyStudying && <p className="text-orange-500 dark:text-orange-400 text-sm">Currently Enrolled</p>}
                           </div>
                         </div>
                       </div>
@@ -326,10 +328,10 @@ const PersonalDetails = () => {
                     // Fallback for no education data
                     <div className="flex justify-between items-start">
                       <div className="flex">
-                        <FaGraduationCap className="text-gray-600 mt-1" />
+                        <FaGraduationCap className="text-gray-600 dark:text-gray-400 mt-1" />
                         <div className="ml-2">
-                          <h4 className="font-bold">No education added yet</h4>
-                          <p className="text-gray-600">Click edit to add your education details</p>
+                          <h4 className="font-bold dark:text-white">No education added yet</h4>
+                          <p className="text-gray-600 dark:text-gray-300">Click edit to add your education details</p>
                         </div>
                       </div>
                     </div>
@@ -338,14 +340,14 @@ const PersonalDetails = () => {
                   {/* Certificate Section */}
                   <div className="flex justify-between items-start">
                     <div className="flex">
-                      <FaCertificate className="text-gray-600 mt-1" />
+                      <FaCertificate className="text-gray-600 dark:text-gray-400 mt-1" />
                       <div className="ml-2">
-                        <h4 className="font-bold">Certificate</h4>
-                        <p className="text-gray-600">Work Reference</p>
+                        <h4 className="font-bold dark:text-white">Certificate</h4>
+                        <p className="text-gray-600 dark:text-gray-300">Work Reference</p>
                       </div>
                     </div>
                     <FaArrowRight
-                      className="text-gray-500 mt-2 cursor-pointer"
+                      className="text-gray-500 dark:text-gray-400 mt-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                       onClick={handleEditCertificate}
                     />
                   </div>
@@ -353,29 +355,29 @@ const PersonalDetails = () => {
                   {/* Rest of the sections (License, UTR Number) remain unchanged */}
                   <div className="flex justify-between items-start">
                     <div className="flex">
-                      <FaIdCard className="text-gray-600 mt-1" />
+                      <FaIdCard className="text-gray-600 dark:text-gray-400 mt-1" />
                       <div className="ml-2">
-                        <h4 className="font-bold">
+                        <h4 className="font-bold dark:text-white">
                           License
                           <FaCheckCircle className="text-green-500 text-sm inline mr-1" />
                         </h4>
                       </div>
                     </div>
                     <FaArrowRight
-                      className="text-gray-500 mt-2 cursor-pointer"
+                      className="text-gray-500 dark:text-gray-400 mt-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                       onClick={handleEditLicense}
                     />
                   </div>
 
                   <div className="flex justify-between items-start">
                     <div className="flex">
-                      <FaFileAlt className="text-gray-600 mt-1" />
+                      <FaFileAlt className="text-gray-600 dark:text-gray-400 mt-1" />
                       <div className="ml-2">
-                        <h4 className="font-bold">UTR Number</h4>
+                        <h4 className="font-bold dark:text-white">UTR Number</h4>
                       </div>
                     </div>
                     <FaArrowRight
-                      className="text-gray-500 mt-2 cursor-pointer"
+                      className="text-gray-500 dark:text-gray-400 mt-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                       onClick={handleEditUTRNumber}
                     />
                   </div>

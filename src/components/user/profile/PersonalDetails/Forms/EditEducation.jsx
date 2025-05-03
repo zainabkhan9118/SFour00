@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -9,6 +9,7 @@ import { getEducation, addEducation, updateEducation, deleteEducation } from "..
 import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 const EditEducation = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const EditEducation = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { showSuccess, showError, showInfo } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
@@ -300,11 +302,11 @@ const EditEducation = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
       
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -318,9 +320,9 @@ const EditEducation = () => {
         
         <div className="p-4 md:p-6 overflow-auto">
           <div className="flex items-center mb-4">
-            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">Education</span>
+              <span className="font-medium text-black dark:text-white">Education</span>
             </button>
           </div>
 
@@ -328,14 +330,14 @@ const EditEducation = () => {
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               <div className="space-y-4">
                 {formData.educations.map((education, index) => (
-                  <div key={education.id || index} className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div key={education.id || index} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Education {index + 1}</h3>
+                      <h3 className="font-medium dark:text-white">Education {index + 1}</h3>
                       {formData.educations.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleDelete(index)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                         >
                           Delete
                         </button>
@@ -344,7 +346,7 @@ const EditEducation = () => {
 
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <label htmlFor={`degree-${index}`} className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`degree-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Degree / Qualification
                         </label>
                         <input
@@ -352,14 +354,14 @@ const EditEducation = () => {
                           type="text"
                           value={education.degree}
                           onChange={(e) => handleChange(index, "degree", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="e.g., Bachelor of Science, Certificate in Security"
                           required
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label htmlFor={`institution-${index}`} className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`institution-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Institution
                         </label>
                         <input
@@ -367,7 +369,7 @@ const EditEducation = () => {
                           type="text"
                           value={education.institution}
                           onChange={(e) => handleChange(index, "institution", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="School, college or university name"
                           required
                         />
@@ -375,7 +377,7 @@ const EditEducation = () => {
 
                       <div className="flex flex-col space-y-3">
                         <div className="relative space-y-1">
-                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700">
+                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Start Date
                           </label>
                           <input
@@ -383,17 +385,17 @@ const EditEducation = () => {
                             type="date"
                             value={education.startDate}
                             onChange={(e) => handleChange(index, "startDate", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             required
                             aria-describedby={`start-date-help-${index}`}
                           />
-                          <p id={`start-date-help-${index}`} className="text-xs text-gray-500 mt-1">
+                          <p id={`start-date-help-${index}`} className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             When did you start this education?
                           </p>
                         </div>
 
                         <div className="relative space-y-1">
-                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700">
+                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             End Date
                           </label>
                           <input
@@ -401,12 +403,12 @@ const EditEducation = () => {
                             type="date"
                             value={education.endDate}
                             onChange={(e) => handleChange(index, "endDate", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             disabled={education.currentlyStudying}
                             required={!education.currentlyStudying}
                             aria-describedby={`end-date-help-${index}`}
                           />
-                          <p id={`end-date-help-${index}`} className="text-xs text-gray-500 mt-1">
+                          <p id={`end-date-help-${index}`} className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {education.currentlyStudying ? "End date not required for current studies" : "When did you complete this education?"}
                           </p>
                         </div>
@@ -418,14 +420,14 @@ const EditEducation = () => {
                           type="checkbox"
                           checked={education.currentlyStudying}
                           onChange={(e) => handleChange(index, "currentlyStudying", e.target.checked)}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
                           aria-describedby={`currently-studying-help-${index}`}
                         />
-                        <label htmlFor={`currently-studying-${index}`} className="ml-2 text-sm text-gray-600">
+                        <label htmlFor={`currently-studying-${index}`} className="ml-2 text-sm text-gray-600 dark:text-gray-300">
                           Currently Studying
                         </label>
                       </div>
-                      <p id={`currently-studying-help-${index}`} className="text-xs text-gray-500 mt-1">
+                      <p id={`currently-studying-help-${index}`} className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Check this box if you are still enrolled in this program
                       </p>
                     </div>
@@ -435,7 +437,7 @@ const EditEducation = () => {
                 <button
                   type="button"
                   onClick={handleAddNew}
-                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                  className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 hover:border-orange-500 hover:text-orange-500 dark:hover:text-orange-400 transition"
                 >
                   + Add Another Education
                 </button>
