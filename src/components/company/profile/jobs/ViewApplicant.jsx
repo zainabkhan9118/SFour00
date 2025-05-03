@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -11,6 +9,7 @@ import AssignJobButton from "./popupsButtons/AssignJobButton";
 import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../constants/enums";
+import { getJobById, checkJobAssignmentStatus, enableJobAssignment } from "../../../../api/jobsApi";
 
 const ViewApplicant = () => {
     const [showButton, setShowButton] = useState(false);
@@ -65,22 +64,12 @@ const ViewApplicant = () => {
                 setLoading(true);
                 // Using the company jobs endpoint and filtering for the specific job
                 const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
-                const response = await fetch(`/api/jobs/company/${companyId}`);
                 
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
-                }
+                // Use the new API function
+                const result = await getJobById(jobId, companyId);
                 
-                const result = await response.json();
-                
-                if (result.statusCode === 200 && Array.isArray(result.data)) {
-                    // Find the specific job by ID
-                    const foundJob = result.data.find(job => job._id === jobId);
-                    if (foundJob) {
-                        setJob(foundJob);
-                    } else {
-                        throw new Error("Job not found");
-                    }
+                if (result.statusCode === 200) {
+                    setJob(result.data);
                 } else {
                     throw new Error("Invalid response format");
                 }
@@ -108,7 +97,7 @@ const ViewApplicant = () => {
         
         try {
             // First check if job is already assigned
-            const isAssigned = await checkJobAssignmentStatus();
+            const isAssigned = await checkJobAssignmentStatus(jobId);
             
             if (isAssigned) {
                 // If job is already assigned, show error and don't proceed
@@ -118,23 +107,8 @@ const ViewApplicant = () => {
             }
             
             // Proceed with assignment if job is not already assigned
-            const response = await fetch(`/api/apply/${jobId}/enable-assignment`, {
-                method: 'PATCH',
-                headers: {
-                    'jobSeekerId': applicant._id,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    isAssignable: true
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Failed to enable assignment: ${response.status}`);
-            }
-            
-            const result = await response.json();
+            // Use the new API function
+            const result = await enableJobAssignment(jobId, applicant._id);
             console.log("Assignment API response:", result);
             
             if (result.statusCode === 200) {
@@ -161,9 +135,9 @@ const ViewApplicant = () => {
     if (loading) {
         return (
             <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+                
                 <div className="flex flex-col flex-1 w-full">
-                    <Header />
+                   
                     <LoadingSpinner />
                 </div>
             </div>
@@ -174,9 +148,9 @@ const ViewApplicant = () => {
     if (error || !job) {
         return (
             <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+            
                 <div className="flex flex-col flex-1 w-full">
-                    <Header />
+                  
                     <div className="flex justify-center items-center h-full">
                         <p className="text-xl text-red-500">Error loading job details. Please try again.</p>
                     </div>
@@ -187,10 +161,10 @@ const ViewApplicant = () => {
 
     return (
         <div className="flex flex-col md:flex-row min-h-screen">
-            <Sidebar className="w-full md:w-1/4 h-auto md:h-screen" />
+            
 
             <div className="flex flex-col flex-1 w-full">
-                <Header />
+                
                 <div className="flex justify-end px-4 md:px-8">
                     <p className="text-gray-400 mt-4 md:mt-6 text-sm md:text-base">
                         Find Job / {job.jobDuration || "Job Duration"} / Job Applicants

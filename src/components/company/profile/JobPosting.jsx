@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import Sidebar from "../Sidebar";
-import Header from "../Header";
 import { IoIosTimer } from "react-icons/io";
 import { FaQrcode } from "react-icons/fa";
 import { FaCalendarAlt } from "react-icons/fa"; 
@@ -12,8 +10,12 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from 'axios';
 import LoadingSpinner from "../../common/LoadingSpinner";
+
 import { IoCloseCircleOutline } from "react-icons/io5";
 import jsQR from "jsqr";
+
+import { createJob } from "../../../api/jobsApi";
+
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -447,25 +449,20 @@ const JobPosting = () => {
       
       console.log("Submitting job data:", apiData);
       
-      // API call with both companyId as header and in payload for flexibility
-      const response = await axios.post('/api/jobs', apiData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'companyId': companyId // Keep the header for backwards compatibility
-        }
-      });
+      // Use the new API function instead of direct axios call
+      const response = await createJob(apiData, companyId);
       
-      console.log("Job created successfully:", response.data);
+      console.log("Job created successfully:", response);
       setSubmitSuccess(true);
       
-      
+      // Navigate to recent jobs page after successful job creation
       setTimeout(() => {
         navigate('/recents-jobs');
       }, 1500);
     } catch (error) {
       console.error("Error creating job:", error);
       
-  
+      // Detailed error logging
       if (error.response) {
         console.error("Error response data:", error.response.data);
         console.error("Error response status:", error.response.status);
@@ -1175,12 +1172,10 @@ const JobPosting = () => {
 
   return (
     <div className="flex flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar className="w-full md:w-1/3 lg:w-1/4" />
+    
 
       <div className="flex flex-col flex-1 p-6">
-        {/* Header */}
-        <Header/>
+        
 
         <div className="rounded-lg p-6">
           <h1 className="text-3xl font-bold mb-4">Post a Job</h1>

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../SideBar";
-import Header from "../Header";
-import { Bookmark, Search, MapPin } from "lucide-react";
+import { Bookmark, Search, MapPin, Home, User, Briefcase, MessageSquare, Bell } from "lucide-react";
 import { fetchAllJobs } from "../../../api/jobsApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import LazyImage from "../../common/LazyImage";
 
 const Job = () => {
   const navigate = useNavigate();
@@ -70,17 +69,9 @@ const Job = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-      {/* Sidebar - Hidden on mobile, visible on medium screens and up */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
-
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-auto">
-        {/* Header */}
-        <Header />
-        
         <div className="flex-1 py-2 px-3 md:px-5 bg-gray-50">
           {/* Hero Banner */}
           <div className="bg-gradient-to-r from-blue-900 to-orange-500 p-4 md:p-6 text-white rounded-xl">
@@ -148,10 +139,12 @@ const Job = () => {
                   >
                     {/* Job Info - 30% width on desktop */}
                     <div className="flex items-center space-x-3 md:space-x-4 md:w-[30%]">
-                      <img 
+                      <LazyImage 
                         src={(job.companyId && job.companyId.companyLogo) || "https://cdn-icons-png.flaticon.com/512/732/732007.png"} 
                         alt={job.jobTitle} 
-                        className="w-8 h-8 md:w-10 md:h-10 rounded-full border object-cover" 
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-full border object-cover"
+                        fallbackSrc="https://cdn-icons-png.flaticon.com/512/732/732007.png"
+                        placeholderColor="#f3f4f6"
                       />
                       <div>
                         <h4 className="font-semibold">{job.jobTitle}</h4>

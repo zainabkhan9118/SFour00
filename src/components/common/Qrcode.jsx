@@ -63,13 +63,8 @@ const Qrcode = () => {
     <>
       {isLoading && <LoadingSpinner />}
       <div className="flex flex-row min-h-screen">
-        {/* Sidebar */}
-        <Sidebar className="w-full md:w-1/4" />
 
         <div className="flex flex-col flex-1">
-          {/* Header */}
-          <Header />
-
           <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100">
             <h1 className="text-2xl font-bold mb-4">QR Code Generator</h1>
 

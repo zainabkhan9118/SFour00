@@ -4,8 +4,6 @@ import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
 import time from "../../../../../assets/images/time.png";
 import qr from "../../../../../assets/images/qr-code.png";
-import Sidebar from "../../../Sidebar";
-import Header from "../../../Header";
 import { JobStatus } from "../../../../../constants/enums";
 import { FaMapMarkerAlt } from "react-icons/fa";
 
@@ -98,7 +96,6 @@ const CompletedJobDetail = () => {
   if (loading) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="w-full lg:w-1/4" />
         <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-xl text-gray-500">Loading job details...</p>
         </div>
@@ -109,7 +106,6 @@ const CompletedJobDetail = () => {
   if (error) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="w-full lg:w-1/4" />
         <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-xl text-red-500">Error: {error}</p>
         </div>
@@ -120,7 +116,6 @@ const CompletedJobDetail = () => {
   if (!job) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="w-full lg:w-1/4" />
         <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-xl text-gray-500">No job details found</p>
         </div>
@@ -140,10 +135,8 @@ const CompletedJobDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="w-full lg:w-1/4" />
 
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="flex justify-end px-4 sm:px-6 md:px-8">
           <p className="text-xs sm:text-sm text-gray-400 mt-4 sm:mt-6">
             Find Job / Completed Jobs / Job Details

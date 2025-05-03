@@ -1,6 +1,4 @@
 import { useState, useEffect, useContext } from "react";
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import PopupButton1 from "../popupModel/PopupButton1";
 import PopupButton2 from "../popupModel/PopupButton2";
@@ -21,6 +19,7 @@ import { AppContext } from "../../../context/AppContext";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
 import LoadingSpinner from "../../common/LoadingSpinner";
+import LazyImage from "../../common/LazyImage";
 import companyImage from "../../../assets/images/company.png";
 
 const CheckIcon = () => (
@@ -413,12 +412,8 @@ export default function MyWorkAssignedPage() {
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
-        <div className="flex flex-col flex-1">
-          <Header />
-          <div className="flex items-center justify-center h-screen">
-            <LoadingSpinner />
-          </div>
+        <div className="flex items-center justify-center h-screen">
+          <LoadingSpinner />
         </div>
       </div>
     );
@@ -426,13 +421,8 @@ export default function MyWorkAssignedPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar />
-
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        {/* Header */}
-        <Header />
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           {/* Tabs */}
           <HeaderWork />
@@ -457,10 +447,12 @@ export default function MyWorkAssignedPage() {
                     {/* Job Icon and Details */}
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
                       <div className="w-12 h-12 rounded-full border border-gray-300 overflow-hidden bg-gray-100">
-                        <img
+                        <LazyImage
                           src={job.companyLogo || companyImage}
                           alt={job.jobTitle || "Company"}
                           className="w-full h-full object-cover"
+                          fallbackSrc={companyImage}
+                          placeholderColor="#f3f4f6"
                         />
                       </div>
                       <div>

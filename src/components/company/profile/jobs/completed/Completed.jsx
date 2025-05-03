@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logo1 from "../../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../../assets/images/EmployersLogo2.png";
-import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
-import Sidebar from "../../../Sidebar";
-import Header from "../../../Header";
+import {FaCheck} from "react-icons/fa";
 import Headerjob from "../Headerjob";
 import { JobStatus } from "../../../../../constants/enums";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { getJobsByStatus } from "../../../../../api/jobsApi";
 
 const Completed = () => {
   const navigate = useNavigate();
@@ -28,14 +27,8 @@ const Completed = () => {
         // Get company ID from localStorage or use a default for testing
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
         
-        // Call the API with the status parameter from JobStatus enum
-        const response = await fetch(`/api/apply/company/${companyId}?status=${JobStatus.COMPLETED}`);
-        
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        // Call the API with the status parameter from JobStatus enum using our new API function
+        const result = await getJobsByStatus(companyId, JobStatus.COMPLETED);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           setCompletedJobs(result.data);
@@ -113,10 +106,10 @@ const Completed = () => {
   
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="w-full lg:w-1/4" />
+      
 
       <div className="flex flex-col gap-4 sm:gap-6 flex-1 p-3 sm:p-4 md:p-6">
-        <Header />
+       
         <Headerjob />
 
         {loading ? (

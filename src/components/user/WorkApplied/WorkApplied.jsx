@@ -6,11 +6,11 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import PropTypes from 'prop-types';
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import { getAppliedJobs } from "../../../api/jobApplicationApi";
 import { AppContext } from "../../../context/AppContext";
+import LazyImage from "../../common/LazyImage";
+import LoadingSpinner from "../../common/LoadingSpinner";
 import companyImage from "../../../assets/images/company.png";
 
 const CheckIcon = () => (
@@ -108,6 +108,9 @@ const WorkApplied = () => {
   useEffect(() => {
     const fetchAppliedJobs = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         let jobSeekerId = localStorage.getItem("jobSeekerId");
 
         if (!jobSeekerId) {
@@ -137,27 +140,41 @@ const WorkApplied = () => {
         }
 
         console.log('Fetching applied jobs for jobSeekerId:', jobSeekerId);
-        // Only get jobs with "applied" status that haven't been assigned yet
-        const response = await getAppliedJobs(jobSeekerId, "applied", { isAssigned: false });
+        
+        // Force fresh data by clearing the cache before getting applied jobs
+        // This is handled by our enhanced applyForJob function when applying for jobs,
+        // but we also do it here to ensure fresh data when directly navigating to this page
+        try {
+          // Import and use clearCache from apiCache
+          const { clearCache } = await import('../../../services/apiCache');
+          clearCache(`applied-jobs-${jobSeekerId}`);
+        } catch (cacheError) {
+          console.error('Error clearing cache:', cacheError);
+          // Continue even if cache clearing fails
+        }
+        
+        // Get jobs with "applied" status
+        const response = await getAppliedJobs(jobSeekerId);
         console.log('API Response:', response);
 
-        if (!response?.data?.data) {
+        // Check if the response has the correct structure
+        if (response && response.data) {
+          const jobsData = response.data;
+          console.log('Jobs data:', jobsData);
+          setAppliedJobs(Array.isArray(jobsData) ? jobsData : []);
+        } else {
           throw new Error("Invalid response format from server");
         }
-
-        const jobsData = response.data.data;
-        console.log('Jobs data:', jobsData);
-        setAppliedJobs(Array.isArray(jobsData) ? jobsData : []);
-        setLoading(false);
       } catch (err) {
         console.error("Error fetching applied jobs:", err);
         setError(err.message || "Failed to load applied jobs. Please try again later.");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchAppliedJobs();
-  }, [BASEURL]); // Add BASEURL to dependency array
+  }, [BASEURL]);
 
   const handleNavigate = (jobId) => {
     navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
@@ -166,14 +183,11 @@ const WorkApplied = () => {
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p>Loading applied jobs...</p>
+            <div className="flex justify-center items-center py-10">
+              <LoadingSpinner />
             </div>
           </div>
         </div>
@@ -184,9 +198,7 @@ const WorkApplied = () => {
   if (error) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
             <div className="text-center text-red-500 py-4">{error}</div>
@@ -198,9 +210,7 @@ const WorkApplied = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           <HeaderWork />
           <div className="">
@@ -214,10 +224,12 @@ const WorkApplied = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4">
                       <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
                         <div className="w-12 h-12 rounded-full border border-gray-300 overflow-hidden bg-gray-100">
-                          <img
+                          <LazyImage
                             src={job.companyId?.companyLogo || companyImage}
                             alt={job.jobTitle || "Company"}
                             className="w-full h-full object-cover"
+                            fallbackSrc={companyImage}
+                            placeholderColor="#f3f4f6"
                           />
                         </div>
                         <div>

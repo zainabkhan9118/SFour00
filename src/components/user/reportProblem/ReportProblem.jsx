@@ -1,18 +1,13 @@
 import React from "react";
-import Header from "../Header";
-import Sidebar from "../SideBar";
+
 import insta from "../../../assets/images/insta.svg";
 
 const ReportProblem = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar  className="fixed"/>
-
       {/* Main Content */}
       <div className="flex flex-col flex-1 relative">
-        {/* Header */}
-        <Header />
+
         <div className="flex flex-col h-screen justify-between md:mx-0 p-4 sm:p-6">
           {/* Tabs */}
           <div className="flex mt-7 flex-wrap justify-center md:justify-start">

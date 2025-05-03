@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import Headerjob from "./Headerjob";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 
 import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
+import { getCompanyJobs } from "../../../../api/jobsApi";
 
 // Sample data as fallback
 const jobs = [
@@ -76,13 +75,9 @@ const RecentJob = () => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/jobs/company/${companyId}`);
         
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        
-        const result = await response.json();
+        // Use the new API function
+        const result = await getCompanyJobs(companyId);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           setCompanyJobs(result.data);
@@ -124,9 +119,9 @@ const RecentJob = () => {
   if (loading) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="lg:block w-full lg:w-1/4" />
+        
         <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
-          <Header />
+        
           <Headerjob />
           <LoadingSpinner />
         </div>
@@ -136,10 +131,10 @@ const RecentJob = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="lg:block w-full lg:w-1/4" />
+      
 
       <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
-        <Header />
+        
         <Headerjob />
 
         <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg">

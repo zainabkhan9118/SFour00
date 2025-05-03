@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
-import Sidebar from "../../SideBar";
-import Header from "../../Header";
 import UserSidebar from "../UserSidebar";
 
 const faqs = [
@@ -49,52 +47,66 @@ const faqs = [
 
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
-     <div className="flex h-screen overflow-hidden">
-    {/* Sidebar */}
-    <Sidebar />
+    <div className="flex flex-col md:flex-row min-h-screen">
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 border-r">
+          <UserSidebar />
+        </div>
+      )}
 
-    {/* Main Content */}
-    <div className="flex flex-col h-screen  flex-1 overflow-hidden">
-      {/* Header */}
-      <Header />
-   
-      <main className="flex-3"> 
-      <div className="flex flex-row flex-1">
-      <UserSidebar />
-    <div className="w-full mx-auto p-6 h-screen overflow-auto">
-      <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className="bg-gray-200 rounded-[10px] overflow-hidden shadow-md"
-          >
-            <button
-              className="w-full flex justify-between items-center p-4 text-left"
-              onClick={() => toggleFAQ(index)}
-            >
-              <span>{faq.question}</span>
-              {openIndex === index ? <FaMinus /> : <FaPlus />}
-            </button>
-            {openIndex === index && (
-              <div className="p-4 text-blue-900  border-gray-300">
-                {faq.answer}
-              </div>
-            )}
+      {/* Main Content */}
+      <div className="flex flex-col flex-1">
+        {/* Mobile Header with Sidebar - Shown only on Mobile */}
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
           </div>
-        ))}
+        )}
+        
+        <div className="flex-1 p-6 overflow-auto">
+          <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="bg-gray-200 rounded-[10px] overflow-hidden shadow-md"
+              >
+                <button
+                  className="w-full flex justify-between items-center p-4 text-left"
+                  onClick={() => toggleFAQ(index)}
+                >
+                  <span>{faq.question}</span>
+                  {openIndex === index ? <FaMinus /> : <FaPlus />}
+                </button>
+                {openIndex === index && (
+                  <div className="p-4 text-blue-900 border-gray-300">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-    </div>
-
-    </main>
-    </div></div>
   );
 };
 

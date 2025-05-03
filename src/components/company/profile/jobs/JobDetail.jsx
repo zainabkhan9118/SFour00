@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
 import { FaFacebook, FaTwitter, FaPinterest, FaMapMarkerAlt } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
+import { getJobById } from "../../../../api/jobsApi";
 
 const JobDetail = () => {
     const [job, setJob] = useState(null);
@@ -50,24 +49,14 @@ const JobDetail = () => {
             
             try {
                 setLoading(true);
-                // Using the company jobs endpoint and filtering for the specific job
+                // Get company ID from localStorage
                 const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
-                const response = await fetch(`/api/jobs/company/${companyId}`);
                 
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
-                }
+                // Use the new API function
+                const result = await getJobById(jobId, companyId);
                 
-                const result = await response.json();
-                
-                if (result.statusCode === 200 && Array.isArray(result.data)) {
-                    // Find the specific job by ID
-                    const foundJob = result.data.find(job => job._id === jobId);
-                    if (foundJob) {
-                        setJob(foundJob);
-                    } else {
-                        throw new Error("Job not found");
-                    }
+                if (result.statusCode === 200) {
+                    setJob(result.data);
                 } else {
                     throw new Error("Invalid response format");
                 }
@@ -87,9 +76,9 @@ const JobDetail = () => {
     if (loading) {
         return (
             <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-                <Sidebar className="lg:block lg:w-1/4" />
+              
                 <div className="flex flex-col flex-1 overflow-x-hidden">
-                    <Header />
+                   
                     <div className="flex justify-center items-center h-full">
                         <LoadingSpinner />
                     </div>
@@ -102,9 +91,9 @@ const JobDetail = () => {
     if (error || !job) {
         return (
             <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-                <Sidebar className="lg:block lg:w-1/4" />
+                
                 <div className="flex flex-col flex-1 overflow-x-hidden">
-                    <Header />
+                   
                     <div className="flex justify-center items-center h-full">
                         <p className="text-xl text-red-500">Error loading job details. Please try again.</p>
                     </div>
@@ -115,10 +104,10 @@ const JobDetail = () => {
 
     return (
         <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-            <Sidebar className="lg:block lg:w-1/4" />
+           
 
             <div className="flex flex-col flex-1 overflow-x-hidden">
-                <Header />
+              
 
                 <div className="flex justify-end px-4 lg:px-8">
                     <p className="text-gray-400 mt-4 lg:mt-6 text-sm">
