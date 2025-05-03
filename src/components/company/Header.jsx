@@ -1,35 +1,23 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getCompanyProfile } from "../../api/companyApi";
 import logo from "../../assets/images/logo.png";
 import profile from "../../assets/images/profileImage.png";
 import { FaSearch, FaHome, FaBriefcase, FaBell, FaUsers, FaComments } from "react-icons/fa";
+import { BsMoon, BsSun } from "react-icons/bs";
+import { ThemeContext } from "../../context/ThemeContext";
 import LoadingSpinner from "../common/LoadingSpinner";
 import LazyImage from "../common/LazyImage";
-import React, { useState, useEffect, useContext } from "react";
-import { FaBell } from "react-icons/fa";
-import { BsMoon, BsSun } from "react-icons/bs";
-import defaultLogo from "../../assets/images/company.png";
-import { useLocation } from "react-router-dom";
-import { ThemeContext } from "../../context/ThemeContext";
-
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const [user, setUser] = useState(null);
   const [companyProfile, setCompanyProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState("");
-
-  const pathname = location.pathname;
-  const [companyName, setCompanyName] = useState("Company Name");
-  const [companyLogo, setCompanyLogo] = useState(null);
   const { theme, toggleTheme } = useContext(ThemeContext) || { theme: 'light', toggleTheme: () => {} };
-
 
   // Fetch user and company data on component mount
   useEffect(() => {
@@ -128,47 +116,29 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
-    <div className="flex justify-between items-center bg-white dark:bg-gray-800 px-4 md:px-6 py-3 md:py-4 md:mb-4 shadow-sm dark:shadow-gray-900 transition-colors duration-200">
+    <div className={`sticky top-0 z-10 flex justify-between items-center px-4 md:px-6 py-3 md:py-4 shadow-sm ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} transition-colors duration-200`}>
       {/* Title - only shown if there's a title for the current route */}
       {title && (
-        <h1 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white">{title}</h1>
+        <h1 className="text-lg md:text-xl font-bold">{title}</h1>
       )}
       {!title && <div></div>} {/* Empty div to maintain flex layout when no title */}
 
       {/* User Info */}
       <div className="flex items-center space-x-3 md:space-x-4">
-        {/* Theme Toggle Button */}
-        <button 
-          onClick={toggleTheme} 
-          className="text-gray-600 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400"
-          aria-label="Toggle dark mode"
-        >
-          {theme === 'dark' ? (
-            <BsSun className="text-lg md:text-xl" />
-          ) : (
-            <BsMoon className="text-lg md:text-xl" />
-          )}
+        {/* Theme Toggle */}
+        <button onClick={toggleTheme} className="text-xl">
+          {theme === 'dark' ? <BsSun className="text-yellow-500" /> : <BsMoon className="text-gray-500" />}
         </button>
-        
-        {/* Notification Icon */}
-
-        {/* <button className="relative">
-          <FaBell className="text-orange-500 text-xl" />
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-
-            3
-          </span>
-        </button> */}
 
         {/* Company Info */}
         <div className="flex items-center space-x-2">
           <img
             src={companyProfile?.companyLogo || logo}
             alt="Company Logo"
-            className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+            className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200"
           />
-          <span className="font-medium text-sm md:text-base text-gray-800 dark:text-gray-200 max-w-[100px] md:max-w-[200px] truncate">
-            {companyName}
+          <span className="font-medium text-sm md:text-base max-w-[100px] md:max-w-[200px] truncate">
+            {companyProfile?.companyName || "Company Name"}
           </span>
           <span className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></span>
         </div>
