@@ -116,7 +116,9 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
+
     <div className={`sticky top-0 z-10 flex justify-between items-center px-4 md:px-6 py-3 md:py-4 shadow-sm ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} transition-colors duration-200`}>
+
       {/* Title - only shown if there's a title for the current route */}
       {title && (
         <h1 className="text-lg md:text-xl font-bold">{title}</h1>
