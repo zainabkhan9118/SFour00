@@ -88,12 +88,12 @@ const Header = () => {
       {/* User Info */}
       <div className="flex items-center space-x-4">
         {/* Notification Icon */}
-        <button className="relative">
+        {/* <button className="relative">
           <FaBell className="text-orange-500 text-xl" />
           <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
             3
           </span>
-        </button>
+        </button> */}
 
         {/* User Avatar */}
         <div className="flex items-center space-x-2">

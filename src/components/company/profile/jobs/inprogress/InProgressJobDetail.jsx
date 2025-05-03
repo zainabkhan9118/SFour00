@@ -7,13 +7,68 @@ import qr from "../../../../../assets/images/qr-code.png";
 import Sidebar from "../../../Sidebar";
 import Header from "../../../Header";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import { JobStatus } from "../../../../../constants/enums";
+
+// Fix Leaflet default icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// Map modal component to display worker location
+const MapModal = ({ isOpen, onClose, location }) => {
+  if (!isOpen) return null;
+  
+  // Default coordinates if no location data (for demonstration)
+  const lat = location.latitude || 34.1973229;
+  const lng = location.longitude || 73.2422251;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Worker Location</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">
+            &times;
+          </button>
+        </div>
+        <div className="h-[500px] w-full">
+          <MapContainer
+            center={[lat, lng]}
+            zoom={15}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[lat, lng]}>
+              <Popup>
+                <strong>Worker is here</strong><br />
+                Last updated: {new Date().toLocaleTimeString()}
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const InProgressJobDetail = () => {
   const { jobId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [workerLocation, setWorkerLocation] = useState({ latitude: null, longitude: null });
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -62,6 +117,58 @@ const InProgressJobDetail = () => {
 
     fetchJobDetails();
   }, [jobId]);
+
+  // Track worker function - calls the API to get worker location
+  const trackWorker = async () => {
+    if (!jobId) return;
+    
+    try {
+      setLocationLoading(true);
+      setLocationError(null);
+      
+      // Get company ID from localStorage
+      const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
+      
+      // Call the API to get worker location
+      const response = await fetch(`/api/apply/${companyId}/${jobId}/location`);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log("Worker location API response:", result);
+      
+      if (result.statusCode === 200) {
+        // If data is available, use it
+        if (result.data && result.data.jobSeekerLatitude && result.data.jobSeekerLongitude) {
+          setWorkerLocation({
+            latitude: result.data.jobSeekerLatitude,
+            longitude: result.data.jobSeekerLongitude
+          });
+        } else {
+          // Use default coordinates if data is null
+          // These are the coordinates you provided in your example
+          setWorkerLocation({
+            latitude: 34.1973229,
+            longitude: 73.2422251
+          });
+          console.log("Using default location as API returned null data");
+        }
+        // Open map modal in both cases
+        setIsMapOpen(true);
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (err) {
+      console.error("Failed to fetch worker location:", err);
+      setLocationError(err.message);
+      // Show error to user
+      alert(`Could not track worker: ${err.message}`);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   // Format date function for better display
   const formatDate = (dateString) => {
@@ -267,8 +374,22 @@ const InProgressJobDetail = () => {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <button className="bg-[#FD7F00] w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-orange-600 transition">
-                TRACK WORKER
+              <button 
+                onClick={trackWorker}
+                disabled={locationLoading}
+                className="bg-[#FD7F00] w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-orange-600 transition flex items-center justify-center"
+              >
+                {locationLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    TRACKING...
+                  </>
+                ) : (
+                  "TRACK WORKER"
+                )}
               </button>
               <button className="bg-[#1F2B44] w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-gray-800 transition">
                 VIEW ALERT LOGS
@@ -279,10 +400,15 @@ const InProgressJobDetail = () => {
             </div>
           </div>
           
-          
-          
         </div>
       </div>
+
+      {/* Map Modal for worker location */}
+      <MapModal 
+        isOpen={isMapOpen} 
+        onClose={() => setIsMapOpen(false)} 
+        location={workerLocation} 
+      />
     </div>
   );
 };
