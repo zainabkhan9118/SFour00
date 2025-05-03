@@ -158,19 +158,6 @@ const CompanySideBar = ({ isMobile = false }) => {
       </Link>
       
       <Link
-        to="/problems-reported"
-        className={`flex items-center p-2 rounded-md ${
-          isActive('/problems-reported')
-            ? "bg-orange-100 text-orange-700 font-medium"
-            : "text-gray-600 hover:bg-gray-50"
-        }`}
-        onClick={() => isMobile && setIsMenuOpen(false)}
-      >
-        <FaExclamationTriangle className="text-orange-500 mr-3" size={14} />
-        <span>Problems Reported</span>
-      </Link>
-      
-      <Link
         to="/rota-management"
         className={`flex items-center p-2 rounded-md ${
           isActive('/rota-management')
@@ -182,11 +169,11 @@ const CompanySideBar = ({ isMobile = false }) => {
         <img src={vector1} alt="" className="text-orange-500 mr-3 h-3.5 w-3.5" />
         <span>Rota Management</span>
       </Link>
-      
+
       <Link
-        to="/chat-support"
+        to="/problems-reported"
         className={`flex items-center p-2 rounded-md ${
-          isActive('/chat-support')
+          isActive('/problems-reported')
             ? "bg-orange-100 text-orange-700 font-medium"
             : "text-gray-600 hover:bg-gray-50"
         }`}
