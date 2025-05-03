@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { FaSearch, FaTimes, FaCog } from "react-icons/fa";
 import useContactSearch from "../../../hooks/useContactSearch";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import axios from 'axios';
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const ChatSidebar = ({ onSelect, selectedContact }) => {
   const selectedContactId = selectedContact?.firebaseId || "";
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -131,11 +133,13 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
   }
 
   return (
-    <div className="w-full md:w-[320px] bg-white border-r flex flex-col h-[calc(100vh-64px)] md:h-screen">
-      <div className="p-4 border-b">
+    <div className={`w-full md:w-[320px] border-r flex flex-col h-[calc(100vh-64px)] md:h-screen ${
+      theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
+    }`}>
+      <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Messages</h2>
+            <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : ''}`}>Messages</h2>
             {contacts.length > 0 && (
               <span className="text-sm bg-orange-500 text-white px-2 py-0.5 rounded-full">
                 {contacts.length}
@@ -143,7 +147,7 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
             )}
           </div>
           <div className="flex items-center">
-            <FaCog className="text-gray-400 hover:text-gray-700 cursor-pointer" />
+            <FaCog className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-700'} cursor-pointer`} />
           </div>
         </div>
         <div className="relative">
@@ -152,13 +156,17 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
             placeholder="Search job seekers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 pl-8 bg-gray-100 rounded-md text-sm"
+            className={`w-full p-2 pl-8 rounded-md text-sm ${
+              theme === 'dark' ? 'bg-gray-700 text-white placeholder-gray-400 border-gray-600' : 'bg-gray-100'
+            }`}
           />
           <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700 p-1"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs p-1 ${
+                theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <FaTimes size={12} />
             </button>
@@ -168,12 +176,20 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
       
       <ul className="flex-1 overflow-y-auto">
         {contacts.length === 0 ? (
-          <li className="p-6 text-center text-gray-500">No verified job seekers available</li>
+          <li className={`p-6 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No verified job seekers available</li>
         ) : hasResults ? (
           filteredContacts.map((contact) => (
             <li
               key={contact.firebaseId}
-              className={`border-b ${contact.firebaseId === selectedContactId ? 'bg-gradient-to-r from-orange-500 to-blue-900' : 'hover:bg-gray-100'} cursor-pointer`}
+              className={`border-b ${
+                theme === 'dark' ? 'border-gray-700' : ''
+              } ${
+                contact.firebaseId === selectedContactId 
+                  ? 'bg-gradient-to-r from-orange-500 to-blue-900' 
+                  : theme === 'dark' 
+                    ? 'hover:bg-gray-700' 
+                    : 'hover:bg-gray-100'
+              } cursor-pointer`}
               onClick={() => onSelect(contact)}
             >
               <div className="flex items-center p-4">
@@ -188,23 +204,41 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
                     }}
                   />
                   {contact.isOnline && (
-                    <div className="absolute bottom-0 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div className={`absolute bottom-0 right-2 w-3 h-3 bg-green-500 rounded-full ${
+                      theme === 'dark' ? 'border-2 border-gray-800' : 'border-2 border-white'
+                    }`}></div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between">
-                    <span className={`font-medium ${contact.firebaseId === selectedContactId ? 'text-white' : 'text-gray-800'}`}>
+                    <span className={`font-medium ${
+                      contact.firebaseId === selectedContactId 
+                        ? 'text-white' 
+                        : theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       {contact.name}
                     </span>
-                    <span className={`text-xs ${contact.firebaseId === selectedContactId ? 'text-white' : 'text-gray-500'}`}>
+                    <span className={`text-xs ${
+                      contact.firebaseId === selectedContactId 
+                        ? 'text-white' 
+                        : theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
                       {contact.time}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className={`text-xs ${contact.firebaseId === selectedContactId ? 'text-white' : 'text-gray-500'}`}>
+                    <span className={`text-xs ${
+                      contact.firebaseId === selectedContactId 
+                        ? 'text-white' 
+                        : theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
                       {contact.role}
                     </span>
-                    <span className={`text-sm truncate mt-1 ${contact.firebaseId === selectedContactId ? 'text-white' : 'text-gray-600'}`}>
+                    <span className={`text-sm truncate mt-1 ${
+                      contact.firebaseId === selectedContactId 
+                        ? 'text-white' 
+                        : theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
                       {contact.message}
                     </span>
                   </div>
@@ -213,7 +247,7 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
             </li>
           ))
         ) : (
-          <li className="p-6 text-center text-gray-500">No matches found</li>
+          <li className={`p-6 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No matches found</li>
         )}
       </ul>
     </div>

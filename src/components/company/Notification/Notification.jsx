@@ -1,8 +1,10 @@
-import React, { useState } from "react";
-
+import React, { useState, useContext } from "react";
 import { CiClock1 } from "react-icons/ci";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const Notification = () => {
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -56,7 +58,7 @@ const Notification = () => {
   };
 
   return (
-    <div className="flex flex-row min-h-screen">
+    <div className={`flex flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       
 
       {/* Main Content */}
@@ -70,7 +72,7 @@ const Notification = () => {
                 <div
                   key={notification.id}
                   className={`p-4 rounded-xl shadow-sm ${
-                    notification.unread ? "bg-[#FD7F00] text-white" : "bg-gray-200"
+                    notification.unread ? "bg-[#FD7F00] text-white" : theme === 'dark' ? "bg-gray-700 text-white" : "bg-gray-200"
                   } `}
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">

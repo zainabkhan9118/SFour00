@@ -91,8 +91,7 @@ export default function Sidebar() {
     // Define routes for the sidebar navigation
     const sidebarRoutes = {
       profile: "/company-profile",
-      chat: "/chat",
-      work: "/my-work", 
+      chat: "/chat", 
       notifications: "/notification",
       qrCode: "/qr-code"
     };
@@ -206,15 +205,7 @@ export default function Sidebar() {
               <FaComments className="h-5 w-5" />
               <span>Chat</span>
             </div>
-            
-            <div 
-              className={`flex items-center space-x-3 ${isActive(routes.work) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
-              onClick={(e) => handleNavigation(e, routes.work)}
-            >
-              <FaBriefcase className="h-5 w-5" />
-              <span>My Work</span>
-            </div>
-            
+
             <div 
               className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
               onClick={(e) => handleNavigation(e, routes.notifications)}
