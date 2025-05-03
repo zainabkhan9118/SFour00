@@ -13,8 +13,8 @@ const config = {
   botName: "S4 Support",
   customStyles: {
     botMessageBox: {
-      backgroundColor: "#fff",
-      border: "1px solid #e2e8f0",
+      backgroundColor: "var(--bot-message-bg, #fff)",
+      border: "1px solid var(--bot-message-border, #e2e8f0)",
       borderRadius: "0.5rem",
     },
     chatButton: {

@@ -9,7 +9,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import jsQR from "jsqr";
 import { createJob } from "../../../api/jobsApi";
-
+import CompanyProfileCompletionCheck from "./CompanyProfileCompletionCheck";
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -140,23 +140,16 @@ function LocationSearch({ setPosition, setLocationName, setSearching }) {
   );
 }
 
-// New component for current location button with improved initialization
+// New component for current location button
 function CurrentLocationMarker({ setPosition, setLocationName }) {
   const map = useMap();
   const [currentLocation, setCurrentLocation] = useState(null);
-  
-  // Automatically locate user when component mounts
-  useEffect(() => {
-    // Get user's location automatically when map is first loaded
-    locateUser();
-  }, [map]);
 
   // Function to get user's current location
   const locateUser = () => {
     map.locate({
       setView: true,
-      maxZoom: 16,
-      enableHighAccuracy: true
+      maxZoom: 16
     });
   };
 
@@ -197,83 +190,25 @@ function CurrentLocationMarker({ setPosition, setLocationName }) {
   });
 
   return (
-    <>
-      {/* Location button in the bottom right */}
-      <div className="absolute bottom-5 right-5 z-[1000]">
-        <button 
-          onClick={locateUser}
-          className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none flex items-center justify-center"
-          title="Find my location"
-        >
-          <FaLocationArrow className="text-blue-500 text-xl" />
-        </button>
-      </div>
+    <div className="absolute bottom-5 right-5 z-[1000]">
+      <button 
+        onClick={locateUser}
+        className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none flex items-center justify-center"
+        title="Find my location"
+      >
+        <FaLocationArrow className="text-blue-500 text-xl" />
+      </button>
       
-      {/* Current location marker */}
       {currentLocation && (
-        <Marker 
-          position={currentLocation}
-          icon={L.icon({
-            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-            shadowSize: [41, 41]
-          })}
-        >
+        <Marker position={currentLocation}>
           <Popup>
             <strong>You are here</strong><br />
             Your current location
           </Popup>
         </Marker>
       )}
-    </>
+    </div>
   );
-}
-
-// InitializeMap component to set map to current location immediately when opened
-function InitializeMapLocation() {
-  const map = useMap();
-  
-  // Get user's location immediately when map is mounted
-  useEffect(() => {
-    console.log("InitializeMapLocation: Getting user's location on mount...");
-    
-    // Set a flag to track if the component is still mounted
-    let isMounted = true;
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!isMounted) return;
-          
-          const { latitude, longitude } = position.coords;
-          console.log("Current location detected:", latitude, longitude);
-          
-          // Move map to user's location
-          map.setView([latitude, longitude], 16, {
-            animate: true,
-            duration: 1
-          });
-        },
-        (error) => {
-          console.error("Error getting location in InitializeMapLocation:", error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [map]);
-  
-  return null;
 }
 
 const JobPosting = () => {
@@ -374,15 +309,9 @@ const JobPosting = () => {
     
     // Get user's live location immediately when map opens
     if (navigator.geolocation) {
-      // Clear any previous location data
-      setPosition(null);
-      setLocationName("Fetching your location...");
-      
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          console.log("Got user location with high accuracy:", latitude, longitude);
-          
           // Set map center to user's location
           setMapCenter([latitude, longitude]);
           
@@ -395,12 +324,6 @@ const JobPosting = () => {
         },
         (error) => {
           console.error("Error getting location:", error);
-          alert("Could not access your location. Please ensure location services are enabled in your browser and that you've granted permission to this site.");
-        },
-        { 
-          enableHighAccuracy: true,  // Request highest accuracy (may be slower)
-          timeout: 10000,            // Maximum time to wait for a position
-          maximumAge: 0              // Don't use cached position data
         }
       );
     }
@@ -830,7 +753,7 @@ const JobPosting = () => {
       setScanningStatus('success');
       setScanSuccessful(true);
       
-      // Close scanner automatically after a short delay to show success message
+      // Close scanner after a short delay
       setTimeout(() => {
         setShowQRScanner(false);
         stopCamera();
@@ -969,10 +892,6 @@ const JobPosting = () => {
               focusMode: "continuous", // Keep trying to focus
               exposureMode: "auto",
               whiteBalanceMode: "auto",
-              advanced: [
-                { focusMode: "continuous" },
-                { exposureMode: "continuous" }
-              ]
             },
             audio: false,
           };
@@ -980,42 +899,16 @@ const JobPosting = () => {
           // Try to access camera with enhanced settings
           let stream;
           try {
-            console.log("Trying back camera with enhanced settings");
+            console.log("Trying camera with enhanced settings");
             stream = await navigator.mediaDevices.getUserMedia(cameraConstraints);
-            console.log("Successfully accessed back camera with enhanced settings");
-
-            // Try to apply advanced camera settings if available
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack && typeof videoTrack.applyConstraints === 'function') {
-              try {
-                await videoTrack.applyConstraints({
-                  advanced: [
-                    { focusMode: "continuous" },
-                    { exposureCompensation: 0.5 }, // Slightly brighter
-                    { sharpness: 1.0 }, // Increase sharpness if available
-                    { brightness: 0.6 } // Slightly brighter
-                  ]
-                });
-                console.log("Applied advanced camera settings");
-              } catch (err) {
-                console.log("Could not apply advanced camera settings:", err);
-                // Continue with default settings
-              }
-            }
+            console.log("Successfully accessed camera with enhanced settings");
           } catch (err) {
-            console.log("Back camera access failed, trying front camera:", err);
-
-            // Try front camera as fallback
-            const frontCameraConstraints = {
-              ...cameraConstraints,
-              video: {
-                ...cameraConstraints.video,
-                facingMode: "user"
-              }
-            };
-
-            stream = await navigator.mediaDevices.getUserMedia(frontCameraConstraints);
-            console.log("Successfully accessed front camera");
+            console.log("Enhanced camera settings failed, trying basic settings:", err);
+            // Fall back to basic settings
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false
+            });
           }
 
           // Store reference to stream for cleanup
@@ -1034,7 +927,6 @@ const JobPosting = () => {
 
             // Set important video settings that help with QR detection
             videoRef.current.setAttribute("autoplay", true);
-            videoRef.current.style.transform = ""; // Clear any transforms that might affect detection
 
             // Wait for video to be ready
             videoRef.current.onloadedmetadata = () => {
@@ -1047,13 +939,10 @@ const JobPosting = () => {
                   setCameraStatus("active");
 
                   // Request animation frame for smoother experience
-                  requestAnimationFrame(() => {
-                    // Start scanning with a slight delay to ensure camera is fully initialized
-                    setTimeout(() => {
-                      console.log("Starting QR scanning with enhanced detection");
-                      scanQRCode();
-                    }, 500);
-                  });
+                  setTimeout(() => {
+                    console.log("Starting QR scanning");
+                    scanQRCode();
+                  }, 500);
                 })
                 .catch((err) => {
                   console.error("Error playing video:", err);
@@ -1102,26 +991,72 @@ const JobPosting = () => {
             // Apply image processing to enhance contrast for better QR detection
             try {
               const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-              const data = imageData.data;
-
-              // Apply adaptive contrast enhancement to make QR codes more visible
-              const enhancedData = enhanceImageForQRDetection(data, canvas.width, canvas.height);
-
-              // Create a new ImageData with enhanced pixels
-              const enhancedImageData = new ImageData(
-                new Uint8ClampedArray(enhancedData),
-                canvas.width,
-                canvas.height
+              
+              // Use jsQR for detection
+              const code = jsQR(
+                imageData.data,
+                imageData.width,
+                imageData.height,
+                {
+                  inversionAttempts: "attemptBoth", // Try both inverted and non-inverted images
+                }
               );
 
-              // Use both original and enhanced images for scanning
-              detectQRCode(imageData);
-              setTimeout(() => detectQRCode(enhancedImageData), 0);
+              if (code) {
+                console.log("QR code found:", code.data);
+                onScan({ text: code.data }, null);
+
+                // Visual feedback (draw box around QR code)
+                context.beginPath();
+                context.lineWidth = 4;
+                context.strokeStyle = "#FF5700";
+                context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+                context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
+                context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
+                context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
+                context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+                context.stroke();
+                return;
+              }
+              
+              // Try browser's BarcodeDetector API if available
+              if (window.BarcodeDetector) {
+                const barcodeDetector = new window.BarcodeDetector({
+                  formats: ["qr_code"],
+                });
+                
+                barcodeDetector.detect(imageData)
+                  .then((barcodes) => {
+                    if (barcodes.length > 0) {
+                      const qrData = barcodes[0].rawValue;
+                      console.log("QR code detected using BarcodeDetector:", qrData);
+                      onScan({ text: qrData }, null);
+                      return;
+                    }
+                    
+                    // Continue scanning if no QR code found
+                    if (mounted) {
+                      animationFrame = requestAnimationFrame(scanQRCode);
+                    }
+                  })
+                  .catch((err) => {
+                    console.warn("BarcodeDetector error:", err);
+                    // Continue scanning
+                    if (mounted) {
+                      animationFrame = requestAnimationFrame(scanQRCode);
+                    }
+                  });
+              } else {
+                // No QR code found with jsQR and BarcodeDetector not available, continue scanning
+                if (mounted) {
+                  animationFrame = requestAnimationFrame(scanQRCode);
+                }
+              }
             } catch (err) {
-              console.warn("Image enhancement failed, trying normal scan:", err);
-              // If enhancement fails, fall back to normal scan
-              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-              detectQRCode(imageData);
+              console.error("Error in QR detection:", err);
+              if (mounted) {
+                animationFrame = requestAnimationFrame(scanQRCode);
+              }
             }
           } else {
             // Video not ready yet, continue scanning
@@ -1134,114 +1069,6 @@ const JobPosting = () => {
           // Try to continue scanning
           if (mounted) {
             animationFrame = requestAnimationFrame(scanQRCode);
-          }
-        }
-      };
-
-      // Function to enhance image data to make QR codes more visible from distance
-      const enhanceImageForQRDetection = (data, width, height) => {
-        const enhancedData = new Uint8ClampedArray(data.length);
-
-        // Copy original data
-        for (let i = 0; i < data.length; i++) {
-          enhancedData[i] = data[i];
-        }
-
-        // Increase contrast and apply edge enhancement
-        for (let i = 0; i < data.length; i += 4) {
-          // Calculate grayscale
-          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-
-          // Apply adaptive threshold for better QR detection
-          const threshold = 127;
-          const value = avg > threshold ? 255 : 0;
-
-          // Increase contrast dramatically for distant QR codes
-          enhancedData[i] = value;        // R
-          enhancedData[i + 1] = value;    // G
-          enhancedData[i + 2] = value;    // B
-          // Keep alpha channel unchanged
-        }
-
-        return enhancedData;
-      };
-
-      // Separate function to detect QR codes from image data
-      const detectQRCode = (imageData) => {
-        if (!mounted) return;
-
-        // Try multiple detection strategies for better sensitivity
-
-        // 1. Use jsQR with high sensitivity settings
-        const code = jsQR(
-          imageData.data,
-          imageData.width,
-          imageData.height,
-          {
-            inversionAttempts: "attemptBoth", // Try both inverted and non-inverted images
-            dontInvert: false,
-            canOverwriteImage: true,
-            greediness: 1, // Maximum greediness for pattern detection
-            maxNumTemplates: 8, // Maximum number of templates to attempt
-          }
-        );
-
-        if (code) {
-          console.log("QR code found using jsQR with high sensitivity:", code.data);
-          onScan({ text: code.data }, null);
-
-          // Visual feedback (draw box around QR code)
-          const canvas = canvasRef.current;
-          const context = canvas.getContext("2d");
-          context.beginPath();
-          context.lineWidth = 4;
-          context.strokeStyle = "#FF5700";
-          context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-          context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
-          context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
-          context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
-          context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-          context.stroke();
-        } else {
-          // 2. Try BarcodeDetector API if available
-          if (window.BarcodeDetector) {
-            try {
-              const barcodeDetector = new window.BarcodeDetector({
-                formats: ["qr_code"],
-              });
-
-              barcodeDetector.detect(imageData)
-                .then((barcodes) => {
-                  if (barcodes.length > 0) {
-                    const qrData = barcodes[0].rawValue;
-                    console.log("QR code detected using BarcodeDetector:", qrData);
-                    onScan({ text: qrData }, null);
-                    return;
-                  }
-                  // Continue scanning if no QR code found
-                  if (mounted) {
-                    animationFrame = requestAnimationFrame(scanQRCode);
-                  }
-                })
-                .catch((err) => {
-                  console.warn("BarcodeDetector error:", err);
-                  // Continue scanning
-                  if (mounted) {
-                    animationFrame = requestAnimationFrame(scanQRCode);
-                  }
-                });
-            } catch (err) {
-              console.warn("BarcodeDetector unavailable:", err);
-              // Continue scanning
-              if (mounted) {
-                animationFrame = requestAnimationFrame(scanQRCode);
-              }
-            }
-          } else {
-            // No QR code found, continue scanning
-            if (mounted) {
-              animationFrame = requestAnimationFrame(scanQRCode);
-            }
           }
         }
       };
@@ -1307,7 +1134,7 @@ const JobPosting = () => {
 
             {/* Scanning visual guide */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              {/* Center scanning box - made larger to capture QR codes from further away */}
+              {/* Center scanning box */}
               <div className="w-64 h-64 border-2 border-orange-500 rounded-lg relative">
                 {/* Corner elements for better visual guidance */}
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-500"></div>
@@ -1321,7 +1148,7 @@ const JobPosting = () => {
 
               {/* Instructions */}
               <p className="mt-4 text-sm text-white bg-black bg-opacity-60 px-3 py-1 rounded-full">
-                Hold QR code in view - can detect from any distance
+                Hold QR code in view to scan
               </p>
             </div>
 
@@ -1723,20 +1550,9 @@ const JobPosting = () => {
                   setPosition={setPosition}
                   setLocationName={setLocationName}
                 />
-                <InitializeMapLocation />
                 <ClickableMap onMapClick={handleMapClick} />
                 {position && (
-                  <Marker 
-                    position={position}
-                    icon={L.icon({
-                      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-                      iconSize: [25, 41],
-                      iconAnchor: [12, 41],
-                      popupAnchor: [1, -34],
-                      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-                      shadowSize: [41, 41]
-                    })}
-                  >
+                  <Marker position={position}>
                     <Popup>
                       <strong>Selected Location</strong><br />
                       {locationName}

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import logo from '../assets/images/logo.png';
 import { HiArrowRight } from 'react-icons/hi';
+import { ThemeContext } from '../context/ThemeContext';
 
 const EmailVerification = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email] = useState('emailaddress@gmail.com');
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   const handleVerification = (e) => {
     e.preventDefault();
@@ -13,8 +15,8 @@ const EmailVerification = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center ">
-      <div className="max-w-md w-full p-6 space-y-4 bg-white rounded-lg ">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 transition-colors duration-200">
+      <div className="max-w-md w-full p-6 space-y-4 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-700/30">
         {/* Logo */}
         <div className="flex justify-center">
           <div className="w-24 h-24 rounded-lg flex items-center justify-center">
@@ -27,12 +29,12 @@ const EmailVerification = () => {
         </div>
 
         {/* Title */}
-        <h2 className="mt-6 text-center text-[32px] font-bold text-[#1F2B44]">
+        <h2 className="mt-6 text-center text-[32px] font-bold text-[#1F2B44] dark:text-white">
           Email Verification
         </h2>
 
         {/* Description */}
-        <p className="text-center text-[15px] bold-[400px] text-gray-600 font-poppins" >
+        <p className="text-center text-[15px] bold-[400px] text-gray-600 dark:text-gray-300 font-poppins" >
           We've sent an verification to {email} to<br />
           verify your email address and activate your account.
         </p>
@@ -43,7 +45,7 @@ const EmailVerification = () => {
             <input
               type="text"
               required
-              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900  focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
+              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
               placeholder="Verification Code"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
@@ -53,7 +55,7 @@ const EmailVerification = () => {
           <div>
           <button
   type="submit"
-  className="group relative w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent text-[14px]  text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 rounded-full"
+  className="group relative w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent text-[14px] text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 rounded-full"
 >
   <span className="flex items-center gap-2">
     Verify My Account
@@ -65,7 +67,7 @@ const EmailVerification = () => {
 
         {/* Resend Link */}
         <div className="text-center text-sm">
-          <span className="text-gray-600">Didn't receive any code! </span>
+          <span className="text-gray-600 dark:text-gray-400">Didn't receive any code! </span>
           <a href="#" className="font-medium text-orange-500 hover:text-orange-400">
             Resends
           </a>

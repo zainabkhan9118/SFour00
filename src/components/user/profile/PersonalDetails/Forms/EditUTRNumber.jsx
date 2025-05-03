@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -8,6 +8,7 @@ import { updateUtrData, getUtrData } from "../../../../../api/utr";
 import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 const EditUTRNumber = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const EditUTRNumber = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   // Add state for responsive design
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -82,12 +84,12 @@ const EditUTRNumber = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
 
       {/* Desktop Sidebar - Hidden on Mobile */}
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -104,9 +106,9 @@ const EditUTRNumber = () => {
         <div className="p-4 md:p-6 overflow-auto">
           {/* Header with back button */}
           <div className="flex items-center mb-4">
-            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">UTR Number</span>
+              <span className="font-medium text-black dark:text-white">UTR Number</span>
             </button>
           </div>
           
@@ -115,7 +117,7 @@ const EditUTRNumber = () => {
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               {/* UTR Number Input */}
               <div className="space-y-2">
-                <label htmlFor="utrNumber" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="utrNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   UTR Number (Unique Taxpayer Reference)
                 </label>
                 <input
@@ -123,11 +125,11 @@ const EditUTRNumber = () => {
                   type="text"
                   value={utrNumber}
                   onChange={handleChange}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="e.g. KNJ44334433443"
                   aria-describedby="utrNumberHelp"
                 />
-                <p id="utrNumberHelp" className="text-xs text-gray-500">
+                <p id="utrNumberHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Your UTR number is a unique 10-digit identifier issued by HMRC.
                 </p>
               </div>

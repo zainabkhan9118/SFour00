@@ -1,19 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { FaBell, FaBars } from "react-icons/fa";
+import { BsMoon, BsSun } from "react-icons/bs";
 import Avatar from "../../assets/images/logo.png";
 import { useLocation } from "react-router-dom";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const Header = () => {
   const location = useLocation();
   const pathname = location.pathname;
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useContext(ThemeContext) || { theme: 'light', toggleTheme: () => {} };
 
   // Function to get the title based on current route
   const getPageTitle = () => {
+    // Check if we're on the JobDetails page with an ID
+    if (pathname.startsWith("/user-JobDetails/")) {
+      return "Job Details";
+    }
+
     switch (pathname) {
       case "/User-UserNotification":
         return "Notifications";
-      case "/User-JobDetails":
+      case "/User-Job":
         return "Jobs";
       case "/User-UserProfile":
         return "Profile";
@@ -57,12 +65,12 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
-    <div className="flex justify-between  items-center bg-white px-3 sm:px-6 py-3 sm:py-4 md:mb-4 lg:mb-0 shadow-sm">
+    <div className="flex justify-between items-center bg-white dark:bg-gray-800 px-3 sm:px-6 py-3 sm:py-4 md:mb-4 lg:mb-0 shadow-sm dark:shadow-gray-900 dark:text-white transition-colors duration-200">
       {/* Mobile menu button - only visible on small screens */}
       <div className="block sm:hidden">
         <button 
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-gray-600 focus:outline-none"
+          className="text-gray-600 dark:text-gray-300 focus:outline-none"
         >
           <FaBars className="h-5 w-5" />
         </button>
@@ -70,17 +78,30 @@ const Header = () => {
 
       {/* Title - only shown if there's a title for the current route */}
       {title && (
-        <h1 className="text-lg sm:text-xl font-bold text-gray-800 hidden sm:block">{title}</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white hidden sm:block">{title}</h1>
       )}
       {!title && <div className="hidden sm:block"></div>}
 
       {/* Mobile Title - centered on small screens */}
       {title && (
-        <h1 className="text-lg font-bold text-gray-800 absolute left-0 right-0 text-center sm:hidden">{title}</h1>
+        <h1 className="text-lg font-bold text-gray-800 dark:text-white absolute left-0 right-0 text-center sm:hidden">{title}</h1>
       )}
 
       {/* User Info */}
       <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Theme Toggle Button */}
+        <button 
+          onClick={toggleTheme} 
+          className="text-gray-600 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400"
+          aria-label="Toggle dark mode"
+        >
+          {theme === 'dark' ? (
+            <BsSun className="text-lg sm:text-xl" />
+          ) : (
+            <BsMoon className="text-lg sm:text-xl" />
+          )}
+        </button>
+
         {/* Notification Icon */}
         <button className="relative">
           <FaBell className="text-orange-500 text-lg sm:text-xl" />
@@ -97,7 +118,7 @@ const Header = () => {
             alt="User Avatar"
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
           />
-          <span className="font-semibold text-gray-800 text-sm sm:text-base hidden xs:inline">Dani Danial</span>
+          <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm sm:text-base hidden xs:inline">Dani Danial</span>
           {/* Online Status */}
           <span className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></span>
         </div>
@@ -106,10 +127,10 @@ const Header = () => {
       {/* Mobile menu - slides in from the side when menuOpen is true */}
       {menuOpen && (
         <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-75 sm:hidden">
-          <div className="bg-white h-full w-3/4 p-4 shadow-lg transform transition-transform">
+          <div className="bg-white dark:bg-gray-800 h-full w-3/4 p-4 shadow-lg transform transition-transform">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">{title || "Menu"}</h2>
-              <button onClick={() => setMenuOpen(false)} className="text-gray-600">
+              <h2 className="text-xl font-bold dark:text-white">{title || "Menu"}</h2>
+              <button onClick={() => setMenuOpen(false)} className="text-gray-600 dark:text-gray-300">
                 &times;
               </button>
             </div>

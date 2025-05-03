@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import HeaderWork from "../HeaderWork";
 import { getAppliedJobs } from "../../../api/jobApplicationApi";
 import { AppContext } from "../../../context/AppContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 import LazyImage from "../../common/LazyImage";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import companyImage from "../../../assets/images/company.png";
@@ -104,6 +105,7 @@ const WorkApplied = () => {
   const [error, setError] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const { BASEURL } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     const fetchAppliedJobs = async () => {
@@ -182,7 +184,7 @@ const WorkApplied = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         <div className="flex flex-col flex-1">
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
@@ -197,7 +199,7 @@ const WorkApplied = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         <div className="flex flex-col flex-1">
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
@@ -209,21 +211,21 @@ const WorkApplied = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       <div className="flex flex-col flex-1">
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           <HeaderWork />
           <div className="">
             {appliedJobs.length === 0 ? (
-              <div className="text-center py-4">No applied jobs found</div>
+              <div className="text-center py-4 text-gray-700 dark:text-gray-300">No applied jobs found</div>
             ) : (
               appliedJobs.map((application, index) => {
                 const job = application.jobId || {};
                 return (
                   <div key={application._id || `job-${index}`}>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white dark:bg-gray-800 mb-4">
                       <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                        <div className="w-12 h-12 rounded-full border border-gray-300 overflow-hidden bg-gray-100">
+                        <div className="w-12 h-12 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
                           <LazyImage
                             src={job.companyId?.companyLogo || companyImage}
                             alt={job.jobTitle || "Company"}
@@ -233,9 +235,9 @@ const WorkApplied = () => {
                           />
                         </div>
                         <div>
-                          <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>
+                          <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200">{job.jobTitle || "No Title Available"}</h3>
                           <div 
-                            className="text-sm text-gray-500 flex items-center flex-wrap cursor-pointer hover:text-orange-500"
+                            className="text-sm text-gray-500 dark:text-gray-400 flex items-center flex-wrap cursor-pointer hover:text-orange-500 dark:hover:text-orange-400"
                             onClick={() => setSelectedJob(selectedJob === job._id ? null : job._id)}
                           >
                             <span>{formatLocation(job)}</span>
@@ -246,7 +248,7 @@ const WorkApplied = () => {
                       </div>
 
                       <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                        <div className="text-sm font-medium text-gray-400">
+                        <div className="text-sm font-medium text-gray-400 dark:text-gray-500">
                           {job.workDate ? new Date(job.workDate).toLocaleDateString() : "Date not available"}
                         </div>
                         <div className="flex items-center text-green-500">
@@ -258,7 +260,7 @@ const WorkApplied = () => {
                       </div>
 
                       <div className="flex justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-                        <button className="text-gray-400 hover:text-gray-600">
+                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                           <BookmarkIcon />
                         </button>
                         <button

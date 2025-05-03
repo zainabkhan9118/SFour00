@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { FaPhoneAlt, FaPaperPlane, FaEllipsisV, FaArrowLeft } from "react-icons/fa";
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -11,6 +12,7 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
   const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -170,9 +172,9 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] md:h-screen bg-white">
+    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] md:h-screen bg-white dark:bg-gray-800 transition-colors duration-200">
       {/* Chat header */}
-      <div className="py-3 px-4 md:px-6 border-b flex justify-between items-center">
+      <div className="py-3 px-4 md:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <div className="flex items-center">
           <div className="md:hidden mr-2">
             <button 
@@ -194,26 +196,26 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
             />
           </div>
           <div>
-            <h2 className="font-medium text-sm md:text-base">{selectedContact?.name || "Chat"}</h2>
-            <span className="text-xs text-gray-500">{selectedContact?.role || ""}</span>
+            <h2 className="font-medium text-sm md:text-base dark:text-white">{selectedContact?.name || "Chat"}</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{selectedContact?.role || ""}</span>
           </div>
         </div>
         <div className="flex items-center gap-3 md:gap-4">
-          <button className="text-orange-500 hover:bg-orange-50 p-1 md:p-2 rounded-full">
+          <button className="text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 p-1 md:p-2 rounded-full">
             <FaPhoneAlt className="text-sm md:text-base" />
           </button>
-          <button className="text-gray-400 hover:text-gray-700 hidden md:block">
+          <button className="text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hidden md:block">
             <FaEllipsisV />
           </button>
         </div>
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50" ref={messagesContainerRef}>
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200" ref={messagesContainerRef}>
         {messages.map((message) => (
           <div key={message.id} className="mb-4 md:mb-6">
             {message.timestamp && (
-              <div className="text-center text-xs text-gray-400 mb-2">
+              <div className="text-center text-xs text-gray-400 dark:text-gray-500 mb-2">
                 {message.timestamp.toDate().toLocaleString()}
               </div>
             )}
@@ -231,12 +233,12 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
                 className={`p-2 md:p-3 rounded-lg max-w-[75%] ${
                   message.sender === 'user'
                     ? 'bg-orange-500 text-white'
-                    : 'bg-white border border-gray-200'
+                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'
                 }`}
               >
                 <p className="text-xs md:text-sm">{message.message}</p>
                 {message.timestamp && (
-                  <div className={`text-[10px] mt-1 ${message.sender === 'user' ? 'text-orange-100' : 'text-gray-400'}`}>
+                  <div className={`text-[10px] mt-1 ${message.sender === 'user' ? 'text-orange-100' : 'text-gray-400 dark:text-gray-400'}`}>
                     {message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
@@ -248,7 +250,7 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
       </div>
 
       {/* Message input */}
-      <div className="p-3 md:p-4 border-t bg-white">
+      <div className="p-3 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex-1">
             <input
@@ -257,14 +259,14 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full p-2 md:p-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full p-2 md:p-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <button 
             className={`p-2 md:p-3 rounded-full transition-colors ${
               messageInput.trim() 
                 ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                : 'bg-gray-100 text-gray-400'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
             }`}
             onClick={sendMessage}
             disabled={!messageInput.trim()}

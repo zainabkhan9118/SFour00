@@ -1,7 +1,10 @@
 // Options.jsx - Component for showing quick option buttons in the chatbot
 import React from 'react';
+import { useContext } from 'react';
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 const Options = (props) => {
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const options = [
     {
       text: "Account Issues",
@@ -31,7 +34,7 @@ const Options = (props) => {
         <button
           key={option.id}
           onClick={option.handler}
-          className="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-full text-sm text-gray-700 transition-colors"
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-2 rounded-full text-sm text-gray-700 dark:text-gray-200 transition-colors"
         >
           {option.text}
         </button>

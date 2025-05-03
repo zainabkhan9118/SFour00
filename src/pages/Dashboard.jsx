@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { ThemeContext } from "../context/ThemeContext";
 
 // Company components
 import CompanySidebar from "../components/company/Sidebar";
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [userRole, setUserRole] = useState("user"); // Default to user
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     console.log("Dashboard mounted - checking auth");
@@ -85,28 +87,28 @@ export default function Dashboard() {
   // Show better loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-white dark:bg-gray-900">
       {/* Role switcher for testing */}
-      <div className="fixed top-2 right-2 z-50 bg-white p-2 rounded shadow-md">
-        <p className="text-sm font-semibold mb-1">Current Role: {userRole}</p>
+      <div className="fixed top-2 right-2 z-50 bg-white dark:bg-gray-800 p-2 rounded shadow-md">
+        <p className="text-sm font-semibold mb-1 text-gray-800 dark:text-gray-200">Current Role: {userRole}</p>
         <button 
-          className={`mr-2 px-2 py-1 text-xs rounded ${userRole === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`mr-2 px-2 py-1 text-xs rounded ${userRole === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}
           onClick={() => setUserRole('user')}
         >
           User
         </button>
         <button 
-          className={`px-2 py-1 text-xs rounded ${userRole === 'company' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`px-2 py-1 text-xs rounded ${userRole === 'company' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}
           onClick={() => setUserRole('company')}
         >
           Company

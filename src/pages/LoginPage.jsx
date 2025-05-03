@@ -16,8 +16,9 @@ import {
 import { auth } from "../config/firebaseConfig";
 import axios from "axios";
 import { AppContext } from "../context/AppContext";
+import { ThemeContext } from "../context/ThemeContext";
 import logo from "../assets/images/logo.png";
-import JobStatsDisplay from "../components/common/JobStatsDisplay";
+import AuthLayout from "../components/layouts/common/AuthLayout";
 import { toast } from "react-toastify";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const [redirectPath, setRedirectPath] = useState("");
 
   const { BASEURL, setRole, setUser, setSessionData } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Check for session validity
   useEffect(() => {
@@ -306,19 +308,19 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-full">
       {/* Left Section */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-start bg-white px-8 md:px-16 lg:px-20 py-10">
-        <div className="mb-8 mt-6">
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center bg-white dark:bg-gray-900 px-8 md:px-16 lg:px-20 py-10">
+        <div className="mb-8 mt-6 items-center justify-center">
           <img
             src={logo}
             alt="Logo"
-            className="h-[120px] w-[120px] object-fill"
+            className="h-[70px] w-[70px] object-fill"
           />
         </div>
 
-        <h2 className="text-[32px] md:text-2xl font-bold mb-3 text-[#1F2B44]">
+        <h2 className="text-[32px] md:text-2xl font-bold mb-3 text-[#1F2B44] dark:text-white">
           Sign in
         </h2>
-        <p className="text-gray-500 text-sm md:text-base mb-8">
+        <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base mb-8">
           Don't have an account?{" "}
           <span
             className="text-orange-500 cursor-pointer font-medium"
@@ -340,7 +342,7 @@ export default function LoginPage() {
               type="email"
               name="email"
               placeholder="Email address"
-              className="w-full border border-gray-300 px-4 py-3 rounded-full mb-4 text-sm md:text-base focus:outline-orange-500"
+              className="w-full border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-full mb-4 text-sm md:text-base focus:outline-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
             <ErrorMessage
               name="email"
@@ -352,12 +354,12 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Password"
-                className="w-full border border-gray-300 px-4 py-3 rounded-full mb-4 text-sm md:text-base focus:outline-orange-500"
+                className="w-full border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-full mb-4 text-sm md:text-base focus:outline-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 focus:outline-none"
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -369,7 +371,7 @@ export default function LoginPage() {
             />
 
             <div className="flex justify-between items-center mb-6 text-sm md:text-base">
-              <label className="flex items-center">
+              <label className="flex items-center text-gray-700 dark:text-gray-300">
                 <input type="checkbox" className="mr-2" /> Remember Me
               </label>
               <a 
@@ -393,17 +395,17 @@ export default function LoginPage() {
           </Form>
         </Formik>
 
-        <p className="text-gray-500 my-6 text-sm md:text-base text-center w-full max-w-md">
+        <p className="text-gray-500 dark:text-gray-400 my-6 text-sm md:text-base text-center w-full max-w-md">
           or
         </p>
 
         <div className="flex flex-col md:flex-row gap-3 w-full max-w-md">
-          <button className="flex items-center justify-center px-4 py-2 border rounded-full w-full text-sm md:text-base">
+          <button className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full w-full text-sm md:text-base text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
             <FaFacebook className="text-blue-600 mr-2" /> Sign in with Facebook
           </button>
           <button
             onClick={handleGoogleSignIn}
-            className="flex items-center justify-center px-4 py-2 border rounded-full w-full text-sm md:text-base"
+            className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full w-full text-sm md:text-base text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <FaGoogle className="text-red-500 mr-2" /> Sign in with Google
           </button>
@@ -411,7 +413,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Section */}
-      <JobStatsDisplay />
+      <AuthLayout />
       
       {/* Success Popup */}
       {showSuccessPopup && (

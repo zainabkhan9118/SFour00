@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { CiClock1 } from "react-icons/ci";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const UserNotification = () => {
   const [notifications, setNotifications] = useState([
@@ -32,6 +33,7 @@ const UserNotification = () => {
       unread: false,
     },
   ]);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Mark single notification as read
   const markAsRead = (id) => {
@@ -55,7 +57,7 @@ const UserNotification = () => {
   };
 
   return (
-    <div className="flex flex-row min-h-screen">
+    <div className="flex flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Main Content */}
       <div className="flex flex-col flex-1">
         {/* Notification Section */}
@@ -66,7 +68,9 @@ const UserNotification = () => {
                 <div
                   key={notification.id}
                   className={`p-4 rounded-xl shadow-sm ${
-                    notification.unread ? "bg-[#FD7F00] text-white" : "bg-gray-200"
+                    notification.unread 
+                      ? "bg-[#FD7F00] text-white" 
+                      : "bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
                   } hover:bg-[#FD7F00] hover:text-white transition duration-300`}
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -88,19 +92,19 @@ const UserNotification = () => {
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500">No notifications available.</p>
+              <p className="text-center text-gray-500 dark:text-gray-400">No notifications available.</p>
             )}
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
             <button
               onClick={deleteAll}
-              className="w-full sm:w-40 h-12 flex items-center justify-center bg-gray-800 text-white rounded-full"
+              className="w-full sm:w-40 h-12 flex items-center justify-center bg-gray-800 dark:bg-gray-700 text-white rounded-full hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
             >
               Delete All
             </button>
             <button
               onClick={markAllAsRead}
-              className="w-full sm:w-40 h-12 flex items-center justify-center bg-[#FD7F00] rounded-full text-white"
+              className="w-full sm:w-40 h-12 flex items-center justify-center bg-[#FD7F00] rounded-full text-white hover:bg-[#E57000] transition-colors duration-200"
             >
               Mark All As Read
             </button>

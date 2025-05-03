@@ -1,5 +1,5 @@
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import logo from "../assets/images/logo.png";
 import { useNavigate } from "react-router-dom";
 import { HiArrowRight } from 'react-icons/hi';
@@ -8,6 +8,7 @@ import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { ThemeContext } from "../context/ThemeContext";
 
 export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +17,7 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   const formik = useFormik({
     initialValues: {
@@ -65,8 +67,8 @@ export default function ResetPassword() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full p-6 space-y-4 bg-white rounded-lg">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+      <div className="max-w-md w-full p-6 space-y-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         {/* Logo */}
         <div className="flex justify-center">
           <div className="w-24 h-24 rounded-lg flex items-center justify-center">
@@ -79,12 +81,12 @@ export default function ResetPassword() {
         </div>
 
         {/* Title */}
-        <h2 className="mt-4 text-center text-[32px] font-bold text-[#1F2B44]">
+        <h2 className="mt-4 text-center text-[32px] font-bold text-[#1F2B44] dark:text-white">
           Reset Password
         </h2>
 
         {/* Description */}
-        <p className="text-center text-[15px] bold-[400px] text-gray-600 font-poppins">
+        <p className="text-center text-[15px] bold-[400px] text-gray-600 dark:text-gray-300 font-poppins">
           Dui luctus interdum metus, ut consectetur ante consectetur sed.
           Suspendisse ultrices viverra massa at amet mollis.
         </p>
@@ -104,7 +106,7 @@ export default function ResetPassword() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Old Password"
                   {...formik.getFieldProps("oldPassword")}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
                 {formik.touched.oldPassword && formik.errors.oldPassword ? (
                   <p className="text-red-500 text-sm">{formik.errors.oldPassword}</p>
@@ -112,7 +114,7 @@ export default function ResetPassword() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -123,7 +125,7 @@ export default function ResetPassword() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter New Password"
                   {...formik.getFieldProps("newPassword")}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
                 {formik.touched.newPassword && formik.errors.newPassword ? (
                   <p className="text-red-500 text-sm">{formik.errors.newPassword}</p>
@@ -131,7 +133,7 @@ export default function ResetPassword() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -142,7 +144,7 @@ export default function ResetPassword() {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
                   {...formik.getFieldProps("confirmPassword")}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm rounded-[120px]"
                 />
                 {formik.touched.confirmPassword && formik.errors.confirmPassword ? (
                   <p className="text-red-500 text-sm">{formik.errors.confirmPassword}</p>
@@ -150,7 +152,7 @@ export default function ResetPassword() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
                 >
                   {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 </button>

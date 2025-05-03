@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -9,6 +9,7 @@ import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -19,6 +20,7 @@ const EditExperience = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { showSuccess, showError, showInfo } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -319,11 +321,11 @@ const EditExperience = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
       
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -337,9 +339,9 @@ const EditExperience = () => {
         
         <div className="p-4 md:p-6 overflow-auto">
           <div className="flex items-center mb-4">
-            <button onClick={handleBack} className="text-gray-600 hover:text-gray-800 flex items-center">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">Experience</span>
+              <span className="font-medium text-black dark:text-white">Experience</span>
             </button>
           </div>
 
@@ -347,14 +349,14 @@ const EditExperience = () => {
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               <div className="space-y-4">
                 {formData.experiences.map((experience, index) => (
-                  <div key={experience.id} className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div key={experience.id} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Experience {index + 1}</h3>
+                      <h3 className="font-medium dark:text-white">Experience {index + 1}</h3>
                       {formData.experiences.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleDelete(index)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                         >
                           Delete
                         </button>
@@ -363,7 +365,7 @@ const EditExperience = () => {
 
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <label htmlFor={`position-${index}`} className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`position-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Position
                         </label>
                         <input
@@ -371,14 +373,14 @@ const EditExperience = () => {
                           type="text"
                           value={experience.position}
                           onChange={(e) => handleChange(index, "position", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="Job title"
                           required
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label htmlFor={`company-${index}`} className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`company-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Company Name
                         </label>
                         <input
@@ -386,7 +388,7 @@ const EditExperience = () => {
                           type="text"
                           value={experience.companyName}
                           onChange={(e) => handleChange(index, "companyName", e.target.value)}
-                          className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                           placeholder="Company Name"
                           required
                         />
@@ -394,7 +396,7 @@ const EditExperience = () => {
 
                       <div className="flex flex-col space-y-3">
                         <div className="relative space-y-1">
-                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700">
+                          <label htmlFor={`start-date-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Start Date
                           </label>
                           <input
@@ -402,13 +404,13 @@ const EditExperience = () => {
                             type="date"
                             value={experience.startDate}
                             onChange={(e) => handleChange(index, "startDate", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             required
                           />
                         </div>
 
                         <div className="relative space-y-1">
-                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700">
+                          <label htmlFor={`end-date-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             End Date
                           </label>
                           <input
@@ -416,7 +418,7 @@ const EditExperience = () => {
                             type="date"
                             value={experience.endDate}
                             onChange={(e) => handleChange(index, "endDate", e.target.value)}
-                            className="w-full p-3 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
+                            className="w-full p-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none pr-10"
                             disabled={experience.currentlyWorking}
                             required={!experience.currentlyWorking}
                           />
@@ -429,26 +431,26 @@ const EditExperience = () => {
                           type="checkbox"
                           checked={experience.currentlyWorking}
                           onChange={(e) => handleChange(index, "currentlyWorking", e.target.checked)}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
                         />
-                        <label htmlFor={`currently-working-${index}`} className="ml-2 text-sm text-gray-600">
+                        <label htmlFor={`currently-working-${index}`} className="ml-2 text-sm text-gray-600 dark:text-gray-300">
                           Currently Working
                         </label>
                       </div>
 
                       <div className="relative space-y-1">
-                        <label htmlFor={`certificate-${index}`} className="block text-sm font-medium text-gray-700">
+                        <label htmlFor={`certificate-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Experience Certificate
                         </label>
                         <div 
-                          className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 cursor-pointer"
+                          className="border border-dashed border-orange-300 rounded-lg p-4 bg-orange-50 dark:bg-gray-700 dark:border-orange-400 cursor-pointer"
                           onClick={() => document.getElementById(`certificate-${index}`).click()}
                         >
                           <div className="flex items-center">
                             <svg className="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
                               {experience.experienceCertificate instanceof File 
                                 ? experience.experienceCertificate.name 
                                 : experience.experienceCertificate
@@ -456,7 +458,7 @@ const EditExperience = () => {
                                 : "Upload Experience Certificate"}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Upload work reference document (optional)
                           </p>
                         </div>
@@ -476,7 +478,7 @@ const EditExperience = () => {
                 <button
                   type="button"
                   onClick={handleAddNew}
-                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition"
+                  className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 hover:border-orange-500 hover:text-orange-500 dark:hover:text-orange-400 transition"
                 >
                   + Add Another Experience
                 </button>

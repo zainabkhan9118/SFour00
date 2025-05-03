@@ -1,7 +1,8 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { FaQrcode } from "react-icons/fa";
 import { updateStatusByQR } from "../../../api/myWorkApi";
+import { ThemeContext } from "../../../context/ThemeContext";
 import axios from "axios";
 import jsQR from "jsqr";
 
@@ -417,6 +418,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
   const [cameraError, setCameraError] = useState(null);
   const [scanSuccessful, setScanSuccessful] = useState(false);
   const [jobDetails, setJobDetails] = useState(null);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     // Load job details when component mounts
@@ -685,14 +687,14 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50"
         >
           <div
-            className="bg-white rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
+            className="bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
-            <div className="w-12 h-12 rounded-full bg-[#E7F0FA] absolute top-[-20px] right-[-3px] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#E7F0FA] dark:bg-gray-700 absolute top-[-20px] right-[-3px] flex items-center justify-center">
               <button
                 onClick={closeCameraAndPopup}
-                className="text-gray-500 focus:outline-none"
+                className="text-gray-500 dark:text-gray-300 focus:outline-none"
               >
                 <IoCloseCircleOutline className="text-4xl text-orange-400" />
               </button>
@@ -700,17 +702,17 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
 
             {showScanner ? (
               <div className="flex flex-col justify-center items-center w-full h-[400px]">
-                <h3 className="text-xl font-semibold mb-4">Scan QR Code</h3>
+                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Scan QR Code</h3>
 
                 {scanningStatus === "error" ? (
                   <div className="text-center p-4">
                     <div className="text-red-500 mb-3 text-lg">❌ Camera Error</div>
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       {cameraError || "Could not access camera"}
                     </p>
                     <button
                       onClick={() => setShowScanner(false)}
-                      className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                      className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
                     >
                       Close
                     </button>
@@ -718,25 +720,25 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                 ) : scanSuccessful ? (
                   <div className="text-center p-4">
                     <div className="text-green-500 mb-3 text-5xl">✓</div>
-                    <p className="text-gray-700 font-medium">
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
                       QR Code successfully scanned!
                     </p>
-                    <p className="text-blue-600 mt-2 break-all">{qrData}</p>
+                    <p className="text-blue-600 dark:text-blue-400 mt-2 break-all">{qrData}</p>
                   </div>
                 ) : (
                   <div className="w-full flex flex-col items-center">
-                    <div className="w-[280px] h-[280px] relative overflow-hidden rounded-lg border-4 border-gray-300">
+                    <div className="w-[280px] h-[280px] relative overflow-hidden rounded-lg border-4 border-gray-300 dark:border-gray-600">
                       <QRScannerComponent onScan={handleScanResult} />
                     </div>
 
-                    <span className="mt-4 text-gray-600 text-sm flex items-center">
+                    <span className="mt-4 text-gray-600 dark:text-gray-400 text-sm flex items-center">
                       <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></span>
                       Position QR code in the frame to scan
                     </span>
 
                     <button
                       onClick={() => setShowScanner(false)}
-                      className="mt-4 px-4 py-2 bg-gray-200 rounded-md text-gray-700"
+                      className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300"
                     >
                       Cancel Scan
                     </button>
@@ -760,22 +762,22 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                     />
                   </div>
                   <div className="flex flex-col text-center md:text-left md:ml-4">
-                    <h2 className="text-2xl font-bold text-gray-700">
+                    <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200">
                       {jobDetails?.jobTitle || "Loading job..."}
                     </h2>
                     <div className="flex flex-wrap items-center justify-center md:justify-start space-x-2 mt-2">
                       {jobDetails?.companyId?.address && (
-                        <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                        <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                           {jobDetails.companyId.address}
                         </div>
                       )}
                       {jobDetails?.jobLocation && (
-                        <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                        <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                           {jobDetails.jobLocation}
                         </div>
                       )}
                       {jobDetails?._id && (
-                        <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                        <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                           ID: {jobDetails._id.slice(-5)}
                         </div>
                       )}
@@ -786,30 +788,30 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                 {/* Salary and Timings */}
                 <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 mt-4 space-y-4 md:space-y-0">
                   <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-orange-300">
+                    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-orange-300 dark:bg-orange-500">
                       <img src={salary} alt="Salary Icon" className="w-8 h-8" />
                     </div>
                     <div>
-                      <span className="text-gray-500 text-sm block">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm block">
                         Salary
                       </span>
-                      <span className="font-bold text-gray-700 text-sm">
+                      <span className="font-bold text-gray-700 dark:text-gray-300 text-sm">
                         £{jobDetails?.pricePerHour || "--"}/hr
                       </span>
                     </div>
                   </div>
                   <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-orange-300">
+                    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-orange-300 dark:bg-orange-500">
                       <img src={time} alt="Time Icon" className="w-8 h-8" />
                     </div>
                     <div>
-                      <span className="text-gray-500 text-sm block">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm block">
                         Timings
                       </span>
-                      <span className="font-bold text-gray-700 text-sm block">
+                      <span className="font-bold text-gray-700 dark:text-gray-300 text-sm block">
                         Start: {jobDetails?.startTime || "--"}
                       </span>
-                      <span className="font-bold text-gray-700 text-sm block">
+                      <span className="font-bold text-gray-700 dark:text-gray-300 text-sm block">
                         End: {jobDetails?.endTime || "--"}
                       </span>
                     </div>
@@ -818,27 +820,27 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
 
                 {/* Display error message if there is one */}
                 {error && (
-                  <div className="w-full mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-red-600 text-sm">{error}</p>
+                  <div className="w-full mt-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md">
+                    <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
                   </div>
                 )}
 
                 {/* QR Code Scanning Buttons */}
                 <div className="flex flex-col space-y-4 mt-6 w-full px-4">
                   <div
-                    className="flex items-center justify-between border border-dashed rounded-full border-gray-300 px-4 py-3 cursor-pointer hover:bg-gray-50"
+                    className="flex items-center justify-between border border-dashed rounded-full border-gray-300 dark:border-gray-600 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                     onClick={openScanner}
                   >
                     {qrData ? (
-                      <div className="w-full text-sm text-green-600 text-center">
+                      <div className="w-full text-sm text-green-600 dark:text-green-400 text-center">
                         Scanned Data: {qrData}
                       </div>
                     ) : (
                       <>
-                        <span className="text-gray-500 text-sm">
+                        <span className="text-gray-500 dark:text-gray-400 text-sm">
                           Scan QR Code
                         </span>
-                        <FaQrcode className="text-gray-400 text-xl" />
+                        <FaQrcode className="text-gray-400 dark:text-gray-500 text-xl" />
                       </>
                     )}
                   </div>
@@ -848,7 +850,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                 <div className="w-full px-4 mt-4">
                   <button
                     onClick={() => setQrData("MOCK-QR-CODE-12345")}
-                    className="text-xs text-blue-500 underline w-full text-center"
+                    className="text-xs text-blue-500 dark:text-blue-400 underline w-full text-center"
                   >
                     Use test QR code (for demo)
                   </button>
@@ -860,7 +862,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                   disabled={loading}
                   className={`mt-6 px-6 py-3 w-full md:w-auto ${
                     loading
-                      ? "bg-gray-400"
+                      ? "bg-gray-400 dark:bg-gray-600"
                       : "bg-[#FD7F00] hover:bg-orange-600"
                   } text-white rounded-full transition duration-200`}
                 >

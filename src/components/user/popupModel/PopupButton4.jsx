@@ -1,11 +1,13 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useContext } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import iphone from '../../../assets/images/iphone.svg';
 import PopupButton5 from "./PopupButton5"; // Import PopupButton5
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const PopupButton4 = ({onClose, onClose4 }) => {
   const [showPopup5, setShowPopup5] = useState(false);
   const buttonRef = useRef();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
@@ -29,14 +31,14 @@ const PopupButton4 = ({onClose, onClose4 }) => {
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50"
         >
           <div
-            className="bg-white rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
+            className="bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
           >
             {/* Close Button */}
-            <div className="w-12 h-12 rounded-full bg-[#E7F0FA] absolute top-[-20px] right-[-3px] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#E7F0FA] dark:bg-gray-700 absolute top-[-20px] right-[-3px] flex items-center justify-center">
               <button
                 onClick={onClose4}
-                className="text-gray-500 focus:outline-none"
+                className="text-gray-500 dark:text-gray-300 focus:outline-none"
               >
                 <IoCloseCircleOutline className="text-4xl text-orange-400" />
               </button>
@@ -52,18 +54,18 @@ const PopupButton4 = ({onClose, onClose4 }) => {
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl font-extrabold text-center text-gray-800">
+            <h2 className="text-2xl font-extrabold text-center text-gray-800 dark:text-gray-200">
               Visual Designer
             </h2>
-            <p className="text-gray-500 text-center font-medium mt-1 text-base">Soul Tech</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center font-medium mt-1 text-base">Soul Tech</p>
 
             {/* Message */}
-            <p className="text-gray-500 text-center mt-4 text-sm">
+            <p className="text-gray-500 dark:text-gray-400 text-center mt-4 text-sm">
               Enter your job pin to continue
             </p>
 
             {/* PIN Input */}
-            <h1 className="font-bold text-xl text-gray-900">Enter Pin</h1>
+            <h1 className="font-bold text-xl text-gray-900 dark:text-gray-100">Enter Pin</h1>
             <div className="flex justify-center space-x-2 mt-4">
               {Array(4)
                 .fill("")
@@ -72,7 +74,7 @@ const PopupButton4 = ({onClose, onClose4 }) => {
                     key={index}
                     type="text"
                     maxLength="1"
-                    className="w-14 h-14 border border-gray-300 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="w-14 h-14 border border-gray-300 dark:border-gray-600 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-gray-700 dark:text-gray-200"
                   />
                 ))}
             </div>

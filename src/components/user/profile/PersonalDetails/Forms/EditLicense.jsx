@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiUpload } from "react-icons/fi";
@@ -9,6 +9,7 @@ import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -17,6 +18,7 @@ const EditLicense = () => {
   const fileInputRef = useRef(null);
   const { showSuccess } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [licenseNumber, setLicenseNumber] = useState("");
   const [dateOfExpiry, setDateOfExpiry] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -195,11 +197,11 @@ const EditLicense = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
 
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -215,10 +217,10 @@ const EditLicense = () => {
           <div className="flex items-center mb-4">
             <button 
               onClick={() => navigate("/User-PersonalDetails")} 
-              className="text-gray-600 hover:text-gray-800 flex items-center"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center"
             >
               <FaArrowLeft className="mr-2" />
-              <span className="font-medium text-black">
+              <span className="font-medium text-black dark:text-white">
                 {licenseId ? "Edit License" : "Add License"}
               </span>
             </button>
@@ -227,7 +229,7 @@ const EditLicense = () => {
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
               <div className="space-y-2">
-                <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   License Number
                 </label>
                 <input
@@ -235,18 +237,18 @@ const EditLicense = () => {
                   type="text"
                   value={licenseNumber}
                   onChange={(e) => setLicenseNumber(e.target.value)}
-                  className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="Add License Number"
                   required
                   aria-describedby="licenseNumberHelp"
                 />
-                <p id="licenseNumberHelp" className="text-xs text-gray-500">
+                <p id="licenseNumberHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Enter your security license identification number
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="dateOfExpiry" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="dateOfExpiry" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Date of Expiry
                 </label>
                 <div className="relative">
@@ -255,40 +257,40 @@ const EditLicense = () => {
                     type="date"
                     value={dateOfExpiry}
                     onChange={(e) => setDateOfExpiry(e.target.value)}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                     placeholder="Enter Date of Expiry"
                     required
                     aria-describedby="expiryDateHelp"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
-                <p id="expiryDateHelp" className="text-xs text-gray-500">
+                <p id="expiryDateHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   The date when your license will expire
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="licensePicPdf" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="licensePicPdf" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   License Document
                 </label>
                 <div 
-                  className="border-2 border-dashed border-orange-300 rounded-lg p-6 bg-orange-50 cursor-pointer flex flex-col items-center justify-center h-32"
+                  className="border-2 border-dashed border-orange-300 rounded-lg p-6 bg-orange-50 dark:bg-gray-800 dark:border-orange-700 cursor-pointer flex flex-col items-center justify-center h-32"
                   onClick={() => fileInputRef.current.click()}
                   onDragOver={(e) => {
                     e.preventDefault();
-                    e.currentTarget.classList.add('bg-orange-100');
+                    e.currentTarget.classList.add('bg-orange-100', 'dark:bg-gray-700');
                   }}
                   onDragLeave={(e) => {
                     e.preventDefault();
-                    e.currentTarget.classList.remove('bg-orange-100');
+                    e.currentTarget.classList.remove('bg-orange-100', 'dark:bg-gray-700');
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    e.currentTarget.classList.remove('bg-orange-100');
+                    e.currentTarget.classList.remove('bg-orange-100', 'dark:bg-gray-700');
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                       setSelectedFile(e.dataTransfer.files[0]);
                     }
@@ -297,17 +299,17 @@ const EditLicense = () => {
                 >
                   {selectedFile ? (
                     <div className="flex flex-col items-center">
-                      <div className="text-orange-500 font-medium mb-2">
+                      <div className="text-orange-500 dark:text-orange-400 font-medium mb-2">
                         {selectedFile instanceof File ? selectedFile.name : selectedFile.name}
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         Click to change file
                       </span>
                     </div>
                   ) : (
                     <div className="flex items-center">
-                      <FiUpload className="h-5 w-5 text-gray-600 mr-2" />
-                      <span className="text-gray-600">Upload License</span>
+                      <FiUpload className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
+                      <span className="text-gray-600 dark:text-gray-400">Upload License</span>
                     </div>
                   )}
                   <input 
@@ -320,7 +322,7 @@ const EditLicense = () => {
                     aria-label="Upload license document"
                   />
                 </div>
-                <p id="licenseFileHelp" className="text-xs text-gray-500">
+                <p id="licenseFileHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Upload a scan or photo of your security license document
                 </p>
               </div>

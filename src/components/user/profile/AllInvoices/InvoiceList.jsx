@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { CheckCircle, MapPin } from "lucide-react";
-import Sidebar from "../../SideBar";
-import Header from "../../Header";
 import UserSidebar from "../UserSidebar";
 import LoadingSpinner from "../../../common/LoadingSpinner";
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 const invoices = [
   {
@@ -64,6 +63,7 @@ const invoices = [
 const InvoiceList = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Handle responsive behavior
   useEffect(() => {
@@ -117,12 +117,12 @@ const InvoiceList = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {isLoading && <LoadingSpinner />}
 
       {/* Desktop Sidebar - Hidden on Mobile */}
       {!isMobile && (
-        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -137,27 +137,27 @@ const InvoiceList = () => {
         )}
         
         <div className="p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto bg-white rounded-lg p-5">
-            <h2 className="text-2xl font-bold mb-6">Invoices</h2>
+          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-5 shadow-md">
+            <h2 className="text-2xl font-bold mb-6 dark:text-white">Invoices</h2>
             
             {/* Invoice Table - Responsive Design */}
             {invoices.map((invoice) => (
               <div
                 key={invoice.id}
-                className="flex flex-col md:grid md:grid-cols-4 items-center border-b last:border-b-0 py-4"
+                className="flex flex-col md:grid md:grid-cols-4 items-center border-b dark:border-gray-700 last:border-b-0 py-4"
               >
                 <div className="flex items-center space-x-4 w-full md:w-auto mb-3 md:mb-0">
                   {renderIcon(invoice)}
                   <div>
-                    <h2 className="font-semibold">{invoice.role}</h2>
-                    <div className="text-sm text-gray-500 flex items-center">
+                    <h2 className="font-semibold dark:text-white">{invoice.role}</h2>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                       <MapPin size={14} className="mr-1" />
-                      {invoice.location} &nbsp; <span className="text-gray-400">{invoice.rate}</span>
+                      {invoice.location} &nbsp; <span className="text-gray-400 dark:text-gray-500">{invoice.rate}</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500 text-center my-2 md:my-0">{invoice.date}</div>
-                <div className="text-green-500 flex items-center justify-center my-2 md:my-0">
+                <div className="text-sm text-gray-500 dark:text-gray-400 text-center my-2 md:my-0">{invoice.date}</div>
+                <div className="text-green-500 dark:text-green-400 flex items-center justify-center my-2 md:my-0">
                   <CheckCircle size={16} className="mr-1" /> {invoice.status}
                 </div>
                 <div className="flex justify-center md:justify-end mt-2 md:mt-0 w-full">

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -7,6 +7,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { getCompanyProfile, updateCompanyProfile, createCompanyProfile } from "../../../api/companyApi";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const EditCompanyForm = () => {
   const navigate = useNavigate();
@@ -14,7 +15,8 @@ const EditCompanyForm = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDataAlreadyPosted, setIsDataAlreadyPosted] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
   const [formData, setFormData] = useState({
     companyName: '',
     companyContact: '',
@@ -166,9 +168,9 @@ const EditCompanyForm = () => {
   return (
     <>
       {isLoading && <LoadingSpinner />}
-      <div className="flex flex-col md:flex-row w-full">
+      <div className="flex flex-col md:flex-row w-full min-h-screen bg-gray-50 dark:bg-gray-900">
         {!isMobile && (
-          <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200">
+          <div className="hidden md:block md:w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
             <CompanySideBar />
           </div>
         )}
@@ -182,25 +184,27 @@ const EditCompanyForm = () => {
           
           <div className="p-4 md:p-6 overflow-auto">
             <div className="flex items-center mb-6">
-              <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 flex items-center">
+              <button onClick={() => navigate(-1)} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center transition-colors">
                 <FaArrowLeft className="mr-2" />
-                <span className="font-medium text-black">Edit Company Details</span>
+                <span className="font-medium text-gray-900 dark:text-white">Edit Company Details</span>
               </button>
             </div>
 
             <div className="max-w-2xl mx-auto">
-              <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-center mb-2">
                   <div className="relative">
-                    <label htmlFor="company-logo" className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                    <label htmlFor="company-logo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
                       Company Logo
                     </label>
-                    <img
-                      src={previewImage || company}
-                      alt="Company Logo"
-                      className="w-24 h-24 rounded-full object-cover cursor-pointer"
-                      onClick={handleImageClick}
-                    />
+                    <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded-full">
+                      <img
+                        src={previewImage || company}
+                        alt="Company Logo"
+                        className="w-24 h-24 rounded-full object-cover cursor-pointer"
+                        onClick={handleImageClick}
+                      />
+                    </div>
                     <input
                       type="file"
                       id="company-logo"
@@ -209,105 +213,105 @@ const EditCompanyForm = () => {
                       accept="image/*"
                       onChange={handleImageChange}
                     />
-                    <p className="text-xs text-gray-500 mt-1 text-center">Click to change logo</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">Click to change logo</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-name" className="font-medium text-gray-700">Company Name</label>
+                  <label htmlFor="company-name" className="font-medium text-gray-700 dark:text-gray-300">Company Name</label>
                   <input
                     id="company-name"
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                     placeholder="Enter company name"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-address" className="font-medium text-gray-700">Address</label>
+                  <label htmlFor="company-address" className="font-medium text-gray-700 dark:text-gray-300">Address</label>
                   <input
                     id="company-address"
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                     placeholder="Enter company address"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-bio" className="font-medium text-gray-700">About Company</label>
+                  <label htmlFor="company-bio" className="font-medium text-gray-700 dark:text-gray-300">About Company</label>
                   <textarea
                     id="company-bio"
                     value={formData.bio}
                     onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                     placeholder="Describe your company"
                     rows="4"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-email" className="font-medium text-gray-700">Company Email</label>
+                  <label htmlFor="company-email" className="font-medium text-gray-700 dark:text-gray-300">Company Email</label>
                   <input
                     id="company-email"
                     type="email"
                     value={formData.companyEmail}
                     onChange={(e) => setFormData({...formData, companyEmail: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                     placeholder="Enter company email"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-contact" className="font-medium text-gray-700">Company Contact</label>
+                  <label htmlFor="company-contact" className="font-medium text-gray-700 dark:text-gray-300">Company Contact</label>
                   <input
                     id="company-contact"
                     type="text"
                     value={formData.companyContact}
                     onChange={(e) => setFormData({...formData, companyContact: e.target.value})}
-                    className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                     placeholder="Enter company contact number"
                   />
                 </div>
 
-                <div className="border-t border-gray-200 pt-4 my-2">
-                  <h3 className="font-medium text-gray-800 mb-3">Manager Details</h3>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 my-2">
+                  <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">Manager Details</h3>
                   
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-name" className="font-medium text-gray-700">Manager Name</label>
+                    <label htmlFor="manager-name" className="font-medium text-gray-700 dark:text-gray-300">Manager Name</label>
                     <input
                       id="manager-name"
                       type="text"
                       value={formData.manager.managerName}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerName: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                       placeholder="Enter manager name"
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-email" className="font-medium text-gray-700">Manager Email</label>
+                    <label htmlFor="manager-email" className="font-medium text-gray-700 dark:text-gray-300">Manager Email</label>
                     <input
                       id="manager-email"
                       type="email"
                       value={formData.manager.managerEmail}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerEmail: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                       placeholder="Enter manager email"
                     />
                   </div>
 
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-phone" className="font-medium text-gray-700">Manager Phone</label>
+                    <label htmlFor="manager-phone" className="font-medium text-gray-700 dark:text-gray-300">Manager Phone</label>
                     <input
                       id="manager-phone"
                       type="text"
                       value={formData.manager.managerPhone}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerPhone: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
                       placeholder="Enter manager phone number"
                     />
                   </div>
@@ -316,7 +320,7 @@ const EditCompanyForm = () => {
                 <button
                   type="submit"
                   className={`w-full text-white font-medium p-4 rounded-full transition flex items-center justify-center ${
-                    isLoading ? "bg-orange-500" : "bg-orange-500 hover:bg-orange-600"
+                    isLoading ? "bg-orange-500 opacity-70" : "bg-orange-500 hover:bg-orange-600"
                   }`}
                   disabled={isLoading}
                 >

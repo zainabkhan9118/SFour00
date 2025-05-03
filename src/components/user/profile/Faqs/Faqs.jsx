@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import UserSidebar from "../UserSidebar";
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 const faqs = [
   {
@@ -48,6 +49,7 @@ const faqs = [
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Handle responsive behavior
   useEffect(() => {
@@ -64,10 +66,10 @@ const FAQSection = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Desktop Sidebar - Hidden on Mobile */}
       {!isMobile && (
-        <div className="hidden md:block md:w-64 border-r">
+        <div className="hidden md:block md:w-64 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
         </div>
       )}
@@ -82,22 +84,22 @@ const FAQSection = () => {
         )}
         
         <div className="flex-1 p-6 overflow-auto">
-          <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold mb-6 dark:text-white">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-gray-200 rounded-[10px] overflow-hidden shadow-md"
+                className="bg-gray-200 dark:bg-gray-800 rounded-[10px] overflow-hidden shadow-md"
               >
                 <button
-                  className="w-full flex justify-between items-center p-4 text-left"
+                  className="w-full flex justify-between items-center p-4 text-left dark:text-white"
                   onClick={() => toggleFAQ(index)}
                 >
                   <span>{faq.question}</span>
-                  {openIndex === index ? <FaMinus /> : <FaPlus />}
+                  {openIndex === index ? <FaMinus className="dark:text-gray-300" /> : <FaPlus className="dark:text-gray-300" />}
                 </button>
                 {openIndex === index && (
-                  <div className="p-4 text-blue-900 border-gray-300">
+                  <div className="p-4 text-blue-900 dark:text-blue-300 border-gray-300 dark:border-gray-700">
                     {faq.answer}
                   </div>
                 )}

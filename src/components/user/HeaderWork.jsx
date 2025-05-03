@@ -1,17 +1,21 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ThemeContext } from "../../context/ThemeContext";
+
 const HeaderWork = () => {
   const location = useLocation();
   const activeTab = location.pathname;
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
   return (
-    <div className="w-full">
-      <div className="flex px-6 space-x-8 py-4">
+    <div className="w-full overflow-x-auto">
+      <div className="flex flex-nowrap min-w-max md:min-w-0 px-2 md:px-6 space-x-4 md:space-x-8 py-4">
         <Link
           to="/User-WorkApplied"
-          className={`relative text-lg font-medium transition duration-300 ${
+          className={`relative text-sm md:text-lg font-medium transition duration-300 whitespace-nowrap ${
             activeTab === "/User-WorkApplied"
               ? "text-orange-500 font-bold"
-              : "text-gray-800 hover:text-orange-500"
+              : "text-gray-800 dark:text-gray-200 hover:text-orange-500 dark:hover:text-orange-400"
           }`}
         >
           Applied
@@ -22,10 +26,10 @@ const HeaderWork = () => {
 
         <Link
           to="/User-MyWorkAssignedPage"
-          className={`relative text-lg font-medium transition duration-300 ${
-            activeTab === "/job-assigned"
+          className={`relative text-sm md:text-lg font-medium transition duration-300 whitespace-nowrap ${
+            activeTab === "/User-MyWorkAssignedPage"
               ? "text-orange-500 font-bold"
-              : "text-gray-800 hover:text-orange-500"
+              : "text-gray-800 dark:text-gray-200 hover:text-orange-500 dark:hover:text-orange-400"
           }`}
         >
           Assigned
@@ -36,10 +40,10 @@ const HeaderWork = () => {
 
         <Link
           to="/User-workInprogess"
-          className={`relative text-lg font-medium transition duration-300 ${
-            activeTab === "/in-progress"
+          className={`relative text-sm md:text-lg font-medium transition duration-300 whitespace-nowrap ${
+            activeTab === "/User-workInprogess"
               ? "text-orange-500 font-bold"
-              : "text-gray-800 hover:text-orange-500"
+              : "text-gray-800 dark:text-gray-200 hover:text-orange-500 dark:hover:text-orange-400"
           }`}
         >
           In-Progress
@@ -50,10 +54,10 @@ const HeaderWork = () => {
 
         <Link
           to="/User-WorkCompleted"
-          className={`relative text-lg font-medium transition duration-300 ${
-            activeTab === "/completed-job"
+          className={`relative text-sm md:text-lg font-medium transition duration-300 whitespace-nowrap ${
+            activeTab === "/User-WorkCompleted"
               ? "text-orange-500 font-bold"
-              : "text-gray-800 hover:text-orange-500"
+              : "text-gray-800 dark:text-gray-200 hover:text-orange-500 dark:hover:text-orange-400"
           }`}
         >
           Completed

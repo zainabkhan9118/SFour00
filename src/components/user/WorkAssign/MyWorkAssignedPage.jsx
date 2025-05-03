@@ -16,6 +16,7 @@ import {
 } from "../../../api/myWorkApi";
 
 import { AppContext } from "../../../context/AppContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
 import LoadingSpinner from "../../common/LoadingSpinner";
@@ -75,6 +76,7 @@ export default function MyWorkAssignedPage() {
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   const [selectedJobId, setSelectedJobId] = useState(null); 
   const { BASEURL } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     const fetchAssignedJobs = async () => {
@@ -411,7 +413,7 @@ export default function MyWorkAssignedPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         <div className="flex items-center justify-center h-screen">
           <LoadingSpinner />
         </div>
@@ -420,7 +422,7 @@ export default function MyWorkAssignedPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       {/* Main Content */}
       <div className="flex flex-col flex-1">
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
@@ -429,7 +431,7 @@ export default function MyWorkAssignedPage() {
 
           {/* Error Message with Red Boundary */}
           {error && (
-            <div className="bg-white p-6 rounded-lg shadow-sm text-center mb-4 border-2 border-red-500">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm text-center mb-4 border-2 border-red-500">
               <p className="text-red-600 font-medium">{error}</p>
             </div>
           )}
@@ -442,11 +444,11 @@ export default function MyWorkAssignedPage() {
                 return (
                   <div
                     key={application._id}
-                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
+                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white dark:bg-gray-800 mb-4"
                   >
                     {/* Job Icon and Details */}
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                      <div className="w-12 h-12 rounded-full border border-gray-300 overflow-hidden bg-gray-100">
+                      <div className="w-12 h-12 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
                         <LazyImage
                           src={job.companyLogo || companyImage}
                           alt={job.jobTitle || "Company"}
@@ -456,8 +458,8 @@ export default function MyWorkAssignedPage() {
                         />
                       </div>
                       <div>
-                        <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>
-                        <div className="text-sm text-gray-500 flex items-center flex-wrap">
+                        <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200">{job.jobTitle || "No Title Available"}</h3>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center flex-wrap">
                           <span>{formatLocation(job.latitude, job.longitude)}</span>
                           <span className="mx-2 hidden sm:inline">•</span>
                           <span>£{job.pricePerHour || "Rate not specified"} per hour</span>
@@ -467,7 +469,7 @@ export default function MyWorkAssignedPage() {
 
                     {/* Job Date and Status */}
                     <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                      <div className="text-sm font-medium text-gray-400">
+                      <div className="text-sm font-medium text-gray-400 dark:text-gray-500">
                         {job.workDate ? new Date(job.workDate).toLocaleDateString() : "Date not available"}
                       </div>
                       <div className="flex items-center text-green-500">
@@ -476,7 +478,7 @@ export default function MyWorkAssignedPage() {
                           {application.status || "Available"}
                         </span>
                       </div>
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <BookmarkIcon />
                       </button>
                     </div>
@@ -511,8 +513,8 @@ export default function MyWorkAssignedPage() {
                 );
               })
             ) : (
-              <div className="bg-white p-6 rounded-lg shadow-sm text-center">
-                <p className="text-gray-500">No assignable jobs found</p>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm text-center">
+                <p className="text-gray-500 dark:text-gray-400">No assignable jobs found</p>
               </div>
             )}
           </div>
