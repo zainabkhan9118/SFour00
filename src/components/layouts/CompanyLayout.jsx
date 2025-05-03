@@ -7,7 +7,7 @@ import { ThemeContext } from "../../context/ThemeContext";
 const CompanyLayout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { theme } = useContext(ThemeContext);
 
   // Handle window resize
   useEffect(() => {
@@ -29,20 +29,12 @@ const CompanyLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
-      {/* Sidebar - fixed position on desktop, conditionally showing on mobile */}
-      <div 
-        className={`${isMobile ? (isMenuOpen ? "block fixed" : "hidden") : "block"} z-30`}
-        style={{ height: '100vh' }}
-      >
-        <Sidebar />
-      </div>
-
-      {/* Mobile Menu Toggle Button - Only visible on mobile */}
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+      {/* Mobile Menu Toggle Button */}
       {isMobile && (
         <button
           onClick={toggleMenu}
-          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] dark:bg-gray-800 rounded-md text-white md:hidden"
+          className="fixed top-4 left-4 z-50 p-2 bg-[#121D34] dark:bg-[#0c1628] rounded-md text-white md:hidden"
           aria-label="Toggle Menu"
         >
           <svg
@@ -74,10 +66,19 @@ const CompanyLayout = ({ children }) => {
         />
       )}
 
+      {/* Main Sidebar - Global Navigation */}
+      <div
+        className={`fixed md:sticky top-0 left-0 bottom-0 z-50 h-screen transition-all duration-300 ease-in-out 
+          ${isMobile && !isMenuOpen ? "-translate-x-full" : "translate-x-0"} 
+          md:translate-x-0 md:flex md:flex-shrink-0`}
+      >
+        <Sidebar />
+      </div>
+
       {/* Main Content */}
-      <div className="flex flex-col flex-1 overflow-hidden md:ml-64">
+      <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         <Header />
-        <main className="flex-1 overflow-auto p-4 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
+        <main className="flex-1 overflow-auto dark:bg-gray-900 dark:text-gray-100">
           {children}
         </main>
       </div>

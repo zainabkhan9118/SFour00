@@ -203,3 +203,31 @@ export const toggleJobBookmark = async (jobId, isBookmarked) => {
     throw error;
   }
 };
+
+/**
+ * Assign a job to a specific job seeker
+ * @param {string} jobId - The ID of the job
+ * @param {string} jobSeekerId - The ID of the job seeker
+ * @returns {Promise} - Promise with the response data
+ */
+export const assignJob = async (jobId, jobSeekerId) => {
+  try {
+    console.log('Assigning job ID:', jobId, 'to job seeker ID:', jobSeekerId);
+    
+    const response = await axios.post(
+      `${BASE_URL}/jobs/${jobId}/assign`, 
+      { jobSeekerId }, 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error assigning job:', error);
+    throw error;
+  }
+};
