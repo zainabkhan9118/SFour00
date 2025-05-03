@@ -6,6 +6,8 @@ import time from "../../../../../assets/images/time.png";
 import qr from "../../../../../assets/images/qr-code.png";
 import { JobStatus } from "../../../../../constants/enums";
 import { FaMapMarkerAlt } from "react-icons/fa";
+import { getJobsByStatus } from "../../../../../api/jobTrackingApi";
+import LoadingSpinner from "../../../../../components/common/LoadingSpinner";
 
 const CompletedJobDetail = () => {
   const { jobId } = useParams();
@@ -24,14 +26,8 @@ const CompletedJobDetail = () => {
         // Get company ID from localStorage or use a default for testing
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
         
-        // Call the API to get all completed jobs for the company
-        const response = await fetch(`/api/apply/company/${companyId}?status=${JobStatus.COMPLETED}`);
-        
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        // Use the imported getJobsByStatus function from jobTrackingApi.js
+        const result = await getJobsByStatus(companyId, JobStatus.COMPLETED);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           console.log("API response:", result.data);
@@ -96,8 +92,8 @@ const CompletedJobDetail = () => {
   if (loading) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <div className="flex flex-col flex-1 justify-center items-center">
-          <p className="text-xl text-gray-500">Loading job details...</p>
+        <div className="flex flex-col flex-1">
+          <LoadingSpinner />
         </div>
       </div>
     );
