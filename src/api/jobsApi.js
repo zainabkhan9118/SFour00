@@ -115,10 +115,12 @@ export const enableJobAssignment = async (jobId, jobSeekerId) => {
     
     const response = await axios.patch(
       `${BASE_URL}/apply/${jobId}/enable-assignment`, 
-      { isAssignable: true },
+      { 
+        isAssignable: true,
+        jobSeekerId: jobSeekerId 
+      },
       {
         headers: {
-          'jobSeekerId': jobSeekerId,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
@@ -214,9 +216,16 @@ export const assignJob = async (jobId, jobSeekerId) => {
   try {
     console.log('Assigning job ID:', jobId, 'to job seeker ID:', jobSeekerId);
     
+    // Step 1: First enable assignment for this job-seeker combination
+    const enableResponse = await enableJobAssignment(jobId, jobSeekerId);
+    console.log('Job assignment enabled:', enableResponse);
+    
+    // Step 2: Then make the actual assignment
     const response = await axios.post(
-      `${BASE_URL}/jobs/${jobId}/assign`, 
-      { jobSeekerId }, 
+      `${BASE_URL}/apply/${jobId}/assign`, 
+      { 
+        jobSeekerId: jobSeekerId 
+      },
       {
         headers: {
           'Content-Type': 'application/json',
