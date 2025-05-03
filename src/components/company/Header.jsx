@@ -113,7 +113,7 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
-    <div className="flex justify-between items-center bg-white px-4 md:px-6 py-3 md:py-4 md:mb-4 shadow-sm">
+    <div className="flex justify-between items-center bg-white px-4 md:px-6 py-3 md:py-4 shadow-sm">
       {/* Title - only shown if there's a title for the current route */}
       {title && (
         <h1 className="text-lg md:text-xl font-bold text-gray-800">{title}</h1>

@@ -6,12 +6,17 @@ import { auth } from "../../config/firebaseConfig";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
 import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
+import { getCompanyProfile } from "../../api/companyApi";
+import CompanyProfileCompletionPopup from "./profile/CompanyProfileCompletionPopup";
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [routes, setRoutes] = useState({});
   const [loading, setLoading] = useState(true);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(true);
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false);
+  
   const location = useLocation();
   const currentPath = location.pathname;
   const navigate = useNavigate();
@@ -26,6 +31,56 @@ export default function Sidebar() {
     // For routes, check if current path equals or starts with the route path
     return currentPath === path || currentPath.startsWith(path);
   };
+
+  // Check if company profile is complete
+  useEffect(() => {
+    const checkProfileCompleteness = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const response = await getCompanyProfile(user.uid);
+        if (response && response.data) {
+          const data = response.data;
+          
+          // Check required fields
+          const requiredFields = [
+            'companyName',
+            'companyContact',
+            'companyEmail',
+            'address',
+            'bio',
+            'manager'
+          ];
+          
+          const managerFields = data.manager ? ['managerName', 'managerEmail', 'managerPhone'] : [];
+          
+          // Check if required fields exist and are not empty
+          const mainFieldsComplete = requiredFields.every(field => {
+            if (field === 'manager') {
+              return data.manager ? true : false;
+            }
+            return data[field] && data[field].trim() !== '';
+          });
+          
+          // Check if manager information is complete if manager object exists
+          const managerFieldsComplete = data.manager ? 
+            managerFields.every(field => data.manager[field] && data.manager[field].trim() !== '') : 
+            false;
+            
+          const profileComplete = mainFieldsComplete && (data.manager ? managerFieldsComplete : true);
+          setIsProfileComplete(profileComplete);
+        } else {
+          setIsProfileComplete(false);
+        }
+      } catch (error) {
+        console.error("Error checking profile completeness:", error);
+        setIsProfileComplete(false);
+      }
+    };
+    
+    checkProfileCompleteness();
+  }, []);
 
   useEffect(() => {
     // Load routes configuration
@@ -47,6 +102,22 @@ export default function Sidebar() {
   // Toggle menu visibility on mobile
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Handler for route navigation with profile check
+  const handleNavigation = (e, path) => {
+    if (path === routes.profile) {
+      // Always allow navigation to profile page
+      navigate(path);
+      return;
+    }
+    
+    if (!isProfileComplete) {
+      e.preventDefault();
+      setShowCompletionPopup(true);
+    } else {
+      navigate(path);
+    }
   };
 
   // Handler for logout functionality using structured approach
@@ -74,6 +145,11 @@ export default function Sidebar() {
     // Navigate to login page after closing the popup
     navigate("/login");
   };
+  
+  // Handle closing the profile completion popup
+  const handleCloseCompletionPopup = () => {
+    setShowCompletionPopup(false);
+  };
 
   return (
     <>
@@ -83,7 +159,7 @@ export default function Sidebar() {
         onClick={toggleMenu}
         aria-label="Toggle Menu"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
         </svg>
       </button>
@@ -113,40 +189,45 @@ export default function Sidebar() {
           </div>
         ) : (
           <nav className="flex flex-col space-y-8 mb-auto">
-            <Link to={routes.profile}>
-              <div className={`flex items-center space-x-3 ${isActive(routes.profile) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
-                <FaUser className="h-5 w-5" />
-                <span>Profile</span>
-              </div>
-            </Link>
+            <div 
+              className={`flex items-center space-x-3 ${isActive(routes.profile) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8 cursor-pointer`}
+              onClick={(e) => handleNavigation(e, routes.profile)}
+            >
+              <FaUser className="h-5 w-5" />
+              <span>Profile</span>
+            </div>
             
-            <Link to={routes.chat}>
-              <div className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
-                <FaComments className="h-5 w-5" />
-                <span>Chat</span>
-              </div>
-            </Link>
+            <div 
+              className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8 cursor-pointer`}
+              onClick={(e) => handleNavigation(e, routes.chat)}
+            >
+              <FaComments className="h-5 w-5" />
+              <span>Chat</span>
+            </div>
             
-            <Link to={routes.work}>
-              <div className={`flex items-center space-x-3 ${isActive(routes.work) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
-                <FaBriefcase className="h-5 w-5" />
-                <span>My Work</span>
-              </div>
-            </Link>
+            <div 
+              className={`flex items-center space-x-3 ${isActive(routes.work) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8 cursor-pointer`}
+              onClick={(e) => handleNavigation(e, routes.work)}
+            >
+              <FaBriefcase className="h-5 w-5" />
+              <span>My Work</span>
+            </div>
             
-            <Link to={routes.notifications}>
-              <div className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
-                <FaBell className="h-5 w-5" />
-                <span>Notifications</span>
-              </div>
-            </Link>
+            <div 
+              className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8 cursor-pointer`}
+              onClick={(e) => handleNavigation(e, routes.notifications)}
+            >
+              <FaBell className="h-5 w-5" />
+              <span>Notifications</span>
+            </div>
             
-            <Link to={routes.qrCode}>
-              <div className={`flex items-center space-x-3 ${isActive(routes.qrCode) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8`}>
-                <FaQrcode className="h-5 w-5" />
-                <span>QR Code</span>
-              </div>
-            </Link>
+            <div 
+              className={`flex items-center space-x-3 ${isActive(routes.qrCode) ? 'text-white' : 'text-[#395080]'} hover:text-white ml-8 cursor-pointer`}
+              onClick={(e) => handleNavigation(e, routes.qrCode)}
+            >
+              <FaQrcode className="h-5 w-5" />
+              <span>QR Code</span>
+            </div>
           </nav>
         )}
 
@@ -161,6 +242,11 @@ export default function Sidebar() {
       {/* Logout Success Popup */}
       {showLogoutPopup && (
         <LogoutSuccessPopup onClose={handleCloseLogoutPopup} />
+      )}
+      
+      {/* Profile Completion Popup */}
+      {showCompletionPopup && (
+        <CompanyProfileCompletionPopup onClose={handleCloseCompletionPopup} />
       )}
     </>
   );

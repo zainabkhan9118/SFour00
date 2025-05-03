@@ -12,11 +12,14 @@ import { FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
 
 import { Link, useNavigate } from "react-router-dom";
 import CompanySideBar from "./CompanySideBar";
+import CompanyProfileCompletionPopup from "./CompanyProfileCompletionPopup";
 
 const ProfileCompany = () => {
   const navigate = useNavigate();
   const [companyData, setCompanyData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -46,12 +49,55 @@ const ProfileCompany = () => {
           localStorage.setItem('companyProfile', JSON.stringify(response.data));
           localStorage.setItem('companyId', response.data._id);
           console.log('Company profile stored in localStorage with ID:', response.data._id);
+          
+          // Check if the profile is complete
+          const profileComplete = checkProfileCompleteness(response.data);
+          setIsProfileComplete(profileComplete);
+          
+          // Show popup if this is a new account (check localStorage or another indicator)
+          const isNewAccount = !localStorage.getItem('profileChecked');
+          if (!profileComplete && isNewAccount) {
+            setShowCompletionPopup(true);
+            localStorage.setItem('profileChecked', 'true');
+          }
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
       } finally {
         setIsLoading(false);
       }
+    };
+    
+    // Helper function to check if company profile is complete
+    const checkProfileCompleteness = (data) => {
+      if (!data) return false;
+      
+      // Check for required fields (customize based on your requirements)
+      const requiredFields = [
+        'companyName',
+        'companyContact',
+        'companyEmail',
+        'address',
+        'bio',
+        'manager'
+      ];
+      
+      const managerFields = data.manager ? ['managerName', 'managerEmail', 'managerPhone'] : [];
+      
+      // Check if required fields exist and are not empty
+      const mainFieldsComplete = requiredFields.every(field => {
+        if (field === 'manager') {
+          return data.manager ? true : false;
+        }
+        return data[field] && data[field].trim() !== '';
+      });
+      
+      // Check if manager information is complete if manager object exists
+      const managerFieldsComplete = data.manager ? 
+        managerFields.every(field => data.manager[field] && data.manager[field].trim() !== '') : 
+        false;
+        
+      return mainFieldsComplete && (data.manager ? managerFieldsComplete : true);
     };
 
     setIsLoading(true);
@@ -225,6 +271,11 @@ const ProfileCompany = () => {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Profile Completion Popup */}
+      {showCompletionPopup && (
+        <CompanyProfileCompletionPopup onClose={() => setShowCompletionPopup(false)} />
       )}
     </>
   );

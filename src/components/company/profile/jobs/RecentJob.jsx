@@ -67,16 +67,24 @@ const RecentJob = () => {
   const [companyJobs, setCompanyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [noCompanyId, setNoCompanyId] = useState(false);
   
-  // Get companyId from localStorage or context - adjust as needed
-  const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e"; // Default ID for testing
+  // Get companyId from localStorage without a default fallback
+  const companyId = localStorage.getItem('companyId');
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
         
-        // Use the new API function
+        // Check if company ID exists
+        if (!companyId) {
+          setNoCompanyId(true);
+          setCompanyJobs([]);
+          return;
+        }
+        
+        // Use the API function with the real company ID
         const result = await getCompanyJobs(companyId);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
@@ -87,7 +95,7 @@ const RecentJob = () => {
       } catch (err) {
         console.error("Failed to fetch jobs:", err);
         setError(err.message);
-        // Use sample data as fallback
+        // Don't use sample data, just set to empty array
         setCompanyJobs([]);
       } finally {
         setLoading(false);
@@ -138,8 +146,28 @@ const RecentJob = () => {
         <Headerjob />
 
         <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg">
-          {companyJobs.length === 0 ? (
-            <p className="text-center py-6 text-gray-500">No jobs found</p>
+          {noCompanyId ? (
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-2">No company profile found</p>
+              <p className="text-sm text-gray-400 mb-4">Please complete your company profile to post and view jobs</p>
+              <Link 
+                to="/company-profile" 
+                className="inline-block bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
+              >
+                Complete Profile
+              </Link>
+            </div>
+          ) : companyJobs.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-2">No jobs found</p>
+              <p className="text-sm text-gray-400 mb-4">Create your first job posting</p>
+              <Link 
+                to="/job-posting" 
+                className="inline-block bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
+              >
+                Post a Job
+              </Link>
+            </div>
           ) : (
             companyJobs.map((job, index) => (
               <div
