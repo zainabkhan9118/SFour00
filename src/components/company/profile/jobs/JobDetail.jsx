@@ -5,6 +5,7 @@ import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
 import { FaFacebook, FaTwitter, FaPinterest, FaMapMarkerAlt } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
+import { getJobById } from "../../../../api/jobsApi";
 
 const JobDetail = () => {
     const [job, setJob] = useState(null);
@@ -48,24 +49,14 @@ const JobDetail = () => {
             
             try {
                 setLoading(true);
-                // Using the company jobs endpoint and filtering for the specific job
+                // Get company ID from localStorage
                 const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
-                const response = await fetch(`/api/jobs/company/${companyId}`);
                 
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
-                }
+                // Use the new API function
+                const result = await getJobById(jobId, companyId);
                 
-                const result = await response.json();
-                
-                if (result.statusCode === 200 && Array.isArray(result.data)) {
-                    // Find the specific job by ID
-                    const foundJob = result.data.find(job => job._id === jobId);
-                    if (foundJob) {
-                        setJob(foundJob);
-                    } else {
-                        throw new Error("Job not found");
-                    }
+                if (result.statusCode === 200) {
+                    setJob(result.data);
                 } else {
                     throw new Error("Invalid response format");
                 }

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { enableJobAssignment } from "../../../../../api/jobsApi";
 
 const AssignJobButton = ({ onClose, applicant, job }) => {
   const buttonRef = useRef();
@@ -31,23 +32,11 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
       setAssigning(true);
       setAssignError(null);
       
-      // Making API call with the correct PATCH method
-      const response = await fetch(`/api/apply/${job._id}/enable-assignment`, {
-        method: 'PATCH', // Using PATCH as specified by the API
-        headers: {
-          'jobSeekerId': applicant._id,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          isAssignable: true
-        })
-      });
-      
-      const data = await response.json();
+      // Using the new API function
+      const data = await enableJobAssignment(job._id, applicant._id);
       console.log("Assign job response:", data);
       
-      if (!response.ok) {
+      if (data.statusCode !== 200) {
         throw new Error(data.message || 'Failed to assign job');
       }
       
