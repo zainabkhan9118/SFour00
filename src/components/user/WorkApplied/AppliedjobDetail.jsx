@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useParams } from "react-router-dom";
 import { getJobDetailsById } from '../../../api/jobApplicationApi';
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import salary from "../../../assets/images/salary.png";
 import { AiOutlineInfoCircle } from "react-icons/ai"; 
 import PopupInprogess from '../popupModel/popupModel-Inprogress/PopupInprogess';
@@ -101,9 +99,9 @@ const AppliedjobDetail = () => {
     if (loading) {
       return (
         <div className="flex flex-row min-h-screen">
-          <Sidebar />
+          
           <div className="flex flex-col flex-1">
-            <Header />
+            
             <div className="min-h-screen mx-auto py-4 px-5 md:p-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
@@ -118,9 +116,9 @@ const AppliedjobDetail = () => {
     if (error) {
       return (
         <div className="flex flex-row min-h-screen">
-          <Sidebar />
+          
           <div className="flex flex-col flex-1">
-            <Header />
+            
             <div className="min-h-screen mx-auto py-4 px-5 md:p-10 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-red-600">{error}</p>
@@ -134,9 +132,9 @@ const AppliedjobDetail = () => {
     if (!jobDetails) {
       return (
         <div className="flex flex-row min-h-screen">
-          <Sidebar />
+          
           <div className="flex flex-col flex-1">
-            <Header />
+            
             <div className="min-h-screen mx-auto py-4 px-5 md:p-10 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-gray-600">Job details not found.</p>
@@ -149,9 +147,9 @@ const AppliedjobDetail = () => {
 
     return (
       <div className="flex flex-row min-h-screen">
-        <Sidebar />
+       
         <div className="flex flex-col flex-1">
-          <Header />
+          
           <div className="min-h-screen py-4 px-5 md:p-10">
             <div className="text-sm text-gray-500 mb-6 text-right">
               <span>Find Job</span> / <span>{jobDetails.jobTitle}</span> /{" "}

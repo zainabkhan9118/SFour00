@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Sidebar from "../../Sidebar";
-import Header from "../../Header";
 import Headerjob from "./Headerjob";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import logo1 from "../../../../assets/images/EmployersLogo1.png";
 import logo2 from "../../../../assets/images/EmployersLogo2.png";
 
 import { FaMapMarkerAlt, FaCheck, FaRegBookmark } from "react-icons/fa";
+import { getCompanyJobs } from "../../../../api/jobsApi";
 
 // Sample data as fallback
 const jobs = [
@@ -68,21 +67,25 @@ const RecentJob = () => {
   const [companyJobs, setCompanyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [noCompanyId, setNoCompanyId] = useState(false);
   
-  // Get companyId from localStorage or context - adjust as needed
-  const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e"; // Default ID for testing
+  // Get companyId from localStorage without a default fallback
+  const companyId = localStorage.getItem('companyId');
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/jobs/company/${companyId}`);
         
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
+        // Check if company ID exists
+        if (!companyId) {
+          setNoCompanyId(true);
+          setCompanyJobs([]);
+          return;
         }
         
-        const result = await response.json();
+        // Use the API function with the real company ID
+        const result = await getCompanyJobs(companyId);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           setCompanyJobs(result.data);
@@ -92,7 +95,7 @@ const RecentJob = () => {
       } catch (err) {
         console.error("Failed to fetch jobs:", err);
         setError(err.message);
-        // Use sample data as fallback
+        // Don't use sample data, just set to empty array
         setCompanyJobs([]);
       } finally {
         setLoading(false);
@@ -123,10 +126,10 @@ const RecentJob = () => {
   // Display loading state
   if (loading) {
     return (
-      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-        <Sidebar className="lg:block w-full lg:w-1/4" />
+      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+        
         <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
-          <Header />
+        
           <Headerjob />
           <LoadingSpinner />
         </div>
@@ -135,16 +138,30 @@ const RecentJob = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar className="lg:block w-full lg:w-1/4" />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+      
 
       <div className="flex flex-col gap-4 lg:gap-6 flex-1 p-4 lg:p-6">
-        <Header />
+        
         <Headerjob />
 
-        <div className="w-full bg-white p-4 lg:p-6 shadow-md rounded-lg">
-          {companyJobs.length === 0 ? (
-            <p className="text-center py-6 text-gray-500">No jobs found</p>
+        <div className="w-full bg-white dark:bg-gray-800 p-4 lg:p-6 shadow-md rounded-lg">
+          {noCompanyId ? (
+            <div className="text-center py-6">
+              <p className="text-gray-500 dark:text-gray-400 mb-2">No company profile found</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Please complete your company profile to post and view jobs</p>
+              <Link 
+                to="/company-profile" 
+                className="inline-block bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
+              >
+                Complete Profile
+              </Link>
+            </div>
+          ) : companyJobs.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-2">No jobs found</p>
+              <p className="text-sm text-gray-400 mb-4">Create your first job posting</p>
+            </div>
           ) : (
             companyJobs.map((job, index) => (
               <div
@@ -164,14 +181,15 @@ const RecentJob = () => {
                   </div>
 
                   <div className="flex-grow sm:w-[300px]">
-                    <h2 className="text-lg font-semibold text-gray-900">{job.jobTitle}</h2>
-                    <div className="flex flex-wrap items-center text-gray-600 text-sm gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{job.jobTitle}</h2>
+                    <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-300 text-sm gap-2">
                       <div className="flex items-center">
-                        <FaMapMarkerAlt className="text-gray-500 mr-1" />
+                        <FaMapMarkerAlt className="text-gray-500 dark:text-gray-400 mr-1" />
                         <span>{job.companyId?.address || "Location not specified"}</span>
                       </div>
                       <span>• ${job.pricePerHour}/hr</span>
                     </div>
+
                   </div>
                 </div>
 

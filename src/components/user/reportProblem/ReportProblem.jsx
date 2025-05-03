@@ -1,18 +1,15 @@
-import React from "react";
-import Header from "../Header";
-import Sidebar from "../SideBar";
+import React, { useContext } from "react";
 import insta from "../../../assets/images/insta.svg";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const ReportProblem = () => {
-  return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar  className="fixed"/>
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       {/* Main Content */}
       <div className="flex flex-col flex-1 relative">
-        {/* Header */}
-        <Header />
+
         <div className="flex flex-col h-screen justify-between md:mx-0 p-4 sm:p-6">
           {/* Tabs */}
           <div className="flex mt-7 flex-wrap justify-center md:justify-start">
@@ -20,17 +17,17 @@ const ReportProblem = () => {
               <img src={insta} alt="Instagram Logo" className="w-16 h-16 rounded-full" />
             </div>
             <div className="flex flex-col text-center md:text-left md:ml-4">
-              <h2 className="text-2xl font-bold text-gray-700">
+              <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200">
                 Senior UX Designer
               </h2>
               <div className="flex flex-wrap items-center justify-center md:justify-start space-x-2 mt-2">
-                <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                   2 Miles Away
                 </div>
-                <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                   New York City
                 </div>
-                <div className="px-3 py-1 bg-gray-100 rounded-full text-gray-500 text-sm">
+                <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 dark:text-gray-400 text-sm">
                   ID: 7878
                 </div>
               </div>
@@ -42,14 +39,14 @@ const ReportProblem = () => {
             {/* Auto-Generated Messages */}
             <div className="flex flex-col space-y-4 items-end">
               <div className="flex items-center space-x-2 justify-end">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
                     stroke="currentColor"
-                    className="w-5 h-5 text-gray-500 [transform:rotate(120deg)]"
+                    className="w-5 h-5 text-gray-500 dark:text-gray-400 [transform:rotate(120deg)]"
                   >
                     <path
                       strokeLinecap="round"
@@ -58,19 +55,19 @@ const ReportProblem = () => {
                     />
                   </svg>
                 </div>
-                <div className="bg-gray-100 px-4 py-2 rounded-lg text-gray-600 text-sm">
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 text-sm">
                   This is Auto-Generated Message!
                 </div>
               </div>
               <div className="flex items-center space-x-2 justify-end">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
                     stroke="currentColor"
-                    className="w-5 h-5 text-gray-500  [transform:rotate(120deg)]"
+                    className="w-5 h-5 text-gray-500 dark:text-gray-400 [transform:rotate(120deg)]"
                   >
                     <path
                       strokeLinecap="round"
@@ -79,19 +76,19 @@ const ReportProblem = () => {
                     />
                   </svg>
                 </div>
-                <div className="bg-gray-100 px-4 py-2 rounded-lg text-gray-600 text-sm">
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 text-sm">
                   Tap to send message!
                 </div>
               </div>
               <div className="flex items-center space-x-2 justify-end">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
                     stroke="currentColor"
-                    className="w-5 h-5 text-gray-500 [transform:rotate(120deg)]"
+                    className="w-5 h-5 text-gray-500 dark:text-gray-400 [transform:rotate(120deg)]"
                   >
                     <path
                       strokeLinecap="round"
@@ -100,7 +97,7 @@ const ReportProblem = () => {
                     />
                   </svg>
                 </div>
-                <div className="bg-gray-100 px-4 py-2 rounded-lg text-gray-600 text-sm">
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 text-sm">
                   Lorem Ipsum Dolor Sit Amet
                 </div>
               </div>
@@ -111,16 +108,16 @@ const ReportProblem = () => {
               <input
                 type="text"
                 placeholder="Write a message..."
-                className="flex-1 px-4 py-2 border border-orange-300 rounded-full h-[62px] focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="flex-1 px-4 py-2 border border-orange-300 rounded-full h-[62px] focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-gray-800 dark:border-orange-500 dark:text-gray-200 dark:placeholder-gray-400"
               />
-              <button className="ml-4 bg-orange-400 text-orange-600 p-3 rounded-full hover:bg-orange-800 transition duration-200">
+              <button className="ml-4 bg-orange-400 text-orange-600 p-3 rounded-full hover:bg-orange-800 transition duration-200 dark:bg-orange-500 dark:text-white">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
                     stroke="currentColor"
-                    className="w-8 h-8 text-gray-500 [transform:rotate(180deg)]"
+                    className="w-8 h-8 text-gray-500 dark:text-white [transform:rotate(180deg)]"
                   >
                     <path
                       strokeLinecap="round"

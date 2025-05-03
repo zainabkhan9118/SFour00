@@ -1,7 +1,5 @@
 import React from 'react'
 import { useState, useEffect, useContext } from "react";
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import PopupButton4 from '../popupModel/PopupButton4';
 import PopupButton5 from '../popupModel/PopupButton5';
@@ -248,9 +246,7 @@ const WorkAssignedBook = () => {
     if (loading) {
         return (
             <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar />
                 <div className="flex flex-col flex-1">
-                    <Header />
                     <div className="flex items-center justify-center h-screen">
                         <LoadingSpinner />
                     </div>
@@ -261,13 +257,8 @@ const WorkAssignedBook = () => {
 
     return (
         <div className="flex flex-col md:flex-row min-h-screen">
-            {/* Sidebar */}
-            <Sidebar />
-
             {/* Main Content */}
             <div className="flex flex-col flex-1">
-                {/* Header */}
-                <Header />
                 <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
                     {/* Tabs */}
                     <HeaderWork />

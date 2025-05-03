@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { FaPhone, FaEnvelope, FaGlobe, FaArrowLeft, FaStar, FaArrowRight, FaBars } from "react-icons/fa";
-import Header from "../Header";
-import Sidebar from "../SideBar";
 import instaImg from "../../../assets/images/insta.png";
 
 const CompanyDetails = () => {
@@ -9,15 +7,11 @@ const CompanyDetails = () => {
   
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar - hidden on mobile, shown on click */}
-      <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block md:relative md:w-64 fixed inset-y-0 left-0 z-50 transition-all duration-300`}>
-        <Sidebar />
-      </div>
+
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 w-full overflow-x-hidden">
-        {/* Header */}
-        <Header />
+
         
         {/* Mobile menu toggle - Moved to top-left for better visibility */}
         <button 

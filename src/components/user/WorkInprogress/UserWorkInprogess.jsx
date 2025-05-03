@@ -1,13 +1,12 @@
 import { useState, useEffect, useContext } from 'react'
-import Sidebar from "../SideBar";
-import Header from "../Header";
 import HeaderWork from "../HeaderWork";
 import { useNavigate } from 'react-router-dom';
 import { getInProgressJobs } from "../../../api/jobApplicationApi";
-// import { getAuth } from "firebase/auth";
-// import axios from "axios";
 import { AppContext } from "../../../context/AppContext";
+import { ThemeContext } from "../../../context/ThemeContext";
+import LazyImage from "../../common/LazyImage";
 import companyImage from "../../../assets/images/company.png";
+import LoadingSpinner from "../../common/LoadingSpinner";
 
 const CheckIcon = () => (
   <svg
@@ -47,6 +46,7 @@ const UserWorkInprogess = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { BASEURL } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
     const fetchInProgressJobs = async () => {
@@ -54,13 +54,15 @@ const UserWorkInprogess = () => {
         let jobSeekerId = localStorage.getItem("jobSeekerId");
 
         const response = await getInProgressJobs(jobSeekerId);
+        console.log('In progress jobs API response:', response);
         
-        if (!response?.data?.data) {
+        if (response && response.data) {
+          const jobsData = response.data;
+          console.log('In progress jobs data:', jobsData);
+          setInProgressJobs(Array.isArray(jobsData) ? jobsData : []);
+        } else {
           throw new Error("Invalid response format from server");
         }
-
-        const jobsData = response.data.data;
-        setInProgressJobs(Array.isArray(jobsData) ? jobsData : []);
       } catch (err) {
         console.error("Error fetching in-progress jobs:", err);
         setError(err.message || "Failed to load in-progress jobs. Please try again later.");
@@ -78,15 +80,12 @@ const UserWorkInprogess = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p>Loading in-progress jobs...</p>
+            <div className="flex justify-center items-center py-10">
+              <LoadingSpinner />
             </div>
           </div>
         </div>
@@ -96,10 +95,8 @@ const UserWorkInprogess = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
             <div className="text-center text-red-500 py-4">{error}</div>
@@ -110,32 +107,32 @@ const UserWorkInprogess = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           <HeaderWork />
           <div className="">
             {inProgressJobs.length === 0 ? (
-              <div className="text-center py-4">No in-progress jobs found</div>
+              <div className="text-center py-4 text-gray-700 dark:text-gray-300">No in-progress jobs found</div>
             ) : (
               inProgressJobs.map((application, index) => {
                 const job = application.jobId || {};
                 return (
-                  <div
-                    key={application._id || `job-${index}`}
-                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
-                  >
+                  <div key={application._id || `job-${index}`} 
+                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white dark:bg-gray-800 mb-4">
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                      <img
-                        src={job.companyId?.companyLogo || companyImage}
-                        alt={job.jobTitle || "Company"}
-                        className="w-12 h-12 rounded-full border border-gray-300"
-                      />
+                      <div className="w-12 h-12 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        <LazyImage
+                          src={job.companyId?.companyLogo || companyImage}
+                          alt={job.jobTitle || "Company"}
+                          className="w-full h-full object-cover"
+                          fallbackSrc={companyImage}
+                          placeholderColor="#f3f4f6"
+                        />
+                      </div>
                       <div>
-                        <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>
-                        <div className="text-sm text-gray-500 flex items-center flex-wrap">
+                        <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200">{job.jobTitle || "No Title Available"}</h3>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center flex-wrap">
                           <span>{job.companyId?.address || "Location not specified"}</span>
                           <span className="mx-2 hidden sm:inline">•</span>
                           <span>£{job.pricePerHour || "Rate not specified"} per hour</span>
@@ -143,8 +140,8 @@ const UserWorkInprogess = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                      <div className="text-sm font-medium text-gray-400">
+                    <div className="flex flex-col sm:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-4">
+                      <div className="text-sm font-medium text-gray-400 dark:text-gray-500">
                         {job.workDate ? new Date(job.workDate).toLocaleDateString() : "Date not available"}
                       </div>
                       <div className="flex items-center text-green-500">
@@ -156,7 +153,7 @@ const UserWorkInprogess = () => {
                     </div>
 
                     <div className="flex justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <BookmarkIcon />
                       </button>
                       <button

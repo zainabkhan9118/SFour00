@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import Sidebar from "../Sidebar";
-import Header from "../Header";
 import { IoIosTimer } from "react-icons/io";
 import { FaQrcode } from "react-icons/fa";
 import { FaCalendarAlt } from "react-icons/fa"; 
 import { FaSearch, FaMapMarkerAlt, FaLocationArrow } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom"; 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
-import { QrReader } from "@blackbox-vision/react-qr-reader";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import axios from 'axios';
-import LoadingSpinner from "../../common/LoadingSpinner";
+import jsQR from "jsqr";
+import { createJob } from "../../../api/jobsApi";
+
+import CompanyProfileCompletionCheck from "./CompanyProfileCompletionCheck";
+
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -445,25 +445,20 @@ const JobPosting = () => {
       
       console.log("Submitting job data:", apiData);
       
-      // API call with both companyId as header and in payload for flexibility
-      const response = await axios.post('/api/jobs', apiData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'companyId': companyId // Keep the header for backwards compatibility
-        }
-      });
+      // Use the new API function instead of direct axios call
+      const response = await createJob(apiData, companyId);
       
-      console.log("Job created successfully:", response.data);
+      console.log("Job created successfully:", response);
       setSubmitSuccess(true);
       
-      
+      // Navigate to recent jobs page after successful job creation
       setTimeout(() => {
         navigate('/recents-jobs');
       }, 1500);
     } catch (error) {
       console.error("Error creating job:", error);
       
-  
+      // Detailed error logging
       if (error.response) {
         console.error("Error response data:", error.response.data);
         console.error("Error response status:", error.response.status);
@@ -873,206 +868,310 @@ const JobPosting = () => {
     );
   };
 
-  // Create custom video component for direct video access
+  // Enhanced QR Scanner component with improved detection capabilities
   const QRScannerComponent = ({ onScan }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
-    const [hasPermission, setHasPermission] = useState(false);
-    const [scanning, setScanning] = useState(true);
-    const streamRef = useRef(null); // Reference to keep track of the stream
+    const [cameraStatus, setCameraStatus] = useState("initializing"); // initializing, active, error
+    const streamRef = useRef(null);
 
     useEffect(() => {
+      console.log("QR Scanner component mounted");
       let animationFrame = null;
-      let mounted = true; // Flag to track component mount state
-      
-      // Setup camera stream directly
-      async function setupCamera() {
+      let mounted = true;
+
+      // Initialize camera with better settings for QR scanning
+      const initCamera = async () => {
+        console.log("Initializing camera with enhanced settings...");
         try {
-          // Don't proceed if component unmounted during async operation
-          if (!mounted) return;
-          
-          // Get user media with front camera
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' },
-            audio: false
-          });
-          
-          // Store stream in ref for cleanup
-          streamRef.current = stream;
-          
-          // Set video source if component is still mounted and video ref exists
-          if (mounted && videoRef.current) {
-            videoRef.current.srcObject = stream;
-            
-            // Use event listener to handle play() failures gracefully
-            const playPromise = videoRef.current.play();
-            
-            if (playPromise !== undefined) {
-              playPromise
-                .then(() => {
-                  if (mounted) {
-                    console.log("Camera feed successfully initialized");
-                    setHasPermission(true);
-                    // Start scanning after video is playing
-                    animationFrame = requestAnimationFrame(scanQRCode);
-                  }
-                })
-                .catch(err => {
-                  // Handle play() promise rejection - common when component unmounts quickly
-                  console.warn("Play promise rejected:", err.message);
-                  if (mounted) {
-                    setCameraError(`Video play error: ${err.message}`);
-                  }
-                });
-            }
+          // Set camera constraints with more specific settings for QR scanning
+          const cameraConstraints = {
+            video: {
+              facingMode: "environment", // Try back camera first for mobile
+              width: { ideal: 1280, min: 720 },
+              height: { ideal: 720, min: 480 },
+              // Important camera settings for better QR detection
+              focusMode: "continuous", // Keep trying to focus
+              exposureMode: "auto",
+              whiteBalanceMode: "auto",
+            },
+            audio: false,
+          };
+
+          // Try to access camera with enhanced settings
+          let stream;
+          try {
+            console.log("Trying camera with enhanced settings");
+            stream = await navigator.mediaDevices.getUserMedia(cameraConstraints);
+            console.log("Successfully accessed camera with enhanced settings");
+          } catch (err) {
+            console.log("Enhanced camera settings failed, trying basic settings:", err);
+            // Fall back to basic settings
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false
+            });
           }
-          
-          // Save reference for external cleanup
-          if (mounted) {
-            window.qrScannerStream = stream;
+
+          // Store reference to stream for cleanup
+          streamRef.current = stream;
+
+          if (!mounted) {
+            // Component unmounted during async operation
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+          }
+
+          // Set stream to video element
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.setAttribute("playsinline", true); // required for iOS Safari
+
+            // Set important video settings that help with QR detection
+            videoRef.current.setAttribute("autoplay", true);
+
+            // Wait for video to be ready
+            videoRef.current.onloadedmetadata = () => {
+              if (!mounted) return;
+
+              videoRef.current
+                .play()
+                .then(() => {
+                  console.log("Camera video playing successfully");
+                  setCameraStatus("active");
+
+                  // Request animation frame for smoother experience
+                  setTimeout(() => {
+                    console.log("Starting QR scanning");
+                    scanQRCode();
+                  }, 500);
+                })
+                .catch((err) => {
+                  console.error("Error playing video:", err);
+                  onScan(null, {
+                    name: "PlayError",
+                    message: "Could not play camera video: " + err.message,
+                  });
+                  setCameraStatus("error");
+                });
+            };
           }
         } catch (err) {
+          console.error("Camera initialization error:", err);
           if (mounted) {
-            console.error("Failed to access camera:", err);
-            setCameraError(`Camera access error: ${err.message}`);
-            setScanningStatus('error');
+            onScan(null, { name: "CameraError", message: err.message });
+            setCameraStatus("error");
           }
         }
-      }
-      
-      // Function to scan for QR codes from video stream
-      const scanQRCode = async () => {
-        if (!mounted || !videoRef.current || !canvasRef.current || !scanning) return;
-        
+      };
+
+      // Function to scan QR code from video frame using jsQR
+      const scanQRCode = () => {
+        if (
+          !mounted ||
+          !videoRef.current ||
+          !canvasRef.current ||
+          cameraStatus !== "active"
+        ) {
+          return;
+        }
+
         try {
           const video = videoRef.current;
           const canvas = canvasRef.current;
-          
-          // Only process video if it's actually playing
+          const context = canvas.getContext("2d", { willReadFrequently: true });
+
+          // Only process when video is actually playing
           if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            const context = canvas.getContext('2d');
-            
-            // Set canvas size to match video dimensions
+            // Set canvas size to match video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
+
             // Draw current video frame to canvas
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Get image data for QR code scanning
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            
+
+            // Apply image processing to enhance contrast for better QR detection
             try {
-              // Create a temporary image to test if it contains QR code data (using browser APIs)
-              const barcodeDetector = window.BarcodeDetector ? 
-                new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+              
+              // Use jsQR for detection
+              const code = jsQR(
+                imageData.data,
+                imageData.width,
+                imageData.height,
+                {
+                  inversionAttempts: "attemptBoth", // Try both inverted and non-inverted images
+                }
+              );
+
+              if (code) {
+                console.log("QR code found:", code.data);
+                onScan({ text: code.data }, null);
+
+                // Visual feedback (draw box around QR code)
+                context.beginPath();
+                context.lineWidth = 4;
+                context.strokeStyle = "#FF5700";
+                context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+                context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
+                context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
+                context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
+                context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+                context.stroke();
+                return;
+              }
+              
+              // Try browser's BarcodeDetector API if available
+              if (window.BarcodeDetector) {
+                const barcodeDetector = new window.BarcodeDetector({
+                  formats: ["qr_code"],
+                });
                 
-              if (barcodeDetector) {
-                const barcodes = await barcodeDetector.detect(imageData);
-                
-                if (barcodes.length > 0) {
-                  // QR code detected!
-                  setScanning(false);
-                  const qrData = barcodes[0].rawValue;
-                  console.log("QR code detected:", qrData);
-                  
-                  // Call the onScan callback with the detected QR data
-                  if (mounted) {
-                    onScan({ text: qrData });
-                  }
-                  return; // Stop scanning
+                barcodeDetector.detect(imageData)
+                  .then((barcodes) => {
+                    if (barcodes.length > 0) {
+                      const qrData = barcodes[0].rawValue;
+                      console.log("QR code detected using BarcodeDetector:", qrData);
+                      onScan({ text: qrData }, null);
+                      return;
+                    }
+                    
+                    // Continue scanning if no QR code found
+                    if (mounted) {
+                      animationFrame = requestAnimationFrame(scanQRCode);
+                    }
+                  })
+                  .catch((err) => {
+                    console.warn("BarcodeDetector error:", err);
+                    // Continue scanning
+                    if (mounted) {
+                      animationFrame = requestAnimationFrame(scanQRCode);
+                    }
+                  });
+              } else {
+                // No QR code found with jsQR and BarcodeDetector not available, continue scanning
+                if (mounted) {
+                  animationFrame = requestAnimationFrame(scanQRCode);
                 }
               }
-            } catch (qrError) {
-              console.warn("QR detection error:", qrError);
+            } catch (err) {
+              console.error("Error in QR detection:", err);
+              if (mounted) {
+                animationFrame = requestAnimationFrame(scanQRCode);
+              }
             }
-          }
-          
-          // If still scanning and component still mounted, continue with next frame
-          if (scanning && mounted) {
-            animationFrame = requestAnimationFrame(scanQRCode);
+          } else {
+            // Video not ready yet, continue scanning
+            if (mounted) {
+              animationFrame = requestAnimationFrame(scanQRCode);
+            }
           }
         } catch (err) {
           console.error("Error in scan loop:", err);
-          // Still try to continue scanning if possible
-          if (scanning && mounted) {
+          // Try to continue scanning
+          if (mounted) {
             animationFrame = requestAnimationFrame(scanQRCode);
           }
         }
       };
 
-      // Start camera setup process
-      setupCamera();
+      // Start camera
+      initCamera();
 
       // Cleanup function
       return () => {
-        mounted = false; // Mark component as unmounted
-        setScanning(false);
-        
+        console.log("QR Scanner component unmounting, cleaning up...");
+        mounted = false;
+
         // Cancel animation frame if active
         if (animationFrame) {
           cancelAnimationFrame(animationFrame);
         }
-        
-        // Stop all tracks in the stream
+
+        // Stop camera stream
         if (streamRef.current) {
           const tracks = streamRef.current.getTracks();
-          tracks.forEach(track => {
+          tracks.forEach((track) => {
             track.stop();
-            console.log("Camera track stopped in cleanup");
+            console.log("Camera track stopped");
           });
           streamRef.current = null;
         }
-        
-        // Also clean up global stream reference if it exists
-        if (window.qrScannerStream) {
-          const globalTracks = window.qrScannerStream.getTracks();
-          globalTracks.forEach(track => track.stop());
-          window.qrScannerStream = null;
-        }
-        
-        // Clear video source to prevent memory leaks
+
+        // Clear video source
         if (videoRef.current && videoRef.current.srcObject) {
           videoRef.current.srcObject = null;
         }
+
+        console.log("Camera cleanup complete");
       };
     }, [onScan]);
 
     return (
       <div className="w-full h-full relative">
-        <video 
-          ref={videoRef}
-          className="w-full h-full object-cover rounded-lg"
-          playsInline
-          muted
-          style={{ transform: "scaleX(-1)" }} // Mirror for selfie mode
-        />
-        
-        {/* Hidden canvas for QR code processing */}
-        <canvas 
-          ref={canvasRef} 
-          style={{ display: 'none' }}
-        />
-        
-        {/* Scanner overlay */}
-        <div className="absolute inset-0 border-2 border-dashed border-red-500 m-[40px] rounded-lg pointer-events-none"></div>
-        
-        {/* Camera status indicator */}
-        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs p-1 rounded">
-          {hasPermission ? "Camera active" : "Activating camera..."}
-        </div>
+        {cameraStatus === "error" ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+            <div className="text-center p-4">
+              <div className="text-red-500 text-xl mb-2">Camera Error</div>
+              <p className="text-gray-600">
+                Could not access your camera. Please check your permissions.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover rounded-lg"
+              playsInline
+              muted
+            />
+
+            {/* Hidden canvas for processing */}
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ display: "none" }}
+            />
+
+            {/* Scanning visual guide */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              {/* Center scanning box */}
+              <div className="w-64 h-64 border-2 border-orange-500 rounded-lg relative">
+                {/* Corner elements for better visual guidance */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-500"></div>
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-500"></div>
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-orange-500"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-orange-500"></div>
+
+                {/* Scanning animation */}
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-orange-500 animate-[scan_2s_ease-in-out_infinite]"></div>
+              </div>
+
+              {/* Instructions */}
+              <p className="mt-4 text-sm text-white bg-black bg-opacity-60 px-3 py-1 rounded-full">
+                Hold QR code in view to scan
+              </p>
+            </div>
+
+            {/* Status indicator */}
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs p-1 rounded">
+              {cameraStatus === "initializing"
+                ? "Starting camera..."
+                : "Camera active"}
+            </div>
+          </>
+        )}
       </div>
     );
   };
 
   return (
     <div className="flex flex-row min-h-screen">
-      {/* Sidebar */}
-      <Sidebar className="w-full md:w-1/3 lg:w-1/4" />
+    
 
       <div className="flex flex-col flex-1 p-6">
-        {/* Header */}
-        <Header/>
+        
 
         <div className="rounded-lg p-6">
           <h1 className="text-3xl font-bold mb-4">Post a Job</h1>
@@ -1390,25 +1489,27 @@ const JobPosting = () => {
             </div>
             
             <div className="flex justify-end mt-8">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`bg-orange-500 w-full md:w-[305px] h-[56px] rounded-full text-white p-2 flex items-center justify-center font-medium text-lg ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-orange-600'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Posting Job...
-                  </>
-                ) : (
-                  <>Post Job →</>
-                )}
-              </button>
+              <CompanyProfileCompletionCheck>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`bg-orange-500 w-full md:w-[305px] h-[56px] rounded-full text-white p-2 flex items-center justify-center font-medium text-lg ${
+                    isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-orange-600'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Posting Job...
+                    </>
+                  ) : (
+                    <>Post Job →</>
+                  )}
+                </button>
+              </CompanyProfileCompletionCheck>
             </div>
           </form>
         </div>

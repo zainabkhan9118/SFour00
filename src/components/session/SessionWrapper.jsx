@@ -7,6 +7,15 @@ const SessionWrapper = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // List of public routes that don't require authentication
+  const publicRoutes = [
+    "/login", 
+    "/CreateAccount", 
+    "/ForgetPassword", 
+    "/ResetPassword",
+    "/email-verification"
+  ];
+
   useEffect(() => {
     const sessionData = JSON.parse(localStorage.getItem("sessionData"));
     if (sessionData) {
@@ -20,7 +29,10 @@ const SessionWrapper = ({ children }) => {
         navigate("/login");
       }
     } else {
-      if (location.pathname !== "/login" && location.pathname !== "/CreateAccount") {
+      // Check if the current route is a public route
+      const isPublicRoute = publicRoutes.some(route => location.pathname === route);
+      
+      if (!isPublicRoute) {
         navigate("/login");
       }
     }

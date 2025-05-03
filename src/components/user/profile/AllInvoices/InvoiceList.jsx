@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { CheckCircle, MapPin } from "lucide-react";
-import Sidebar from "../../SideBar";
-import Header from "../../Header";
 import UserSidebar from "../UserSidebar";
+import LoadingSpinner from "../../../common/LoadingSpinner";
+import { ThemeContext } from "../../../../context/ThemeContext";
 
 const invoices = [
   {
@@ -61,6 +61,20 @@ const invoices = [
 ];
 
 const InvoiceList = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Function to render the appropriate icon
   const renderIcon = (invoice) => {
     if (invoice.logoType === "apple") {
@@ -103,53 +117,60 @@ const InvoiceList = () => {
   };
 
   return (
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <Sidebar />
-    
-        {/* Main Content */}
-        <div className="flex flex-col flex-1">
-          {/* Header */}
-          <Header />
-       
-          <main className="flex-3 mt-4"> 
-          <div className="flex flex-row flex-1">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+      {isLoading && <LoadingSpinner />}
+
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
           <UserSidebar />
-          <div className="w-[60vw] ml-4 p-6">
-            <h1 className="text-2xl font-bold mb-4">All Invoices</h1>
-            <div className="bg-white rounded-lg p-5">
-              {invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="grid grid-cols-4 items-center border-b last:border-b-0 py-4"
-                >
-                  <div className="flex items-center space-x-4">
-                    {renderIcon(invoice)}
-                    <div>
-                      <h2 className="font-semibold">{invoice.role}</h2>
-                      <div className="text-sm text-gray-500 flex items-center">
-                        <MapPin size={14} className="mr-1" />
-                        {invoice.location} &nbsp; <span className="text-gray-400">{invoice.rate}</span>
-                      </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1">
+        {/* Mobile Header with Sidebar - Shown only on Mobile */}
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-5 shadow-md">
+            <h2 className="text-2xl font-bold mb-6 dark:text-white">Invoices</h2>
+            
+            {/* Invoice Table - Responsive Design */}
+            {invoices.map((invoice) => (
+              <div
+                key={invoice.id}
+                className="flex flex-col md:grid md:grid-cols-4 items-center border-b dark:border-gray-700 last:border-b-0 py-4"
+              >
+                <div className="flex items-center space-x-4 w-full md:w-auto mb-3 md:mb-0">
+                  {renderIcon(invoice)}
+                  <div>
+                    <h2 className="font-semibold dark:text-white">{invoice.role}</h2>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                      <MapPin size={14} className="mr-1" />
+                      {invoice.location} &nbsp; <span className="text-gray-400 dark:text-gray-500">{invoice.rate}</span>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-500 text-center">{invoice.date}</div>
-                  <div className="text-green-500 flex items-center justify-center">
-                    <CheckCircle size={16} className="mr-1" /> {invoice.status}
-                  </div>
-                  <div className="flex justify-end">
-                    <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                      See Invoice
-                    </button>
-                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 text-center my-2 md:my-0">{invoice.date}</div>
+                <div className="text-green-500 dark:text-green-400 flex items-center justify-center my-2 md:my-0">
+                  <CheckCircle size={16} className="mr-1" /> {invoice.status}
+                </div>
+                <div className="flex justify-center md:justify-end mt-2 md:mt-0 w-full">
+                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    See Invoice
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-          </div>
-          </main>
         </div>
       </div>
+    </div>
   );
 };
 

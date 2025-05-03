@@ -1,129 +1,100 @@
-import React, { useRef, useState } from 'react';
-import { IoCloseCircleOutline } from "react-icons/io5";
-import { useNavigate } from 'react-router-dom';
-import LoadingSpinner from "../../../../common/LoadingSpinner";
+import React, { useState, useContext } from "react";
+import { IoMdClose } from "react-icons/io";
+import { assignJob } from "../../../../../api/jobsApi";
+import { ThemeContext } from "../../../../../context/ThemeContext";
 
 const AssignJobButton = ({ onClose, applicant, job }) => {
-  const buttonRef = useRef();
-  const [assigning, setAssigning] = useState(false);
-  const [assignError, setAssignError] = useState(null);
-  const [assignSuccess, setAssignSuccess] = useState(false);
-  
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
-  const closeModel = (e) => {
-    if (buttonRef.current === e.target) {
-        onClose();
-    }
-  };
-
-  const handleNavigate = () => {
-    navigate('/job-assigned');
-  };
-  
   const handleAssignJob = async () => {
-    if (!job || !job._id || !applicant || !applicant._id) {
-      setAssignError("Missing job or applicant information");
-      return;
-    }
-    
+    if (loading) return;
+
     try {
-      setAssigning(true);
-      setAssignError(null);
-      
-      // Making API call with the correct PATCH method
-      const response = await fetch(`/api/apply/${job._id}/enable-assignment`, {
-        method: 'PATCH', // Using PATCH as specified by the API
-        headers: {
-          'jobSeekerId': applicant._id,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          isAssignable: true
-        })
-      });
-      
-      const data = await response.json();
-      console.log("Assign job response:", data);
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to assign job');
+      setLoading(true);
+      setError(null);
+
+      // Call the API function to assign the job
+      const result = await assignJob(job._id, applicant._id);
+
+      if (result.statusCode === 200) {
+        setSuccess(true);
+        // Automatically close after 3 seconds
+        setTimeout(() => {
+          onClose();
+        }, 3000);
+      } else {
+        throw new Error(result.message || "Failed to assign job");
       }
-      
-      setAssignSuccess(true);
-      
-      // Navigate to assigned jobs page after a short delay
-      setTimeout(() => {
-        handleNavigate();
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Error assigning job:", error);
-      setAssignError(error.message || 'An error occurred while assigning the job');
+    } catch (err) {
+      console.error("Error assigning job:", err);
+      setError(err.message || "An error occurred while assigning the job");
     } finally {
-      setAssigning(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div ref={buttonRef} onClick={closeModel} className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 p-4">
-      {assigning && <LoadingSpinner />}
-      <div className="bg-white flex flex-col justify-center items-center p-4 sm:p-6 w-full max-w-[95%] sm:max-w-md h-auto md:w-[561px] md:h-[333px] relative rounded-xl">
-        {/* Close Button */}
-        <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#E7F0FA] absolute top-[-15px] sm:top-[-20px] right-[-10px] sm:right-[-3px] '>
-          <button className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 text-gray-500">
-            <IoCloseCircleOutline onClick={onClose} className='text-3xl sm:text-4xl text-orange-400' />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Assign Job</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            <IoMdClose size={24} />
           </button>
         </div>
 
-        {/* Modal Content */}
-        <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-900">Alert!</h2>
-        
-        {assignSuccess ? (
-          <p className="text-green-500 text-center mt-2 w-full max-w-xs md:w-[421px] h-auto md:h-[52px] text-base sm:text-lg px-2">
-            Job successfully assigned to {applicant?.fullname || "the applicant"}. Redirecting...
-          </p>
-        ) : (
-          <p className="text-gray-500 text-center mt-2 w-full max-w-xs md:w-[421px] h-auto md:h-[52px] text-base sm:text-lg px-2">
-            Are you sure you want to assign this job to <span className='font-bold text-base sm:text-lg text-gray-400'>{applicant?.fullname || "this applicant"}</span>?
-          </p>
-        )}
-        
-        {assignError && (
-          <p className="text-red-500 text-center mt-2 text-sm">
-            {assignError}
-          </p>
-        )}
-
-        {/* Buttons */}
-        {!assignSuccess && (
-          <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-6 w-full px-4">
-            <button
-              onClick={onClose}
-              disabled={assigning}
-              className="px-4 sm:px-6 py-2 w-full sm:w-32 h-10 sm:h-12 md:w-[154px] md:h-[48px] bg-[#E7F0FA] text-[#FD7F00] rounded-full hover:bg-gray-400 text-sm sm:text-base disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAssignJob}
-              disabled={assigning}
-              className="px-4 sm:px-6 py-2 w-full sm:w-32 h-10 sm:h-12 md:w-[154px] md:h-[48px] bg-[#FD7F00] text-white rounded-full hover:bg-orange-600 text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
-            >
-              {assigning ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Assigning...
-                </>
-              ) : (
-                "Assign"
-              )}
-            </button>
+        {success ? (
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Job Assigned Successfully!</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              The job has been assigned to {applicant?.fullname}. They will be notified.
+            </p>
           </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Are you sure you want to assign this job to <span className="font-semibold">{applicant?.fullname}</span>?
+              </p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Once assigned, the applicant will be notified and other applicants will be informed that the position has been filled.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAssignJob}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? "Assigning..." : "Assign Job"}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

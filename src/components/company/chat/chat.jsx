@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import ChatSidebar from "./ChatSidebar";
-import MessageArea from "./MessageArea";
-import Header from "../Header";
-import Sidebar from "../Sidebar"; 
+import MessageArea from "./MessageArea"; 
 import { FaArrowLeft, FaBars } from "react-icons/fa";
 
 const Chat = () => {
@@ -20,10 +18,7 @@ const Chat = () => {
 
   return (
     <div className="flex h-screen">
-      {/* Parent Sidebar - Hidden on mobile by default */}
-      <div className={`${showSidebar ? 'block' : 'hidden'} md:block fixed md:relative z-30 h-full`}>
-        <Sidebar className="w-[170px] h-full bg-[#1e2a47]" />
-      </div>
+
 
       <div className="flex flex-1 flex-col md:flex-row relative w-full">
         {/* Mobile header with toggle buttons */}

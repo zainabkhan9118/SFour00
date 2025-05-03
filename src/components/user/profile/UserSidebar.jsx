@@ -1,41 +1,30 @@
-import React, { useContext } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import React, { useContext, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaUser,
   FaLock,
   FaFileInvoice,
   FaHeadset,
   FaQuestionCircle,
-  FaSignOutAlt,
   FaUniversity,
+  FaBars,
+  FaTimes
 } from "react-icons/fa";
-import { toast } from "react-toastify";
-import { auth } from "../../../config/firebaseConfig";
 import { AppContext } from "../../../context/AppContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 
-const UserSidebar = () => {
-  const navigate = useNavigate();
+const UserSidebar = ({ isMobile = false }) => {
   const { profileName, profileDp } = useContext(AppContext);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Fallback values for profile data
   const fallbackProfileName = "John Doe";
   const fallbackProfileDp = "src/assets/images/profile.jpeg";
 
-  // const handleLogout = async () => {
-  //   try {
-  //     localStorage.removeItem("sessionData");
-  //     await signOut(auth);
-  //     toast.success("Logged out successfully!");
-  //     navigate("/login");
-  //   } catch (error) {
-  //     console.error("Error during logout:", error);
-  //     toast.error("Failed to log out. Please try again.");
-  //   }
-  // };
-
+  // Check if current path matches route or is a sub-route
   const isActive = (path) => {
     if (path === "/User-PersonalDetails") {
       return (
@@ -51,122 +40,159 @@ const UserSidebar = () => {
     return currentPath === path;
   };
 
+  // Navigation links component - reused in both desktop and mobile views
+  const NavigationLinks = () => (
+    <nav className="flex flex-col space-y-4 text-sm">
+      <Link
+        to="/User-PersonalDetails"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/User-PersonalDetails")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaUser className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>Personal Details</span>
+      </Link>
+      
+      <Link
+        to="/User-BankDetails"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/User-BankDetails")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaUniversity className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>Bank Details</span>
+      </Link>
+      
+      <Link
+        to="/ResetPassword"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/ResetPassword")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaLock className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>Reset Password</span>
+      </Link>
+      
+      <Link
+        to="/User-InvoiceList"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/User-InvoiceList")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaFileInvoice className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>My Invoices</span>
+      </Link>
+      
+      <Link
+        to="/User-ContactSupport"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/User-ContactSupport")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaHeadset className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>Contact S4 Support</span>
+      </Link>
+      
+      <Link
+        to="/User-FAQSection"
+        className={`flex items-center p-2 rounded-md ${
+          isActive("/User-FAQSection")
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 font-medium"
+            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        }`}
+        onClick={() => isMobile && setIsMenuOpen(false)}
+      >
+        <FaQuestionCircle className="text-orange-500 dark:text-orange-400 mr-3" size={14} />
+        <span>FAQ's</span>
+      </Link>
+    </nav>
+  );
+
+  // Mobile version of the sidebar
+  if (isMobile) {
+    return (
+      <div className="bg-white dark:bg-gray-800 w-full transition-colors duration-200">
+        {/* Mobile header with menu button */}
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <div className="flex items-center">
+            <img
+              src={profileDp || fallbackProfileDp}
+              alt="profile"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+            <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
+              {profileName?.trim() ? profileName : fallbackProfileName}
+            </span>
+          </div>
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="text-gray-600 dark:text-gray-300 focus:outline-none"
+          >
+            {isMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+        </div>
+
+        {/* Mobile menu - conditionally rendered */}
+        {isMenuOpen && (
+          <div className="px-4 py-2">
+            <NavigationLinks />
+            
+            {/* Footer text */}
+            <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 px-2">
+              <p>Terms and conditions of use:</p>
+              <div className="flex space-x-1">
+                <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Privacy policy</a>
+                <span>,</span>
+                <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Cookie policy</a>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop version of the sidebar (original implementation)
   return (
-    <div className="w-64 bg-white p-4 shadow-xl min-h-screen">
-      <div className="flex items-center space-x-3 pb-4">
+    <div className="h-full bg-white dark:bg-gray-800 py-4 px-3 transition-colors duration-200">
+      {/* Profile quick info - smaller height */}
+      <div className="flex items-center mb-6 px-2">
         <img
-          src={profileDp || fallbackProfileDp} // Use fallback image if profileDp is not defined
+          src={profileDp || fallbackProfileDp}
           alt="profile"
-          className="w-10 h-10 rounded-full"
+          className="w-8 h-8 rounded-full object-cover"
         />
-        <span className="font-semibold  text-lg">
-        {profileName?.trim() ? profileName : fallbackProfileName} {/* Use fallback name if profileName is not defined */}
+        <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
+          {profileName?.trim() ? profileName : fallbackProfileName}
         </span>
       </div>
-      <ul className="mt-4 space-y-8 text-gray-700">
-        <li>
-          <Link
-            to="/User-PersonalDetails"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-PersonalDetails")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaUser
-              className={`${
-                isActive("/User-PersonalDetails")
-                  ? "text-orange-500"
-                  : "text-gray-600"
-              }`}
-            />
-            <span>Personal Details</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-BankDetails"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-BankDetails")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaUniversity className="text-orange-500" />
-            <span>Bank Details</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/ResetPassword"
-            className={`flex items-center space-x-3 ${
-              isActive("/ResetPassword")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaLock className="text-orange-500" />
-            <span>Reset Password</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-InvoiceList"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-InvoiceList")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaFileInvoice className="text-orange-500" />
-            <span>My Invoices</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-ContactSupport"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-ContactSupport")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaHeadset className="text-orange-500" />
-            <span>Contact S4 Support</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/User-FAQSection"
-            className={`flex items-center space-x-3 ${
-              isActive("/User-FAQSection")
-                ? "bg-orange-100 p-2 rounded-md font-semibold text-black"
-                : ""
-            }`}
-          >
-            <FaQuestionCircle className="text-orange-500" />
-            <span>FAQ's</span>
-          </Link>
-        </li>
-        {/* <li onClick={handleLogout}>
-          <div className="flex items-center space-x-3 text-red-500 cursor-pointer">
-            <FaSignOutAlt className="text-orange-500" />
-            <span>Logout</span>
-          </div>
-        </li> */}
-      </ul>
-      <div className="mt-6 text-xs text-gray-500">
+      
+      {/* Navigation links - more compact */}
+      <NavigationLinks />
+      
+      {/* Footer text - more compact */}
+      <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 px-2">
         <p>Terms and conditions of use:</p>
-        <p>
-          <a href="#" className="text-blue-500 underline">
-            Privacy policy
-          </a>
-          ,
-          <a href="#" className="text-blue-500 underline">
-            {" "}
-            Cookie policy
-          </a>
-        </p>
+        <div className="flex space-x-1">
+          <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Privacy policy</a>
+          <span>,</span>
+          <a href="#" className="text-blue-500 dark:text-blue-400 hover:underline">Cookie policy</a>
+        </div>
       </div>
     </div>
   );

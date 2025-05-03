@@ -1,12 +1,11 @@
-// import React from 'react'
-import { useState, useEffect } from "react";
-// import { useNavigate } from 'react-router-dom';
-import Sidebar from "../SideBar";
-import Header from "../Header";
+import { useState, useEffect, useContext } from "react";
 import HeaderWork from "../HeaderWork";
 import PopupModelJobCompleted from '../popupModel/popupModel-Inprogress/PopupModelJobCompleted';
 import companyImage from '../../../assets/images/company.png';
 import { getCompletedJobs } from '../../../api/jobApplicationApi';
+import LazyImage from "../../common/LazyImage";
+import LoadingSpinner from "../../common/LoadingSpinner";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const CheckIcon = () => (
   <svg
@@ -45,6 +44,7 @@ const UserCompleted = () => {
   const [completedJobs, setCompletedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
   // const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,13 +56,16 @@ const UserCompleted = () => {
         }
 
         const response = await getCompletedJobs(jobSeekerId);
-
-        if (!response?.data?.data) {
+        console.log('Completed jobs API response:', response);
+        
+        // Fix error handling to accommodate the actual response format
+        if (response && response.data) {
+          const jobsData = response.data;
+          console.log('Completed jobs data:', jobsData);
+          setCompletedJobs(Array.isArray(jobsData) ? jobsData : []);
+        } else {
           throw new Error("Invalid response format from server");
         }
-
-        const jobsData = response.data.data;
-        setCompletedJobs(Array.isArray(jobsData) ? jobsData : []);
       } catch (err) {
         console.error("Error fetching completed jobs:", err);
         setError(err.message || "Failed to load completed jobs. Please try again later.");
@@ -74,21 +77,14 @@ const UserCompleted = () => {
     fetchCompletedJobs();
   }, []);
 
-  // const handleNavigate = (jobId) => {
-  //   navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
-  // };
-
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p>Loading completed jobs...</p>
+            <div className="flex justify-center items-center py-10">
+              <LoadingSpinner />
             </div>
           </div>
         </div>
@@ -98,10 +94,8 @@ const UserCompleted = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar />
+      <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
         <div className="flex flex-col flex-1">
-          <Header />
           <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
             <HeaderWork />
             <div className="text-center py-4 text-red-500">{error}</div>
@@ -112,32 +106,32 @@ const UserCompleted = () => {
   }
     
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       <div className="flex flex-col flex-1">
-        <Header />
         <div className="max-w-6xl mx-auto md:mx-0 p-4 sm:p-6">
           <HeaderWork />
           <div className="">
             {completedJobs.length === 0 ? (
-              <div className="text-center py-4">No completed jobs found</div>
+              <div className="text-center py-4 dark:text-gray-300">No completed jobs found</div>
             ) : (
               completedJobs.map((application, index) => {
                 const job = application.jobId || {};
                 return (
                   <div
                     key={application._id || `job-${index}`}
-                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white mb-4"
+                    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center p-4 rounded-lg shadow-sm bg-white dark:bg-gray-800 mb-4 transition-colors duration-200"
                   >
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
-                      <img
+                      <LazyImage
                         src={job.companyId?.companyLogo || companyImage}
                         alt={job.jobTitle || "Company"}
-                        className="w-12 h-12 rounded-full border border-gray-300"
+                        className="w-12 h-12 rounded-full border border-gray-300 dark:border-gray-600"
+                        fallbackSrc={companyImage}
+                        placeholderColor="#f3f4f6"
                       />
                       <div>
-                        <h3 className="font-medium text-lg">{job.jobTitle || "No Title Available"}</h3>
-                        <div className="text-sm text-gray-500 flex items-center flex-wrap">
+                        <h3 className="font-medium text-lg dark:text-white">{job.jobTitle || "No Title Available"}</h3>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center flex-wrap">
                           <span>{job.companyId?.address || "Location not specified"}</span>
                           <span className="mx-2 hidden sm:inline">•</span>
                           <span>£{job.pricePerHour || "Rate not specified"} per hour</span>
@@ -146,22 +140,22 @@ const UserCompleted = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-col lg:flex-row items-start md:items-center justify-between col-span-1 sm:col-span-1 md:col-span-1 space-y-2 sm:space-y-0 sm:space-x-6">
-                      <div className="text-sm font-medium text-gray-400">
+                      <div className="text-sm font-medium text-gray-400 dark:text-gray-500">
                         {job.workDate ? new Date(job.workDate).toLocaleDateString() : "Date not available"}
                       </div>
-                      <div className="flex items-center text-green-500">
+                      <div className="flex items-center text-green-500 dark:text-green-400">
                         <CheckIcon />
                         <span className="ml-1 text-sm font-medium">Completed</span>
                       </div>
                     </div>
 
                     <div className="flex justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200">
                         <BookmarkIcon />
                       </button>
                       <button
                         onClick={() => setShowPopup(true)}
-                        className="bg-[#FD7F00] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full"
+                        className="bg-[#FD7F00] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-600 transition-colors duration-200"
                       >
                         Completed
                       </button>
