@@ -158,7 +158,7 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
           <div key={message.id} className="mb-4 md:mb-6">
             {message.timestamp && (
               <div className="text-center text-xs text-gray-400 mb-2">
-                {message.timestamp.toDate().toLocaleString()}
+                {message.timestamp?.toDate()?.toLocaleString() || 'No timestamp'}
               </div>
             )}
             <div className={`flex items-start ${message.isFromCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -170,9 +170,11 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
                 }`}
               >
                 <p className="text-xs md:text-sm">{message.message}</p>
-                <div className={`text-[10px] mt-1 ${message.isFromCurrentUser ? 'text-orange-100' : 'text-gray-400'}`}>
-                {message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
+                {message.timestamp && (
+                  <div className={`text-[10px] mt-1 ${message.isFromCurrentUser ? 'text-orange-100' : 'text-gray-400'}`}>
+                    {message.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'No time'}
+                  </div>
+                )}
               </div>
             </div>
           </div>

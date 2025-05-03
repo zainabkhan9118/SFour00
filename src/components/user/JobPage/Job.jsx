@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, Search, MapPin, Home, User, Briefcase, MessageSquare, Bell } from "lucide-react";
+import { Bookmark, Search, MapPin, Home, User, Briefcase, MessageSquare, Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { fetchAllJobs } from "../../../api/jobsApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import LazyImage from "../../common/LazyImage";
@@ -14,6 +14,8 @@ const Job = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsPerPage] = useState(10);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   
   useEffect(() => {
@@ -41,8 +43,6 @@ const Job = () => {
     setJobs(jobs.map(job => 
       job._id === id ? {...job, bookMarked: !job.bookMarked} : job
     ));
-    // Here you could also call the API to persist the bookmark state
-    // toggleJobBookmark(id, !job.bookMarked)
   };
   
   const filteredJobs = jobs.filter(job => {
@@ -51,9 +51,22 @@ const Job = () => {
       (job.companyId && job.companyId.address && job.companyId.address.toLowerCase().includes(locationTerm.toLowerCase()));
     return matchesSearch && matchesLocation;
   });
+
+  // Get current jobs for pagination
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
   
   const handleSearch = () => {
-    // Just use the current state values when filtering
+    setCurrentPage(1); // Reset to first page when searching
     console.log("Searching for:", searchTerm, "in", locationTerm);
   };
 
@@ -133,72 +146,119 @@ const Job = () => {
                 <p className="text-gray-500 dark:text-gray-400">No jobs found matching your criteria.</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm transition-colors duration-200">
-                {filteredJobs.map((job) => (
-                  <div 
-                    key={job._id} 
-                    className="flex flex-col md:flex-row md:items-center p-3 md:p-4 border-b dark:border-gray-700 last:border-none space-y-3 md:space-y-0"
-                  >
-                    {/* Job Info - 30% width on desktop */}
-                    <div className="flex items-center space-x-3 md:space-x-4 md:w-[30%]">
-                      <LazyImage 
-                        src={(job.companyId && job.companyId.companyLogo) || "https://cdn-icons-png.flaticon.com/512/732/732007.png"} 
-                        alt={job.jobTitle} 
-                        className="w-8 h-8 md:w-10 md:h-10 rounded-full border dark:border-gray-600 object-cover"
-                        fallbackSrc="https://cdn-icons-png.flaticon.com/512/732/732007.png"
-                        placeholderColor="#f3f4f6"
-                      />
-                      <div>
-                        <h4 className="font-semibold dark:text-white">{job.jobTitle}</h4>
-                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                          {(job.companyId && job.companyId.address) || 'Remote'} • ${job.pricePerHour}/hr
+              <>
+                <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm transition-colors duration-200">
+                  {currentJobs.map((job) => (
+                    <div 
+                      key={job._id} 
+                      className="flex flex-col md:flex-row md:items-center p-3 md:p-4 border-b dark:border-gray-700 last:border-none space-y-3 md:space-y-0"
+                    >
+                      {/* Job Info - 30% width on desktop */}
+                      <div className="flex items-center space-x-3 md:space-x-4 md:w-[30%]">
+                        <LazyImage 
+                          src={(job.companyId && job.companyId.companyLogo) || "https://cdn-icons-png.flaticon.com/512/732/732007.png"} 
+                          alt={job.jobTitle} 
+                          className="w-8 h-8 md:w-10 md:h-10 rounded-full border dark:border-gray-600 object-cover"
+                          fallbackSrc="https://cdn-icons-png.flaticon.com/512/732/732007.png"
+                          placeholderColor="#f3f4f6"
+                        />
+                        <div>
+                          <h4 className="font-semibold dark:text-white">{job.jobTitle}</h4>
+                          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                            {(job.companyId && job.companyId.address) || 'Remote'} • ${job.pricePerHour}/hr
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Date - 15% width on desktop */}
+                      <div className="hidden md:block md:w-[15%]">
+                        <p className="text-xs md:text-sm text-gray-400 dark:text-gray-500">
+                          {formatDate(job.createdAt)}
                         </p>
                       </div>
+                      
+                      {/* Status and Bookmark - 25% width on desktop */}
+                      <div className="flex items-center md:w-[25%] justify-between md:justify-around">
+                        <span className={`text-xs md:text-sm font-medium ${
+                          job.jobStatus === 'open' ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+                        }`}>
+                          ✔ {job.jobStatus.charAt(0).toUpperCase() + job.jobStatus.slice(1)}
+                        </span>
+                        <button 
+                          onClick={() => toggleBookmark(job._id)}
+                          className="focus:outline-none"
+                          aria-label={job.bookMarked ? "Remove bookmark" : "Add bookmark"}
+                        >
+                          <Bookmark 
+                            className={`w-4 h-4 md:w-5 md:h-5 ${job.bookMarked ? 'fill-orange-500 text-orange-500' : 'text-gray-400 dark:text-gray-500'}`}
+                          />
+                        </button>
+                      </div>
+                      
+                      {/* View Details Button - 30% width on desktop */}
+                      <div className="md:w-[30%] flex justify-end">
+                        <button 
+                          onClick={() => navigate(`/user-JobDetails/${job._id}`)} 
+                          onMouseEnter={() => setHoveredButton(job._id)}
+                          onMouseLeave={() => setHoveredButton(null)}
+                          className={`w-full md:w-auto ${
+                            hoveredButton === job._id 
+                              ? 'bg-orange-500 text-white' 
+                              : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600'
+                          } px-4 py-2 md:px-6 md:py-3 rounded-[50px] text-sm md:text-base shadow-sm transition-colors duration-200 hover:bg-orange-500 hover:text-white hover:border-orange-500`}
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 space-x-2">
+                    <button
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`p-2 rounded-lg ${
+                        currentPage === 1
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
                     
-                    {/* Date - 15% width on desktop */}
-                    <div className="hidden md:block md:w-[15%]">
-                      <p className="text-xs md:text-sm text-gray-400 dark:text-gray-500">
-                        {formatDate(job.createdAt)}
-                      </p>
+                    <div className="flex space-x-1">
+                      {[...Array(totalPages)].map((_, index) => (
+                        <button
+                          key={index + 1}
+                          onClick={() => paginate(index + 1)}
+                          className={`px-3 py-1 rounded-lg ${
+                            currentPage === index + 1
+                              ? 'bg-orange-500 text-white'
+                              : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
                     </div>
-                    
-                    {/* Status and Bookmark - 25% width on desktop */}
-                    <div className="flex items-center md:w-[25%] justify-between md:justify-around">
-                      <span className={`text-xs md:text-sm font-medium ${
-                        job.jobStatus === 'open' ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        ✔ {job.jobStatus.charAt(0).toUpperCase() + job.jobStatus.slice(1)}
-                      </span>
-                      <button 
-                        onClick={() => toggleBookmark(job._id)}
-                        className="focus:outline-none"
-                        aria-label={job.bookMarked ? "Remove bookmark" : "Add bookmark"}
-                      >
-                        <Bookmark 
-                          className={`w-4 h-4 md:w-5 md:h-5 ${job.bookMarked ? 'fill-orange-500 text-orange-500' : 'text-gray-400 dark:text-gray-500'}`}
-                        />
-                      </button>
-                    </div>
-                    
-                    {/* View Details Button - 30% width on desktop */}
-                    <div className="md:w-[30%] flex justify-end">
-                      <button 
-                        onClick={() => navigate(`/user-JobDetails/${job._id}`)} 
-                        onMouseEnter={() => setHoveredButton(job._id)}
-                        onMouseLeave={() => setHoveredButton(null)}
-                        className={`w-full md:w-auto ${
-                          hoveredButton === job._id 
-                            ? 'bg-orange-500 text-white' 
-                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600'
-                        } px-4 py-2 md:px-6 md:py-3 rounded-[50px] text-sm md:text-base shadow-sm transition-colors duration-200 hover:bg-orange-500 hover:text-white hover:border-orange-500`}
-                      >
-                        View Details
-                      </button>
-                    </div>
+
+                    <button
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`p-2 rounded-lg ${
+                        currentPage === totalPages
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
