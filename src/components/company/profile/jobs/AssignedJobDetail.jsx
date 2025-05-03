@@ -8,6 +8,7 @@ import QRCodeModal from "./popupsButtons/QRCodeModal";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { JobStatus } from "../../../../constants/enums";
 import { getJobsByStatus } from "../../../../api/jobsApi";
+import { getWorkerLocation } from "../../../../api/locationApi";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -141,14 +142,9 @@ const AssignedJobDetail = () => {
       // Get company ID from localStorage
       const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
       
-      // Call the API to get worker location
-      const response = await fetch(`/api/apply/${companyId}/${jobId}/location`);
+      // Use the getWorkerLocation function from locationApi.js
+      const result = await getWorkerLocation(companyId, jobId);
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
       console.log("Worker location API response:", result);
       
       if (result.statusCode === 200) {

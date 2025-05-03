@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
 import time from "../../../../../assets/images/time.png";
@@ -9,6 +9,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { JobStatus } from "../../../../../constants/enums";
+import { getJobsByStatus } from "../../../../../api/jobTrackingApi";
+import { getWorkerLocation } from "../../../../../api/locationApi";
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -78,14 +80,8 @@ const InProgressJobDetail = () => {
         // Get company ID from localStorage or use a default for testing
         const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
         
-        // Call the API to get the job details
-        const response = await fetch(`/api/apply/company/${companyId}?status=${JobStatus.IN_PROGRESS}`);
-        
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        // Use the imported getJobsByStatus function
+        const result = await getJobsByStatus(companyId, JobStatus.IN_PROGRESS);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           console.log("API response:", result.data);
@@ -127,14 +123,9 @@ const InProgressJobDetail = () => {
       // Get company ID from localStorage
       const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
       
-      // Call the API to get worker location
-      const response = await fetch(`/api/apply/${companyId}/${jobId}/location`);
+      // Use the imported getWorkerLocation function from locationApi.js
+      const result = await getWorkerLocation(companyId, jobId);
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
       console.log("Worker location API response:", result);
       
       if (result.statusCode === 200) {
@@ -146,7 +137,6 @@ const InProgressJobDetail = () => {
           });
         } else {
           // Use default coordinates if data is null
-          // These are the coordinates you provided in your example
           setWorkerLocation({
             latitude: 34.1973229,
             longitude: 73.2422251
