@@ -294,9 +294,8 @@ const EditPersonalDetails = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate to education form next
+    navigate('/edit-education');
   };
 
   return (

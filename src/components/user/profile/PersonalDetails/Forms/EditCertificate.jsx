@@ -166,9 +166,8 @@ const EditCertificate = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate to license form next
+    navigate('/edit-license');
   };
 
   return (

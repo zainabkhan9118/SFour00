@@ -296,9 +296,8 @@ const EditEducation = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate to experience form next
+    navigate('/edit-experience');
   };
 
   return (

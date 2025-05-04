@@ -46,7 +46,7 @@ export default function LoginPage() {
         console.log("Session is valid, redirecting...");
         navigate(
           sessionData.role === "Job Seeker"
-            ? "/User-UserProfile"
+            ? "/User-PersonalDetails"
             : "/company-profile"
         );
       } else {
@@ -173,28 +173,27 @@ export default function LoginPage() {
     localStorage.setItem("sessionData", JSON.stringify(sessionData));
 
     // For Job Seekers, use the EXACT same approach that works in WorkApplied.jsx
+    let jobSeekerId = null;
     if (userData.role === "Job Seeker") {
       console.log("Job Seeker detected, fetching job seeker document ID...");
-      const jobSeekerId = await fetchAndStoreJobSeekerId(firebaseId);
+      jobSeekerId = await fetchAndStoreJobSeekerId(firebaseId);
 
       if (jobSeekerId) {
-        // console.log("✅ Job seeker ID successfully stored: " + jobSeekerId);
-        // console.log("⚠️ User ID (login response): " + userId);
-        // console.log("⚠️ Job Seeker ID (document _id): " + jobSeekerId);
+        console.log("✅ Job seeker ID successfully stored: " + jobSeekerId);
+        console.log("⚠️ User ID (login response): " + userId);
+        console.log("⚠️ Job Seeker ID (document _id): " + jobSeekerId);
 
         if (userId === jobSeekerId) {
           console.error("❌ ERROR: User ID and Job Seeker ID are the same!");
         } else {
-          console.log(
-            "✅ VERIFIED: User ID and Job Seeker ID are different as expected"
-          );
+          console.log("✅ VERIFIED: User ID and Job Seeker ID are different as expected");
         }
       } else {
         console.warn("⚠️ Could not fetch job seeker document ID");
       }
     }
 
-    return userData.role;
+    return { role: userData.role, hasJobSeekerId: !!jobSeekerId };
   };
 
   const handleSignIn = async (values, { setFieldError }) => {
@@ -208,25 +207,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // Clear any previous user data before signing in
-      localStorage.removeItem("profileName");
-      localStorage.removeItem("profileDp");
-      localStorage.removeItem("sessionData");
-      localStorage.removeItem("user");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("jobSeekerId");
-      localStorage.removeItem("currentUserId");
-      localStorage.removeItem("certificateId");
-      localStorage.removeItem("licenseId");
-      localStorage.removeItem("bankDetailId");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("profileComplete");
-      
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const firebaseId = await user.getIdToken(true);
       console.log("Firebase ID Token:", firebaseId);
@@ -241,16 +222,26 @@ export default function LoginPage() {
 
       console.log("Backend login response:", response.data);
 
-      if (
-        (response.status === 200 || response.status === 201) &&
-        response.data?.data
-      ) {
+      if ((response.status === 200 || response.status === 201) && response.data?.data) {
         const userData = response.data.data;
 
-        // Store user data and get role
-        const role = await storeUserData(firebaseId, userData);
-
-        // Set success message and show popup instead of toast
+        // Store user data and check jobSeekerId status
+        const { role, hasJobSeekerId } = await storeUserData(firebaseId, userData);
+        
+        // For Job Seekers, strictly verify jobSeekerId existence
+        if (role === "Job Seeker") {
+          const storedJobSeekerId = localStorage.getItem("jobSeekerId");
+          
+          if (!hasJobSeekerId || !storedJobSeekerId) {
+            console.log("No valid jobSeekerId found, redirecting to profile creation");
+            setSuccessMessage("Please complete your profile!");
+            setRedirectPath("/edit-personal-details");
+            setShowSuccessPopup(true);
+            return; // Important: stop here to ensure redirect happens
+          }
+        }
+        
+        // If we get here, either it's a company user or a job seeker with valid jobSeekerId
         setSuccessMessage("Login successful!");
         setShowSuccessPopup(true);
         
@@ -303,17 +294,27 @@ export default function LoginPage() {
 
       console.log("Google Backend response:", response.data);
 
-      if (
-        (response.status === 200 || response.status === 201) &&
-        response.data?.data
-      ) {
+      if ((response.status === 200 || response.status === 201) && response.data?.data) {
         const userData = response.data.data;
 
-        // Store user data and get role
-        const role = await storeUserData(idToken, userData);
+        // Store user data and check jobSeekerId status
+        const { role, hasJobSeekerId } = await storeUserData(idToken, userData);
+        
+        // For Job Seekers, strictly verify jobSeekerId existence
+        if (role === "Job Seeker") {
+          const storedJobSeekerId = localStorage.getItem("jobSeekerId");
+          
+          if (!hasJobSeekerId || !storedJobSeekerId) {
+            console.log("No valid jobSeekerId found, redirecting to profile creation");
+            setSuccessMessage("Please complete your profile!");
+            setRedirectPath("/edit-personal-details");
+            setShowSuccessPopup(true);
+            return; // Important: stop here to ensure redirect happens
+          }
+        }
 
-        // Show success popup instead of toast
-        setSuccessMessage("Google login successful!");
+        // If we get here, either it's a company user or a job seeker with valid jobSeekerId
+        setSuccessMessage("Login successful!");
         setShowSuccessPopup(true);
         
         // Set redirect path based on role

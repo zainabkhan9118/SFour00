@@ -311,9 +311,8 @@ const EditExperience = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate to certificate form next
+    navigate('/edit-certificate');
   };
 
   const handleCloseErrorPopup = () => {

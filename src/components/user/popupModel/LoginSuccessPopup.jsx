@@ -4,6 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { FiCheckCircle } from 'react-icons/fi';
 import { ThemeContext } from '../../../context/ThemeContext';
 
+const profileSections = [
+  '/edit-personal-details',
+  '/edit-education',
+  '/edit-experience',
+  '/edit-certificate',
+  '/edit-license',
+  '/edit-utr-number'
+];
+
 const LoginSuccessPopup = ({ message, redirectPath, onClose }) => {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
@@ -16,11 +25,26 @@ const LoginSuccessPopup = ({ message, redirectPath, onClose }) => {
     };
   }, []);
 
+  // Handle sequential navigation through profile sections
+  useEffect(() => {
+    if (redirectPath === '/edit-personal-details') {
+      navigate(redirectPath);
+    }
+  }, [redirectPath, navigate]);
+
   const handleContinue = () => {
     if (onClose) {
       onClose();
     } else if (redirectPath) {
-      navigate(redirectPath);
+      // Find current section index
+      const currentIndex = profileSections.indexOf(redirectPath);
+      if (currentIndex !== -1 && currentIndex < profileSections.length - 1) {
+        // Navigate to next section
+        navigate(profileSections[currentIndex + 1]);
+      } else {
+        // If we're at the last section or path not found, navigate to user profile
+        navigate('/User-PersonalDetails');
+      }
     }
   };
 
