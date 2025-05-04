@@ -41,7 +41,7 @@ const PopupButton3 = ({ onClose, jobId }) => {
             
             // Navigate after location is shared successfully
             setTimeout(() => {
-              navigate("/User-MyWorkAssignedBook");
+              navigate("/User-MyWorkAssignedPage");
             }, 1500);
           } catch (error) {
             console.error("Error updating location:", error);

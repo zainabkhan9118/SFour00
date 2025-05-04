@@ -78,9 +78,8 @@ const EditUTRNumber = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate back to profile since this is the last step
+    navigate('/User-PersonalDetails');
   };
 
   return (

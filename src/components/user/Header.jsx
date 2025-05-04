@@ -23,8 +23,8 @@ const Header = () => {
         return "Notifications";
       case "/User-Job":
         return "Jobs";
-      case "/User-UserProfile":
-        return "Profile";
+      // case "/User-UserProfile":
+        // return "Profile";
       case "/User-WorkApplied":
         return "Work Applied";
       case "/User-MyWorkAssignedPage":

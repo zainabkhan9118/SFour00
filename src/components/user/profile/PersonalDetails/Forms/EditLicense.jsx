@@ -187,9 +187,8 @@ const EditLicense = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    if (redirectPath) {
-      navigate(redirectPath);
-    }
+    // Navigate to UTR number form next
+    navigate('/edit-utr-number');
   };
 
   const handleCloseErrorPopup = () => {

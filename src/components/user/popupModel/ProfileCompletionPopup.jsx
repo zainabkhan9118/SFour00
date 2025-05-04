@@ -16,7 +16,7 @@ const ProfileCompletionPopup = ({ onClose }) => {
   }, []);
 
   const handleCompleteProfile = () => {
-    navigate('/User-PersonalDetails');
+    navigate('/edit-personal-details');
     if (onClose) onClose();
   };
 
