@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { IoIosTimer } from "react-icons/io";
 import { FaQrcode } from "react-icons/fa";
 import { FaCalendarAlt } from "react-icons/fa"; 
@@ -9,9 +9,11 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import jsQR from "jsqr";
 import { createJob } from "../../../api/jobsApi";
+import PopupButton5 from "../../user/popupModel/PopupButton5";
+import ReactDOM from 'react-dom';
+import { IoCloseCircleOutline } from "react-icons/io5";
 
 import CompanyProfileCompletionCheck from "./CompanyProfileCompletionCheck";
-
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -260,13 +262,9 @@ const JobPosting = () => {
   const [hoveredCheckpoint, setHoveredCheckpoint] = useState(null);
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
   const [currentScanningIndex, setCurrentScanningIndex] = useState(0);
-  const [scanningStatus, setScanningStatus] = useState('waiting'); // 'waiting', 'scanning', 'success', 'error'
-  const [cameraError, setCameraError] = useState(null);
-  const [scanSuccessful, setScanSuccessful] = useState(false);
   
   // Refs
   const pointDropdownRef = useRef(null);
-  const scannerRef = useRef(null);
   
   
   const availablePoints = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -701,108 +699,60 @@ const JobPosting = () => {
   // Improved function to open scanner for a specific checkpoint
   const openScannerForCheckpoint = (index) => {
     setCurrentScanningIndex(index);
-    setScanningStatus('scanning');
-    setScanSuccessful(false);
-    setCameraError(null);
-    setShowQRScanner(true);
     
-    // Using a slight delay to ensure the QR scanner component mounts properly
-    setTimeout(() => {
-      // Request camera permissions with better error handling - trying user (front) camera first for laptops
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: "user",  // Use front camera for laptops
-            width: { ideal: 640 },
-            height: { ideal: 480 } 
-          },
-          audio: false
-        })
-        .then((stream) => {
-          console.log("Camera access granted for QR scanning");
-          // Store the stream for proper cleanup later
-          window.qrScannerStream = stream;
-          setScanningStatus('ready');
-        })
-        .catch(err => {
-          console.error("Camera permission error:", err);
-          setCameraError(`Camera access error: ${err.message || 'Unknown error'}`);
-          setScanningStatus('error');
-        });
-      } else {
-        setCameraError("Your browser doesn't support camera access");
-        setScanningStatus('error');
-      }
-    }, 300);
-  };
-  
-  // Enhanced QR code scan result handler
-  const handleScanResult = (index, result, error) => {
-    if (result && result.text) {
-      console.log("Scanned QR Code:", result.text);
-      
-      // Update the form data with the scanned QR code
-      setFormData(prevData => {
-        const newCheckpoints = [...prevData.checkpoints];
-        newCheckpoints[index].qrCodeData = result.text;
-        return {
-          ...prevData,
-          checkpoints: newCheckpoints
-        };
-      });
-      
-      // Show success state briefly before closing
-      setScanningStatus('success');
-      setScanSuccessful(true);
-      
-      // Close scanner after a short delay
-      setTimeout(() => {
-        setShowQRScanner(false);
-        stopCamera();
-      }, 1500);
-    }
+    // Create a temporary div to render the PopupButton5 component
+    const container = document.createElement('div');
+    container.id = 'qr-scanner-container';
+    document.body.appendChild(container);
     
-    if (error) {
-      // Only log errors but don't change state on every frame error
-      console.warn("QR Scan Error:", error);
-    }
-  };
-  
-  // Improved function to stop the camera properly
-  const stopCamera = () => {
-    try {
-      // Stop the stored stream if it exists (our global reference)
-      if (window.qrScannerStream) {
-        const tracks = window.qrScannerStream.getTracks();
-        tracks.forEach(track => {
-          track.stop();
-          console.log("Camera track stopped");
+    // Create a callback function to handle when QR code is scanned
+    const handleQRScan = (qrData) => {
+      if (qrData) {
+        // Update the form data with the scanned QR code
+        setFormData(prevData => {
+          const newCheckpoints = [...prevData.checkpoints];
+          newCheckpoints[index].qrCodeData = qrData;
+          return {
+            ...prevData,
+            checkpoints: newCheckpoints
+          };
         });
-        window.qrScannerStream = null;
-      }
-      
-      // Also try to find and stop any active video elements
-      const videoElements = document.querySelectorAll('video');
-      videoElements.forEach(video => {
-        if (video && video.srcObject) {
-          const stream = video.srcObject;
-          const tracks = stream.getTracks();
-          tracks.forEach(track => track.stop());
-          video.srcObject = null;
+        
+        // Clean up the container
+        if (container) {
+          document.body.removeChild(container);
         }
-      });
+      }
+    };
+    
+    // Use dynamic import to load both components
+    Promise.all([
+      import('../../user/popupModel/PopupButton5'),
+      import('react-dom/client')
+    ]).then(([{ default: PopupButton5 }, ReactDOMClient]) => {
+      // Use React 18's createRoot API
+      const root = ReactDOMClient.createRoot(container);
       
-      console.log("Camera stopped successfully");
-    } catch (err) {
-      console.error("Error stopping camera:", err);
-    }
-  };
-
-  // Close QR scanner and stop camera
-  const closeQRScanner = () => {
-    setShowQRScanner(false);
-    setScanningStatus('waiting');
-    stopCamera();
+      root.render(
+        <PopupButton5 
+          onClose5={() => {
+            // Clean up when popup is closed
+            if (container) {
+              // Unmount component using root.unmount()
+              root.unmount();
+              document.body.removeChild(container);
+            }
+          }}
+          onQRScanned={handleQRScan}
+          useQROnly={true} // Special flag to indicate we only want QR functionality
+        />
+      );
+    }).catch(err => {
+      console.error("Error loading QR scanner:", err);
+      if (container) {
+        document.body.removeChild(container);
+      }
+    });
   };
 
   // Handle adding a new checkpoint
@@ -865,304 +815,6 @@ const JobPosting = () => {
   const isPointUsed = (pointId) => {
     return formData.checkpoints.some(checkpoint => 
       checkpoint.name === `Location ${pointId}`
-    );
-  };
-
-  // Enhanced QR Scanner component with improved detection capabilities
-  const QRScannerComponent = ({ onScan }) => {
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
-    const [cameraStatus, setCameraStatus] = useState("initializing"); // initializing, active, error
-    const streamRef = useRef(null);
-
-    useEffect(() => {
-      console.log("QR Scanner component mounted");
-      let animationFrame = null;
-      let mounted = true;
-
-      // Initialize camera with better settings for QR scanning
-      const initCamera = async () => {
-        console.log("Initializing camera with enhanced settings...");
-        try {
-          // Set camera constraints with more specific settings for QR scanning
-          const cameraConstraints = {
-            video: {
-              facingMode: "environment", // Try back camera first for mobile
-              width: { ideal: 1280, min: 720 },
-              height: { ideal: 720, min: 480 },
-              // Important camera settings for better QR detection
-              focusMode: "continuous", // Keep trying to focus
-              exposureMode: "auto",
-              whiteBalanceMode: "auto",
-            },
-            audio: false,
-          };
-
-          // Try to access camera with enhanced settings
-          let stream;
-          try {
-            console.log("Trying camera with enhanced settings");
-            stream = await navigator.mediaDevices.getUserMedia(cameraConstraints);
-            console.log("Successfully accessed camera with enhanced settings");
-          } catch (err) {
-            console.log("Enhanced camera settings failed, trying basic settings:", err);
-            // Fall back to basic settings
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: true,
-              audio: false
-            });
-          }
-
-          // Store reference to stream for cleanup
-          streamRef.current = stream;
-
-          if (!mounted) {
-            // Component unmounted during async operation
-            stream.getTracks().forEach((track) => track.stop());
-            return;
-          }
-
-          // Set stream to video element
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.setAttribute("playsinline", true); // required for iOS Safari
-
-            // Set important video settings that help with QR detection
-            videoRef.current.setAttribute("autoplay", true);
-
-            // Wait for video to be ready
-            videoRef.current.onloadedmetadata = () => {
-              if (!mounted) return;
-
-              videoRef.current
-                .play()
-                .then(() => {
-                  console.log("Camera video playing successfully");
-                  setCameraStatus("active");
-
-                  // Request animation frame for smoother experience
-                  setTimeout(() => {
-                    console.log("Starting QR scanning");
-                    scanQRCode();
-                  }, 500);
-                })
-                .catch((err) => {
-                  console.error("Error playing video:", err);
-                  onScan(null, {
-                    name: "PlayError",
-                    message: "Could not play camera video: " + err.message,
-                  });
-                  setCameraStatus("error");
-                });
-            };
-          }
-        } catch (err) {
-          console.error("Camera initialization error:", err);
-          if (mounted) {
-            onScan(null, { name: "CameraError", message: err.message });
-            setCameraStatus("error");
-          }
-        }
-      };
-
-      // Function to scan QR code from video frame using jsQR
-      const scanQRCode = () => {
-        if (
-          !mounted ||
-          !videoRef.current ||
-          !canvasRef.current ||
-          cameraStatus !== "active"
-        ) {
-          return;
-        }
-
-        try {
-          const video = videoRef.current;
-          const canvas = canvasRef.current;
-          const context = canvas.getContext("2d", { willReadFrequently: true });
-
-          // Only process when video is actually playing
-          if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            // Set canvas size to match video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            // Draw current video frame to canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Apply image processing to enhance contrast for better QR detection
-            try {
-              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-              
-              // Use jsQR for detection
-              const code = jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height,
-                {
-                  inversionAttempts: "attemptBoth", // Try both inverted and non-inverted images
-                }
-              );
-
-              if (code) {
-                console.log("QR code found:", code.data);
-                onScan({ text: code.data }, null);
-
-                // Visual feedback (draw box around QR code)
-                context.beginPath();
-                context.lineWidth = 4;
-                context.strokeStyle = "#FF5700";
-                context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-                context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
-                context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
-                context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
-                context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-                context.stroke();
-                return;
-              }
-              
-              // Try browser's BarcodeDetector API if available
-              if (window.BarcodeDetector) {
-                const barcodeDetector = new window.BarcodeDetector({
-                  formats: ["qr_code"],
-                });
-                
-                barcodeDetector.detect(imageData)
-                  .then((barcodes) => {
-                    if (barcodes.length > 0) {
-                      const qrData = barcodes[0].rawValue;
-                      console.log("QR code detected using BarcodeDetector:", qrData);
-                      onScan({ text: qrData }, null);
-                      return;
-                    }
-                    
-                    // Continue scanning if no QR code found
-                    if (mounted) {
-                      animationFrame = requestAnimationFrame(scanQRCode);
-                    }
-                  })
-                  .catch((err) => {
-                    console.warn("BarcodeDetector error:", err);
-                    // Continue scanning
-                    if (mounted) {
-                      animationFrame = requestAnimationFrame(scanQRCode);
-                    }
-                  });
-              } else {
-                // No QR code found with jsQR and BarcodeDetector not available, continue scanning
-                if (mounted) {
-                  animationFrame = requestAnimationFrame(scanQRCode);
-                }
-              }
-            } catch (err) {
-              console.error("Error in QR detection:", err);
-              if (mounted) {
-                animationFrame = requestAnimationFrame(scanQRCode);
-              }
-            }
-          } else {
-            // Video not ready yet, continue scanning
-            if (mounted) {
-              animationFrame = requestAnimationFrame(scanQRCode);
-            }
-          }
-        } catch (err) {
-          console.error("Error in scan loop:", err);
-          // Try to continue scanning
-          if (mounted) {
-            animationFrame = requestAnimationFrame(scanQRCode);
-          }
-        }
-      };
-
-      // Start camera
-      initCamera();
-
-      // Cleanup function
-      return () => {
-        console.log("QR Scanner component unmounting, cleaning up...");
-        mounted = false;
-
-        // Cancel animation frame if active
-        if (animationFrame) {
-          cancelAnimationFrame(animationFrame);
-        }
-
-        // Stop camera stream
-        if (streamRef.current) {
-          const tracks = streamRef.current.getTracks();
-          tracks.forEach((track) => {
-            track.stop();
-            console.log("Camera track stopped");
-          });
-          streamRef.current = null;
-        }
-
-        // Clear video source
-        if (videoRef.current && videoRef.current.srcObject) {
-          videoRef.current.srcObject = null;
-        }
-
-        console.log("Camera cleanup complete");
-      };
-    }, [onScan]);
-
-    return (
-      <div className="w-full h-full relative">
-        {cameraStatus === "error" ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-            <div className="text-center p-4">
-              <div className="text-red-500 text-xl mb-2">Camera Error</div>
-              <p className="text-gray-600">
-                Could not access your camera. Please check your permissions.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover rounded-lg"
-              playsInline
-              muted
-            />
-
-            {/* Hidden canvas for processing */}
-            <canvas
-              ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full"
-              style={{ display: "none" }}
-            />
-
-            {/* Scanning visual guide */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              {/* Center scanning box */}
-              <div className="w-64 h-64 border-2 border-orange-500 rounded-lg relative">
-                {/* Corner elements for better visual guidance */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-500"></div>
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-500"></div>
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-orange-500"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-orange-500"></div>
-
-                {/* Scanning animation */}
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-orange-500 animate-[scan_2s_ease-in-out_infinite]"></div>
-              </div>
-
-              {/* Instructions */}
-              <p className="mt-4 text-sm text-white bg-black bg-opacity-60 px-3 py-1 rounded-full">
-                Hold QR code in view to scan
-              </p>
-            </div>
-
-            {/* Status indicator */}
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs p-1 rounded">
-              {cameraStatus === "initializing"
-                ? "Starting camera..."
-                : "Camera active"}
-            </div>
-          </>
-        )}
-      </div>
     );
   };
 
@@ -1603,63 +1255,6 @@ const JobPosting = () => {
                   Confirm Location
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced QR Scanner Modal */}
-      {showQRScanner && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl flex flex-col p-6 w-[90%] max-w-md h-auto relative">
-            <div className="w-12 h-12 rounded-full bg-[#E7F0FA] absolute top-[-20px] right-[-3px] flex items-center justify-center">
-              <button
-                onClick={closeQRScanner}
-                className="text-gray-500 focus:outline-none"
-              >
-                <span className="text-4xl text-orange-400">&times;</span>
-              </button>
-            </div>
-            
-            <div className="flex flex-col justify-center items-center w-full h-[400px]">
-              <h3 className="text-xl font-semibold mb-4">
-                Scan QR Code for {formData.checkpoints[currentScanningIndex]?.name || ''}
-              </h3>
-              
-              {scanningStatus === 'error' ? (
-                <div className="text-center p-4">
-                  <div className="text-red-500 mb-3 text-lg">❌ Camera Error</div>
-                  <p className="text-gray-700">{cameraError || 'Could not access camera'}</p>
-                  <button
-                    onClick={closeQRScanner}
-                    className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  >
-                    Close
-                  </button>
-                </div>
-              ) : scanSuccessful ? (
-                <div className="text-center p-4">
-                  <div className="text-green-500 mb-3 text-5xl">✓</div>
-                  <p className="text-gray-700 font-medium">QR Code successfully scanned!</p>
-                  <p className="text-blue-600 mt-2 break-all">{formData.checkpoints[currentScanningIndex]?.qrCodeData}</p>
-                </div>
-              ) : (
-                <div className="w-full flex flex-col items-center">
-                  <div className="w-[280px] h-[280px] relative overflow-hidden rounded-lg border-4 border-gray-300">
-                    <QRScannerComponent onScan={(result, error) => handleScanResult(currentScanningIndex, result, error)} />
-                    
-                    {/* Debug info to check camera status */}
-                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs p-1 rounded">
-                      Camera active
-                    </div>
-                  </div>
-                  
-                  <span className="mt-4 text-gray-600 text-sm flex items-center">
-                    <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2 animate-pulse"></span>
-                    Position QR code in the frame to scan
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </div>

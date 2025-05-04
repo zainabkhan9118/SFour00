@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useContext, useRef } from "react";
+
 import { FaSearch, FaTimes, FaCog } from "react-icons/fa";
 import useContactSearch from "../../../hooks/useContactSearch";
 import { collection, getDocs, query, where, limit, startAfter } from "firebase/firestore";
@@ -7,9 +9,11 @@ import LoadingSpinner from "../../common/LoadingSpinner";
 import axios from 'axios';
 import { ThemeContext } from "../../../context/ThemeContext";
 
+
 const PAGE_SIZE = 5; // Reduced to 5 to better manage the loading
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
+
 
 
 const ChatSidebar = ({ onSelect, selectedContact }) => {
@@ -17,11 +21,13 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [lastDoc, setLastDoc] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const addedUserIds = useRef(new Set());
   const containerRef = useRef(null);
+
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   const isUserAdded = (firebaseId, seekerId) => {
@@ -201,7 +207,9 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
       theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'
     }`}>
       <div className={`p-4 border-b ${theme === 'dark' ? 'border-gray-700' : ''}`}>
+
         {/* ... existing header code ... */}
+
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : ''}`}>Messages</h2>
@@ -314,11 +322,13 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
           ))
         ) : (
           <li className={`p-6 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No matches found</li>
+
         )}
         {isFetching && (
           <div className="p-4 flex justify-center">
             <LoadingSpinner />
           </div>
+
         )}
       </ul>
     </div>

@@ -115,10 +115,12 @@ export const enableJobAssignment = async (jobId, jobSeekerId) => {
     
     const response = await axios.patch(
       `${BASE_URL}/apply/${jobId}/enable-assignment`, 
-      { isAssignable: true },
+      { 
+        isAssignable: true,
+        jobSeekerId: jobSeekerId 
+      },
       {
         headers: {
-          'jobSeekerId': jobSeekerId,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
@@ -200,6 +202,41 @@ export const toggleJobBookmark = async (jobId, isBookmarked) => {
     return response.data;
   } catch (error) {
     console.error('Error toggling job bookmark:', error);
+    throw error;
+  }
+};
+
+/**
+ * Assign a job to a specific job seeker
+ * @param {string} jobId - The ID of the job
+ * @param {string} jobSeekerId - The ID of the job seeker
+ * @returns {Promise} - Promise with the response data
+ */
+export const assignJob = async (jobId, jobSeekerId) => {
+  try {
+    console.log('Assigning job ID:', jobId, 'to job seeker ID:', jobSeekerId);
+    
+    // Step 1: First enable assignment for this job-seeker combination
+    const enableResponse = await enableJobAssignment(jobId, jobSeekerId);
+    console.log('Job assignment enabled:', enableResponse);
+    
+    // Step 2: Then make the actual assignment
+    const response = await axios.post(
+      `${BASE_URL}/apply/${jobId}/assign`, 
+      { 
+        jobSeekerId: jobSeekerId 
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error assigning job:', error);
     throw error;
   }
 };

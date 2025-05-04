@@ -407,10 +407,10 @@ const QRScannerComponent = ({ onScan }) => {
   );
 };
 
-const PopupButton5 = ({ onClose, onClose5, jobId }) => {
+const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned }) => {
   const [showPopup6, setShowPopup6] = useState(false);
   const buttonRef = useRef();
-  const [showScanner, setShowScanner] = useState(false);
+  const [showScanner, setShowScanner] = useState(useQROnly); // Auto-show scanner in QR-only mode
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -565,6 +565,12 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
       setShowScanner(false);
       setScanSuccessful(true);
       stopCameraStream();
+
+      // If we're in QR-only mode, call the callback with the data
+      if (useQROnly && onQRScanned) {
+        onQRScanned(result.text);
+        closeCameraAndPopup(); // Close the popup after successful scan in QR-only mode
+      }
     }
 
     if (error) {
@@ -687,7 +693,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50"
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative"
+            className={`bg-white dark:bg-gray-800 rounded-xl flex flex-col justify-center items-center p-6 w-[90%] max-w-md h-auto md:w-[500px] lg:w-[561px] relative ${useQROnly ? 'h-[400px]' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -700,7 +706,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
               </button>
             </div>
 
-            {showScanner ? (
+            {showScanner || useQROnly ? (
               <div className="flex flex-col justify-center items-center w-full h-[400px]">
                 <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Scan QR Code</h3>
 
@@ -711,7 +717,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                       {cameraError || "Could not access camera"}
                     </p>
                     <button
-                      onClick={() => setShowScanner(false)}
+                      onClick={() => useQROnly ? closeCameraAndPopup() : setShowScanner(false)}
                       className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
                     >
                       Close
@@ -724,6 +730,14 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                       QR Code successfully scanned!
                     </p>
                     <p className="text-blue-600 dark:text-blue-400 mt-2 break-all">{qrData}</p>
+                    {useQROnly && (
+                      <button
+                        onClick={closeCameraAndPopup}
+                        className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                      >
+                        Use This Value
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="w-full flex flex-col items-center">
@@ -736,8 +750,23 @@ const PopupButton5 = ({ onClose, onClose5, jobId }) => {
                       Position QR code in the frame to scan
                     </span>
 
+                    {useQROnly && (
+                      <button
+                        onClick={() => {
+                          const mockQrCode = "MOCK-QR-CODE-" + Math.floor(Math.random() * 10000);
+                          if (onQRScanned) {
+                            onQRScanned(mockQrCode);
+                          }
+                          closeCameraAndPopup();
+                        }}
+                        className="mt-4 text-xs text-blue-500 dark:text-blue-400 underline"
+                      >
+                        Use test QR code (for demo)
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => setShowScanner(false)}
+                      onClick={() => useQROnly ? closeCameraAndPopup() : setShowScanner(false)}
                       className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300"
                     >
                       Cancel Scan

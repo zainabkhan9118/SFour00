@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import ChatSidebar from "./ChatSidebar";
 import MessageArea from "./MessageArea"; 
 import { FaArrowLeft, FaBars } from "react-icons/fa";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 const Chat = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Handle selecting a contact on mobile view
   const handleContactSelect = (contact) => {
@@ -17,15 +19,15 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-screen">
-
-
+    <div className={`flex h-screen ${theme === 'dark' ? 'bg-gray-900' : ''}`}>
       <div className="flex flex-1 flex-col md:flex-row relative w-full">
         {/* Mobile header with toggle buttons */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b z-20">
+        <div className={`md:hidden flex items-center justify-between p-4 border-b z-20 ${
+          theme === 'dark' ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800'
+        }`}>
           <button 
             onClick={() => setShowSidebar(!showSidebar)} 
-            className="text-gray-700 p-1"
+            className={`p-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
           >
             <FaBars size={20} />
           </button>
@@ -58,7 +60,9 @@ const Chat = () => {
                 onBackClick={() => setShowChatSidebar(true)} 
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className={`flex items-center justify-center h-full ${
+                theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'text-gray-500'
+              }`}>
                 Select a job seeker to start chatting
               </div>
             )}
