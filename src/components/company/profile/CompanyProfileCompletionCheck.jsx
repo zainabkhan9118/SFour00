@@ -6,9 +6,17 @@ import CompanyProfileCompletionPopup from './CompanyProfileCompletionPopup';
 
 const CompanyProfileCompletionCheck = ({ children }) => {
   const navigate = useNavigate();
-  const [isProfileComplete, setIsProfileComplete] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false); // Default to false for new users
   const [isChecking, setIsChecking] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
+
+  // Initialize from local storage to prevent incorrect popup on initial render
+  useEffect(() => {
+    const storedProfileStatus = localStorage.getItem('companyProfileComplete');
+    if (storedProfileStatus) {
+      setIsProfileComplete(JSON.parse(storedProfileStatus));
+    }
+  }, []);
 
   useEffect(() => {
     const checkProfileCompleteness = async () => {
@@ -48,19 +56,51 @@ const CompanyProfileCompletionCheck = ({ children }) => {
                 false;
                 
               const profileComplete = mainFieldsComplete && (data.manager ? managerFieldsComplete : true);
+              
+              // Store completion status in localStorage
+              localStorage.setItem('companyProfileComplete', JSON.stringify(profileComplete));
+              
+              // For newly registered user - show popup if:
+              // 1. Profile is incomplete AND
+              // 2. We don't have a specific "seen popup" flag set
+              const isNewRegistration = !localStorage.getItem('profilePopupShown');
+              if (!profileComplete && isNewRegistration) {
+                setShowPopup(true);
+                // Set a flag that we've shown the popup
+                localStorage.setItem('profilePopupShown', 'true');
+              }
+              
               setIsProfileComplete(profileComplete);
             } else {
+              // No profile data - must be new user
               setIsProfileComplete(false);
+              localStorage.setItem('companyProfileComplete', JSON.stringify(false));
+              
+              // For a new user with no profile, always show the popup
+              const isNewRegistration = !localStorage.getItem('profilePopupShown');
+              if (isNewRegistration) {
+                setShowPopup(true);
+                localStorage.setItem('profilePopupShown', 'true');
+              }
             }
           } catch (error) {
             console.error("Error checking profile completeness:", error);
             setIsProfileComplete(false);
+            localStorage.setItem('companyProfileComplete', JSON.stringify(false));
+            
+            // For error case, assume new user
+            const isNewRegistration = !localStorage.getItem('profilePopupShown');
+            if (isNewRegistration) {
+              setShowPopup(true);
+              localStorage.setItem('profilePopupShown', 'true');
+            }
           } finally {
             setIsChecking(false);
           }
         } else {
           setIsProfileComplete(false);
           setIsChecking(false);
+          localStorage.setItem('companyProfileComplete', JSON.stringify(false));
         }
       });
       

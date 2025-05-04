@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, useRef } from "react";
 
 import { FaSearch, FaTimes, FaCog } from "react-icons/fa";
@@ -10,7 +9,7 @@ import axios from 'axios';
 import { ThemeContext } from "../../../context/ThemeContext";
 
 
-const PAGE_SIZE = 5; // Reduced to 5 to better manage the loading
+const PAGE_SIZE = 5; 
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -27,8 +26,39 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
   const [isFetching, setIsFetching] = useState(false);
   const addedUserIds = useRef(new Set());
   const containerRef = useRef(null);
+  const initialLoadDone = useRef(false);
 
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
+  // Check local storage for cached contacts on component mount
+  useEffect(() => {
+    const cachedContacts = localStorage.getItem('cachedCompanyChatContacts');
+    if (cachedContacts) {
+      try {
+        const parsedContacts = JSON.parse(cachedContacts);
+        if (Array.isArray(parsedContacts) && parsedContacts.length > 0) {
+          setContacts(parsedContacts);
+          // Update the tracking sets
+          parsedContacts.forEach(contact => {
+            addedUserIds.current.add(contact.firebaseId);
+            if (contact.id) addedUserIds.current.add(contact.id);
+          });
+          setLoading(false);
+          initialLoadDone.current = true;
+        }
+      } catch (err) {
+        console.error("Error parsing cached contacts:", err);
+        // If there's an error with the cached data, proceed with fresh load
+      }
+    }
+  }, []);
+
+  // Cache contacts when they update
+  useEffect(() => {
+    if (contacts.length > 0) {
+      localStorage.setItem('cachedCompanyChatContacts', JSON.stringify(contacts));
+    }
+  }, [contacts]);
 
   const isUserAdded = (firebaseId, seekerId) => {
     return addedUserIds.current.has(firebaseId) || 
@@ -153,17 +183,19 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
     }
   };
 
-  // Reset when component mounts
+  // Reset when component mounts - but only if we didn't restore from cache
   useEffect(() => {
-    const resetAndFetch = () => {
-      setLastDoc(null);
-      setHasMore(true);
-      setContacts([]);
-      addedUserIds.current.clear();
-      fetchNextBatch();
-    };
-    
-    resetAndFetch();
+    if (!initialLoadDone.current) {
+      const resetAndFetch = () => {
+        setLastDoc(null);
+        setHasMore(true);
+        setContacts([]);
+        addedUserIds.current.clear();
+        fetchNextBatch();
+      };
+      
+      resetAndFetch();
+    }
   }, []);
 
   // Setup scroll listener for infinite loading

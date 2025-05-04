@@ -14,6 +14,12 @@ const CompanyProfileCompletionPopup = ({ onClose }) => {
   }, []);
 
   const handleCompleteProfile = () => {
+    // Set profile status as incomplete
+    localStorage.setItem('companyProfileComplete', 'false');
+    
+    // Remove the "seen popup" flag so popup will appear again if they don't complete the profile
+    localStorage.removeItem('profilePopupShown');
+    
     navigate('/edit-company-profile');
     if (onClose) onClose();
   };
@@ -31,20 +37,18 @@ const CompanyProfileCompletionPopup = ({ onClose }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mt-4">Complete Your Company Profile</h3>
-          <div className="mt-2">
-            <p className="text-sm text-gray-500">
-              You need to complete your company profile before posting jobs. 
-              A complete profile helps job seekers understand your company better and 
-              makes your job postings more effective. Please fill in all required information.
-            </p>
-          </div>
+          <h3 className="text-lg font-medium text-gray-900 mt-2">Complete Your Company Profile</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            You need to complete your company profile before posting jobs. A complete profile helps job seekers understand your company better and makes your job postings more effective.
+          </p>
         </div>
         <div className="mt-5 sm:mt-6 flex space-x-3">
           <button
             type="button"
             className="inline-flex justify-center w-1/2 rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-300 text-base font-medium text-gray-700 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            onClick={onClose}
+            onClick={() => {
+              onClose();
+            }}
           >
             Later
           </button>

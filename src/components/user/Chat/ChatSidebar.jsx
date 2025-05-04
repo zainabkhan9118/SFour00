@@ -8,7 +8,7 @@ import axios from "axios";
 import { ThemeContext } from "../../../context/ThemeContext";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
-const PAGE_SIZE = 1; 
+const PAGE_SIZE = 5; 
 
 const ChatSidebar = ({ onSelect, selectedContact }) => {
   const [contacts, setContacts] = useState([]);
@@ -22,6 +22,37 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
   const selectedContactId = selectedContact?.firebaseId || "";
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const containerRef = useRef(null);
+  const initialLoadDone = useRef(false);
+
+  // Check local storage for cached contacts on component mount
+  useEffect(() => {
+    const cachedContacts = localStorage.getItem('cachedChatContacts');
+    if (cachedContacts) {
+      try {
+        const parsedContacts = JSON.parse(cachedContacts);
+        if (Array.isArray(parsedContacts) && parsedContacts.length > 0) {
+          setContacts(parsedContacts);
+          // Update the tracking sets
+          parsedContacts.forEach(contact => {
+            addedFirebaseIds.current.add(contact.firebaseId);
+            if (contact.id) addedCompanyIds.current.add(contact.id);
+          });
+          setLoading(false);
+          initialLoadDone.current = true;
+        }
+      } catch (err) {
+        console.error("Error parsing cached contacts:", err);
+        // If there's an error with the cached data, proceed with fresh load
+      }
+    }
+  }, []);
+
+  // Cache contacts when they update
+  useEffect(() => {
+    if (contacts.length > 0) {
+      localStorage.setItem('cachedChatContacts', JSON.stringify(contacts));
+    }
+  }, [contacts]);
 
   const isCompanyAdded = (firebaseId, companyId) => {
     return addedFirebaseIds.current.has(firebaseId) || 
@@ -57,74 +88,74 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
         return;
       }
 
-      const doc = querySnapshot.docs[0];
-      setLastDoc(doc); // Update lastDoc immediately
+      // Track the last document for pagination
+      setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
 
-      // Skip if this is current user
-      if (doc.id === currentUser.uid) {
-        setIsFetching(false);
-        fetchNextCompany(); // Try next company
-        return;
-      }
+      // Process each company document
+      const fetchPromises = querySnapshot.docs.map(async (doc) => {
+        // Skip if this is current user
+        if (doc.id === currentUser.uid) return null;
 
-      try {
-        const response = await axios.get(`${BASEURL}/company`, {
-          headers: {
-            "firebase-id": doc.id
+        // Skip if already added
+        if (addedFirebaseIds.current.has(doc.id)) return null;
+
+        try {
+          const response = await axios.get(`${BASEURL}/company`, {
+            headers: {
+              "firebase-id": doc.id
+            }
+          });
+          
+          if (response.data?.data) {
+            const detailedCompany = response.data.data;
+            const companyId = detailedCompany._id;
+
+            // Check if either firebaseId or companyId is already added
+            if (isCompanyAdded(doc.id, companyId)) return null;
+
+            // Add both IDs to Sets before processing
+            addedFirebaseIds.current.add(doc.id);
+            if (companyId) {
+              addedCompanyIds.current.add(companyId);
+            }
+
+            const companyData = doc.data();
+            return {
+              firebaseId: doc.id,
+              id: companyId || doc.id,
+              name: detailedCompany.companyName || companyData.companyName || "Unknown Company",
+              role: "Company",
+              avatar: detailedCompany.companyLogo || "https://i.pravatar.cc/100",
+              time: "Now",
+              isOnline: true,
+              address: detailedCompany.address || "",
+              bio: detailedCompany.bio || "",
+              owner: detailedCompany.owner || "",
+              message: detailedCompany.bio ? 
+                (detailedCompany.bio.length > 50 ? detailedCompany.bio.substring(0, 47) + "..." : detailedCompany.bio) 
+                : "Click to start chatting",
+              companyProfile: detailedCompany
+            };
           }
-        });
-        
-        if (response.data?.data) {
-          const detailedCompany = response.data.data;
-          const companyId = detailedCompany._id;
-
-          // Check if either firebaseId or companyId is already added
-          if (isCompanyAdded(doc.id, companyId)) {
-            setIsFetching(false);
-            fetchNextCompany(); // Try next company
-            return;
-          }
-
-          // Add both IDs to Sets before processing
-          addedFirebaseIds.current.add(doc.id);
-          if (companyId) {
-            addedCompanyIds.current.add(companyId);
-          }
-
-          const companyData = doc.data();
-          const basicContactData = {
-            firebaseId: doc.id,
-            id: companyId || doc.id,
-            name: detailedCompany.companyName || companyData.companyName || "Unknown Company",
-            role: "Company",
-            message: "Click to start chatting",
-            avatar: detailedCompany.companyLogo || "https://i.pravatar.cc/100",
-            time: "Now",
-            isOnline: true,
-            address: detailedCompany.address || "",
-            bio: detailedCompany.bio || "",
-            owner: detailedCompany.owner || "",
-            message: detailedCompany.bio ? 
-              (detailedCompany.bio.length > 50 ? detailedCompany.bio.substring(0, 47) + "..." : detailedCompany.bio) 
-              : "Click to start chatting",
-            companyProfile: detailedCompany
-          };
-
-          setContacts(prev => [...prev, basicContactData]);
+          return null;
+        } catch (err) {
+          console.warn("[ChatSidebar] Could not fetch company details:", {
+            companyId: doc.id,
+            error: err.message
+          });
+          return null;
         }
-      } catch (err) {
-        console.warn("[ChatSidebar] Could not fetch company details:", {
-          companyId: doc.id,
-          error: err.message
-        });
-        // Remove from Sets if we failed to add it
-        addedFirebaseIds.current.delete(doc.id);
-        if (response?.data?.data?._id) {
-          addedCompanyIds.current.delete(response.data.data._id);
-        }
-        // Try next company
-        setIsFetching(false);
-        fetchNextCompany();
+      });
+
+      // Wait for all promises to resolve
+      const results = await Promise.all(fetchPromises);
+      const newContacts = results.filter(Boolean);
+
+      if (newContacts.length > 0) {
+        setContacts(prev => [...prev, ...newContacts]);
+      } else if (hasMore) {
+        // If we got no new contacts but there might be more, try fetching again
+        setTimeout(() => fetchNextCompany(), 100);
       }
     } catch (error) {
       console.error("[ChatSidebar] Error fetching companies:", error);
@@ -135,18 +166,20 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
     }
   };
 
-  // Reset when component mounts
+  // Reset when component mounts - but only if we didn't restore from cache
   useEffect(() => {
-    const resetAndFetch = () => {
-      setLastDoc(null);
-      setHasMore(true);
-      setContacts([]);
-      addedFirebaseIds.current.clear();
-      addedCompanyIds.current.clear();
-      fetchNextCompany();
-    };
+    if (!initialLoadDone.current) {
+      const resetAndFetch = () => {
+        setLastDoc(null);
+        setHasMore(true);
+        setContacts([]);
+        addedFirebaseIds.current.clear();
+        addedCompanyIds.current.clear();
+        fetchNextCompany();
+      };
 
-    resetAndFetch();
+      resetAndFetch();
+    }
   }, []);
 
   // Setup scroll listener for infinite loading
@@ -176,7 +209,7 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
     isSearching 
   } = useContactSearch(contacts);
 
-  if (loading) {
+  if (loading && contacts.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
         <LoadingSpinner />
