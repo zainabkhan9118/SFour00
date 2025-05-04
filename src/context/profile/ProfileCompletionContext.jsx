@@ -23,6 +23,7 @@ export const ProfileCompletionProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [profileCompletionPercentage, setProfileCompletionPercentage] = useState(0);
+  const [lastChecked, setLastChecked] = useState(0);
   // Use the imported auth instance directly
   const auth = firebaseAuth;
 
@@ -81,8 +82,26 @@ export const ProfileCompletionProvider = ({ children }) => {
   };
 
   // Function to check profile completion
-  const checkProfileCompletion = async () => {
-    setIsLoading(true);
+  const checkProfileCompletion = async (forceCheck = false) => {
+    // If we already checked recently and the profile is complete, just return true
+    // unless forceCheck is true
+    const now = Date.now();
+    if (!forceCheck && isProfileComplete && now - lastChecked < 60000) {
+      return true;
+    }
+    
+    setLastChecked(now);
+    
+    // If we're already known to be complete from localStorage, use that
+    // while we check in the background
+    const cachedComplete = localStorage.getItem("profileComplete") === "true";
+    if (!forceCheck && cachedComplete) {
+      setIsProfileComplete(true);
+      // Still check in the background to update other state
+      setIsLoading(true);
+    } else {
+      setIsLoading(true);
+    }
     
     try {
       const currentUser = auth.currentUser;
@@ -90,6 +109,7 @@ export const ProfileCompletionProvider = ({ children }) => {
         setIsProfileComplete(false);
         setProfileData(null);
         setProfileCompletionPercentage(0);
+        localStorage.removeItem("profileComplete");
         return false;
       }
 
@@ -100,6 +120,7 @@ export const ProfileCompletionProvider = ({ children }) => {
         setIsProfileComplete(false);
         setProfileData(null);
         setProfileCompletionPercentage(0);
+        localStorage.removeItem("profileComplete");
         return false;
       }
       
@@ -121,13 +142,20 @@ export const ProfileCompletionProvider = ({ children }) => {
       // Check if profile is complete
       const complete = isComplete(profile);
       setIsProfileComplete(complete);
+      
+      // Store in localStorage to avoid unnecessary checks
+      localStorage.setItem("profileComplete", complete ? "true" : "false");
+      
       return complete;
     } catch (error) {
       console.error("Error checking profile completion:", error);
-      setIsProfileComplete(false);
-      setProfileData(null);
-      setProfileCompletionPercentage(0);
-      return false;
+      // Only update state if we weren't already complete, to avoid flickering
+      if (!cachedComplete) {
+        setIsProfileComplete(false);
+        setProfileData(null);
+        setProfileCompletionPercentage(0);
+      }
+      return cachedComplete;
     } finally {
       setIsLoading(false);
     }
@@ -135,6 +163,13 @@ export const ProfileCompletionProvider = ({ children }) => {
 
   // Check profile completion on mount and when auth state changes
   useEffect(() => {
+    // Check if we've already determined the profile is complete
+    const cachedComplete = localStorage.getItem("profileComplete") === "true";
+    if (cachedComplete) {
+      setIsProfileComplete(true);
+      setIsLoading(false);
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         await checkProfileCompletion();
@@ -143,6 +178,7 @@ export const ProfileCompletionProvider = ({ children }) => {
         setProfileData(null);
         setIsLoading(false);
         setProfileCompletionPercentage(0);
+        localStorage.removeItem("profileComplete");
       }
     });
 

@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import { auth } from "../config/firebaseConfig";
 
 export const AppContext = createContext();
 
@@ -9,9 +10,38 @@ export const AppContextProvider = ({ children }) => {
   const [profileName, setProfileName] = useState(() => localStorage.getItem("profileName") || " ");
   const [profileDp, setProfileDp] = useState(() => localStorage.getItem("profileDp") || null);
   const [sessionData, setSessionData] = useState(() => JSON.parse(localStorage.getItem("sessionData")) || null);
+  const [currentAuthUser, setCurrentAuthUser] = useState(null);
 
   const BASEURL = import.meta.env.VITE_BASE_URL;
 
+  // Listen for auth changes to detect new logins
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      // If the auth user has changed (new login or logout)
+      if (JSON.stringify(user?.uid) !== JSON.stringify(currentAuthUser?.uid)) {
+        setCurrentAuthUser(user);
+        
+        // If there's no user (logout) or a new user is logging in
+        if (!user) {
+          // Clear local data on logout
+          clearSession();
+        } else {
+          // Check if this is a new user compared to stored user
+          const storedUserId = localStorage.getItem('currentUserId');
+          if (storedUserId && user.uid !== storedUserId) {
+            // This is a different user than before, clear previous user data
+            clearSession();
+            localStorage.setItem('currentUserId', user.uid);
+          } else if (!storedUserId) {
+            // First login, store the user ID
+            localStorage.setItem('currentUserId', user.uid);
+          }
+        }
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [currentAuthUser]);
 
   // Save `profileName` to localStorage whenever it changes
   useEffect(() => {
@@ -61,6 +91,8 @@ export const AppContextProvider = ({ children }) => {
     localStorage.removeItem("profileName");
     localStorage.removeItem("profileDp");
     localStorage.removeItem("sessionData");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
   };
 
   const value = {

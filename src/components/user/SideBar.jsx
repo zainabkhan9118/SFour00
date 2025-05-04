@@ -20,13 +20,21 @@ const Sidebar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
-  const { isProfileComplete, isLoading } = useProfileCompletion();
+  const { isProfileComplete, isLoading, checkProfileCompletion } = useProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   
   // Close sidebar when route changes on mobile
   useEffect(() => {
     setIsMenuOpen(false);
   }, [currentPath]);
+
+  // Check profile completion status on initial load
+  useEffect(() => {
+    // If we have a cached result indicating completion, use it
+    if (localStorage.getItem("profileComplete") !== "true") {
+      checkProfileCompletion();
+    }
+  }, []);
 
   // List of routes for easier checking
   const routes = {
@@ -72,14 +80,32 @@ const Sidebar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Handler for protected route navigation
-  const handleProtectedNavigation = (e, path) => {
+  // Handler for protected route navigation - now an async function
+  const handleProtectedNavigation = async (e, path) => {
     // Allow navigation to profile section regardless of completion status
     if (path === routes.profile) return;
     
-    // For all other sections, check if profile is complete
-    if (!isLoading && !isProfileComplete) {
-      e.preventDefault();
+    // Use cached result if available
+    if (localStorage.getItem("profileComplete") === "true") {
+      return; // Allow navigation
+    }
+    
+    // If context says we're complete and not loading, allow navigation
+    if (isProfileComplete && !isLoading) {
+      return;
+    }
+    
+    // Otherwise check profile completion
+    e.preventDefault();
+    
+    // Wait for the profile check to complete
+    const isComplete = await checkProfileCompletion(true);
+    
+    // If profile is complete, navigate to the intended path
+    if (isComplete) {
+      navigate(path);
+    } else {
+      // Otherwise show popup
       setShowProfilePopup(true);
     }
   };
@@ -107,6 +133,17 @@ const Sidebar = () => {
     // Navigate to login page after closing the popup
     navigate("/login");
   };
+
+  // Determine if we should disable options based on profile completion
+  // Use cached result when available
+  const shouldDisableOptions = () => {
+    if (localStorage.getItem("profileComplete") === "true") {
+      return false;
+    }
+    return !isLoading && !isProfileComplete;
+  };
+
+  const disabledStatus = shouldDisableOptions();
 
   return (
     <>
@@ -145,7 +182,7 @@ const Sidebar = () => {
           <Link 
             to={routes.jobs}
             onClick={(e) => handleProtectedNavigation(e, routes.jobs)}
-            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+            className={disabledStatus ? "cursor-not-allowed" : ""}
           >
             <div className={`flex items-center space-x-3 ${isActive(routes.jobs) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8`}>
               <img src={breifcase} alt="Logo" className="h-6 w-6" />
@@ -163,7 +200,7 @@ const Sidebar = () => {
           <Link 
             to={routes.chat}
             onClick={(e) => handleProtectedNavigation(e, routes.chat)}
-            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+            className={disabledStatus ? "cursor-not-allowed" : ""}
           >
             <div className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8`}>
               <img src={chat} alt="chat" className="h-7 w-7" />
@@ -174,7 +211,7 @@ const Sidebar = () => {
           <Link 
             to={routes.work}
             onClick={(e) => handleProtectedNavigation(e, routes.work)}
-            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+            className={disabledStatus ? "cursor-not-allowed" : ""}
           >
             <div className={`flex items-center space-x-3 ${isActive(routes.work) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8`}>
               <img src={work} alt="work" className="h-6 w-6" />
@@ -185,7 +222,7 @@ const Sidebar = () => {
           <Link 
             to={routes.notifications}
             onClick={(e) => handleProtectedNavigation(e, routes.notifications)}
-            className={!isLoading && !isProfileComplete ? "cursor-not-allowed" : ""}
+            className={disabledStatus ? "cursor-not-allowed" : ""}
           >
             <div className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8`}>
               <img src={notifications} alt="work" className="h-6 w-6" />

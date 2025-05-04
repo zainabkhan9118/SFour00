@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FaUser,
@@ -12,17 +12,41 @@ import {
 } from "react-icons/fa";
 import { AppContext } from "../../../context/AppContext";
 import { ThemeContext } from "../../../context/ThemeContext";
+import { auth } from "../../../config/firebaseConfig";
 
 const UserSidebar = ({ isMobile = false }) => {
-  const { profileName, profileDp } = useContext(AppContext);
+  const { profileName, profileDp, clearSession } = useContext(AppContext);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Fallback values for profile data
   const fallbackProfileName = "John Doe";
   const fallbackProfileDp = "src/assets/images/profile.jpeg";
+
+  // Check for auth state changes and clear previous user data if needed
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      // If auth user changes, update current user state
+      if (JSON.stringify(user?.uid) !== JSON.stringify(currentUser?.uid)) {
+        setCurrentUser(user);
+        
+        // If we have a user but their ID doesn't match what's in localStorage,
+        // clear the session data to prevent showing previous user's info
+        const storedUserId = localStorage.getItem('currentUserId');
+        if (user && storedUserId && user.uid !== storedUserId) {
+          clearSession();
+          localStorage.setItem('currentUserId', user.uid);
+        } else if (user && !storedUserId) {
+          localStorage.setItem('currentUserId', user.uid);
+        }
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [currentUser, clearSession]);
 
   // Check if current path matches route or is a sub-route
   const isActive = (path) => {

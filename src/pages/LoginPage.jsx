@@ -208,6 +208,20 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
+      // Clear any previous user data before signing in
+      localStorage.removeItem("profileName");
+      localStorage.removeItem("profileDp");
+      localStorage.removeItem("sessionData");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("jobSeekerId");
+      localStorage.removeItem("currentUserId");
+      localStorage.removeItem("certificateId");
+      localStorage.removeItem("licenseId");
+      localStorage.removeItem("bankDetailId");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("profileComplete");
+      
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -216,6 +230,9 @@ export default function LoginPage() {
       const user = userCredential.user;
       const firebaseId = await user.getIdToken(true);
       console.log("Firebase ID Token:", firebaseId);
+
+      // Store the current user ID for later comparison
+      localStorage.setItem("currentUserId", user.uid);
 
       // Login with backend
       const response = await axios.post(`${BASEURL}/auth/login`, {
@@ -257,10 +274,27 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // Clear any previous user data before signing in
+      localStorage.removeItem("profileName");
+      localStorage.removeItem("profileDp");
+      localStorage.removeItem("sessionData");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("jobSeekerId");
+      localStorage.removeItem("currentUserId");
+      localStorage.removeItem("certificateId");
+      localStorage.removeItem("licenseId");
+      localStorage.removeItem("bankDetailId");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("profileComplete");
+      
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
+      
+      // Store the current user ID for later comparison
+      localStorage.setItem("currentUserId", user.uid);
 
       // Login with backend
       const response = await axios.post(`${BASEURL}/auth/login`, {
