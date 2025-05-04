@@ -38,6 +38,7 @@ const SessionWrapper = ({ children }) => {
   }, [navigate, location]);
 
   const handleSessionExpirePopupClose = () => {
+    setSessionExpired(false); // Reset the state to remove the popup
     navigate("/login"); // Redirect to login when popup is closed
   };
 
