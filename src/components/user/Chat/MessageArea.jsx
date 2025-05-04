@@ -248,7 +248,6 @@ const MessageArea = ({ selectedContact, onBackClick }) => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-
       {/* Message input */}
       <div className="p-3 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2 md:gap-3">

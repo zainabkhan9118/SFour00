@@ -1,19 +1,19 @@
-// src/components/common/SessionWrapper.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import SessionExpirePopup from "../user/popupModel/SessionExpirePopup"; // Import your popup component
 
 const SessionWrapper = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [sessionExpired, setSessionExpired] = useState(false); // Track session expiration
 
   // List of public routes that don't require authentication
   const publicRoutes = [
-    "/login", 
-    "/CreateAccount", 
-    "/ForgetPassword", 
+    "/login",
+    "/CreateAccount",
+    "/ForgetPassword",
     "/ResetPassword",
-    "/email-verification"
+    "/email-verification",
   ];
 
   useEffect(() => {
@@ -21,24 +21,35 @@ const SessionWrapper = ({ children }) => {
     if (sessionData) {
       const { timestamp } = sessionData;
       const currentTime = Date.now();
-      const sessionDuration = 3600000; 
+      const sessionDuration = 3600000; // 1 hour
 
       if (currentTime - timestamp > sessionDuration) {
-        toast.error("Your session has expired. Please log in again.");
+        setSessionExpired(true); // Show the session expiration popup
         localStorage.removeItem("sessionData");
-        navigate("/login");
       }
     } else {
       // Check if the current route is a public route
-      const isPublicRoute = publicRoutes.some(route => location.pathname === route);
-      
+      const isPublicRoute = publicRoutes.some((route) => location.pathname === route);
+
       if (!isPublicRoute) {
         navigate("/login");
       }
     }
   }, [navigate, location]);
 
-  return <>{children}</>;
+  const handleSessionExpirePopupClose = () => {
+    navigate("/login"); // Redirect to login when popup is closed
+  };
+
+  return (
+    <>
+      {sessionExpired ? (
+        <SessionExpirePopup onClose={handleSessionExpirePopupClose} />
+      ) : (
+        children
+      )}
+    </>
+  );
 };
 
 export default SessionWrapper;

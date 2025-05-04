@@ -6,9 +6,6 @@ import { auth } from "../../config/firebaseConfig";
 import { ThemeContext } from "../../context/ThemeContext";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
-import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
-import { getCompanyProfile } from "../../api/companyApi";
-import CompanyProfileCompletionPopup from "./profile/CompanyProfileCompletionPopup";
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -224,12 +221,13 @@ export default function Sidebar() {
           </nav>
         )}
 
-        <Link to="/login" onClick={handleLogout}>
-          <div className="flex items-center space-x-3 text-[#395080] dark:text-gray-400 hover:text-white ml-8 mt-8">
-            <FaSignOutAlt className="h-5 w-5" />
-            <span>Logout</span>
-          </div>
-        </Link>
+        <div className="mt-auto pt-6">
+          <Link to="/login">
+            <div className="flex items-center px-6 py-2 text-lg text-gray-400 hover:bg-[#1F2A48] hover:text-white rounded-lg cursor-pointer">
+              <FaSignOutAlt className="mr-3 text-xl" /> Logout
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Logout Success Popup */}

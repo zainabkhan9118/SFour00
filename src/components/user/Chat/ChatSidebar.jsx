@@ -1,107 +1,172 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { FaSearch, FaTimes, FaCog } from "react-icons/fa";
 import useContactSearch from "../../../hooks/useContactSearch";
-import { collection, getDocs, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, onSnapshot, orderBy, limit, startAfter } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import axios from "axios";
 import { ThemeContext } from "../../../context/ThemeContext";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
+const PAGE_SIZE = 1; 
 
 const ChatSidebar = ({ onSelect, selectedContact }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const addedFirebaseIds = useRef(new Set());
+  const addedCompanyIds = useRef(new Set());
   const selectedContactId = selectedContact?.firebaseId || "";
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const containerRef = useRef(null);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      setError(null);
+  const isCompanyAdded = (firebaseId, companyId) => {
+    return addedFirebaseIds.current.has(firebaseId) || 
+           (companyId && addedCompanyIds.current.has(companyId)) ||
+           contacts.some(c => c.firebaseId === firebaseId || c.id === companyId);
+  };
+
+  const fetchNextCompany = async () => {
+    if (!hasMore || isFetching) return;
+    setIsFetching(true);
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError("Please login to view messages");
+        setLoading(false);
+        return;
+      }
+
+      const usersRef = collection(db, "Users");
+      let q = query(usersRef, where("role", "==", "Company"), limit(PAGE_SIZE));
+      
+      if (lastDoc) {
+        q = query(usersRef, where("role", "==", "Company"), startAfter(lastDoc), limit(PAGE_SIZE));
+      }
+
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setHasMore(false);
+        setIsFetching(false);
+        setLoading(false);
+        return;
+      }
+
+      const doc = querySnapshot.docs[0];
+      setLastDoc(doc); // Update lastDoc immediately
+
+      // Skip if this is current user
+      if (doc.id === currentUser.uid) {
+        setIsFetching(false);
+        fetchNextCompany(); // Try next company
+        return;
+      }
+
       try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.error("[ChatSidebar] No authenticated user");
-          setError("Please login to view messages");
-          setLoading(false);
-          return;
-        }
+        const response = await axios.get(`${BASEURL}/company`, {
+          headers: {
+            "firebase-id": doc.id
+          }
+        });
+        
+        if (response.data?.data) {
+          const detailedCompany = response.data.data;
+          const companyId = detailedCompany._id;
 
-        const usersRef = collection(db, "Users");
-        const q = query(usersRef, where("role", "==", "Company"));
-        const querySnapshot = await getDocs(q);
+          // Check if either firebaseId or companyId is already added
+          if (isCompanyAdded(doc.id, companyId)) {
+            setIsFetching(false);
+            fetchNextCompany(); // Try next company
+            return;
+          }
 
-        const companies = [];
-
-        for (const doc of querySnapshot.docs) {
-          if (doc.id === currentUser.uid) {
-            console.log("[ChatSidebar] Skipping current user:", doc.id);
-            continue;
+          // Add both IDs to Sets before processing
+          addedFirebaseIds.current.add(doc.id);
+          if (companyId) {
+            addedCompanyIds.current.add(companyId);
           }
 
           const companyData = doc.data();
-          
           const basicContactData = {
             firebaseId: doc.id,
-            id: doc.id,
-            name: companyData.companyName || "Unknown Company",
+            id: companyId || doc.id,
+            name: detailedCompany.companyName || companyData.companyName || "Unknown Company",
             role: "Company",
             message: "Click to start chatting",
-            avatar: "https://i.pravatar.cc/100",
+            avatar: detailedCompany.companyLogo || "https://i.pravatar.cc/100",
             time: "Now",
-            isOnline: true
+            isOnline: true,
+            address: detailedCompany.address || "",
+            bio: detailedCompany.bio || "",
+            owner: detailedCompany.owner || "",
+            message: detailedCompany.bio ? 
+              (detailedCompany.bio.length > 50 ? detailedCompany.bio.substring(0, 47) + "..." : detailedCompany.bio) 
+              : "Click to start chatting",
+            companyProfile: detailedCompany
           };
 
-          try {
-            const response = await axios.get(`${BASEURL}/company`, {
-              headers: {
-                "firebase-id": doc.id
-              }
-            });
-            
-            if (!response.data || !response.data.data) {
-              console.warn("[ChatSidebar] Invalid company profile response:", response.data);
-              throw new Error("Invalid company profile data");
-            }
-
-            const detailedCompany = response.data.data;
-
-            if (detailedCompany && detailedCompany._id) {
-              basicContactData.name = detailedCompany.companyName || basicContactData.name;
-              basicContactData.avatar = detailedCompany.companyLogo || basicContactData.avatar;
-              basicContactData.id = detailedCompany._id;
-              basicContactData.address = detailedCompany.address || "";
-              basicContactData.bio = detailedCompany.bio || "";
-              basicContactData.owner = detailedCompany.owner || "";
-              basicContactData.message = detailedCompany.bio ? 
-                (detailedCompany.bio.length > 50 ? detailedCompany.bio.substring(0, 47) + "..." : detailedCompany.bio) 
-                : "Click to start chatting";
-              basicContactData.companyProfile = detailedCompany;
-            } else {
-              console.warn("[ChatSidebar] Missing required company data:", detailedCompany);
-            }
-          } catch (err) {
-            console.warn("[ChatSidebar] Could not fetch company details:", {
-              companyId: doc.id,
-              error: err.message
-            });
-          }
-
-          companies.push(basicContactData);
+          setContacts(prev => [...prev, basicContactData]);
         }
+      } catch (err) {
+        console.warn("[ChatSidebar] Could not fetch company details:", {
+          companyId: doc.id,
+          error: err.message
+        });
+        // Remove from Sets if we failed to add it
+        addedFirebaseIds.current.delete(doc.id);
+        if (response?.data?.data?._id) {
+          addedCompanyIds.current.delete(response.data.data._id);
+        }
+        // Try next company
+        setIsFetching(false);
+        fetchNextCompany();
+      }
+    } catch (error) {
+      console.error("[ChatSidebar] Error fetching companies:", error);
+      setError("Failed to load companies. Please try again.");
+    } finally {
+      setIsFetching(false);
+      setLoading(false);
+    }
+  };
 
-        setContacts(companies);
-      } catch (error) {
-        console.error("[ChatSidebar] Error fetching companies:", error);
-        setError("Failed to load companies. Please try again.");
-      } finally {
-        setLoading(false);
+  // Reset when component mounts
+  useEffect(() => {
+    const resetAndFetch = () => {
+      setLastDoc(null);
+      setHasMore(true);
+      setContacts([]);
+      addedFirebaseIds.current.clear();
+      addedCompanyIds.current.clear();
+      fetchNextCompany();
+    };
+
+    resetAndFetch();
+  }, []);
+
+  // Setup scroll listener for infinite loading
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (
+        container.scrollHeight - container.scrollTop <= container.clientHeight * 1.5 &&
+        hasMore &&
+        !isFetching
+      ) {
+        fetchNextCompany();
       }
     };
 
-    fetchCompanies();
-  }, []);
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [hasMore, isFetching]);
 
   const { 
     searchQuery, 
@@ -120,7 +185,7 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
   }
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-colors duration-200">
+    <div ref={containerRef} className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-colors duration-200">
       {/* Search Bar */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">
@@ -213,6 +278,11 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
           <li className="p-6 text-center text-gray-500 dark:text-gray-400">No matches found</li>
         )}
       </ul>
+      {isFetching && (
+        <div className="p-4 flex justify-center">
+          <LoadingSpinner />
+        </div>
+      )}
     </div>
   );
 };
