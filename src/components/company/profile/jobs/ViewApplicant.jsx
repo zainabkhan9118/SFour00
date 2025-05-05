@@ -108,21 +108,11 @@ const ViewApplicant = () => {
                 return;
             }
             
-            // Proceed with assignment if job is not already assigned
-            // Use the new API function
-            const result = await enableJobAssignment(jobId, applicant._id);
-            console.log("Assignment API response:", result);
-            
-            if (result.statusCode === 200) {
-                console.log("Assignment successfully enabled");
-                // After successful API call, show the assign job modal
-                setShowButton(true);
-            } else {
-                throw new Error(result.message || "Failed to enable assignment");
-            }
+            // If not assigned, show the assignment confirmation popup
+            setShowButton(true);
         } catch (err) {
-            console.error("Error enabling assignment:", err);
-            setAssignError(err.message || "Failed to enable assignment. Please try again.");
+            console.error("Error checking assignment status:", err);
+            setAssignError(err.message || "Failed to check assignment status. Please try again.");
         } finally {
             setAssignLoading(false);
         }
@@ -136,7 +126,7 @@ const ViewApplicant = () => {
     // Display loading state
     if (loading) {
         return (
-            <div className="flex flex-col md:flex-row min-h-screen">
+            <div className={`flex flex-col md:flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
                 
                 <div className="flex flex-col flex-1 w-full">
                    
@@ -149,7 +139,7 @@ const ViewApplicant = () => {
     // Display error state
     if (error || !job) {
         return (
-            <div className="flex flex-col md:flex-row min-h-screen">
+            <div className={`flex flex-col md:flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
             
                 <div className="flex flex-col flex-1 w-full">
                   
@@ -162,7 +152,7 @@ const ViewApplicant = () => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen">
+        <div className={`flex flex-col md:flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
             
 
             <div className="flex flex-col flex-1 w-full">
@@ -192,7 +182,7 @@ const ViewApplicant = () => {
                         </div>
                     )}
 
-                    <div className="flex flex-col md:flex-row p-4 md:p-6 justify-between rounded-lg w-full bg-white shadow-sm">
+                    <div className={`flex flex-col md:flex-row p-4 md:p-6 justify-between rounded-lg w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} shadow-sm`}>
                         <div className="flex items-center space-x-4 mb-6 md:mb-0">
                             <div className="flex items-center justify-center rounded-full">
                                 <img 
@@ -227,7 +217,7 @@ const ViewApplicant = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg w-full bg-white shadow-sm">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg w-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} shadow-sm`}>
                         <div className="flex items-center space-x-3">
                             <div className="w-16 h-16 bg-orange-200 flex items-center justify-center rounded-full">
                                 <img src={salary} className="w-9 h-9" alt="Salary icon" />
@@ -258,7 +248,7 @@ const ViewApplicant = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white shadow-sm rounded-lg p-4 md:p-6">
+                    <div className={`bg-white shadow-sm rounded-lg p-4 md:p-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
                         <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-3">
                             {job.noOfApplicants || 0} Applicant(s):
                         </h1>

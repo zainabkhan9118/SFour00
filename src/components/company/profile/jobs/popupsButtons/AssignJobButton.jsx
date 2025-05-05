@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from "../../../../common/LoadingSpinner";
-// Removed enableJobAssignment import as it's no longer needed
+import { enableJobAssignment } from "../../../../../api/jobsApi";
 
 const AssignJobButton = ({ onClose, applicant, job }) => {
   const buttonRef = useRef();
@@ -32,20 +32,24 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
       setAssigning(true);
       setAssignError(null);
       
-      // Simulating success without API call
-      setTimeout(() => {
-        setAssigning(false);
+      // Call the API to enable job assignment
+      const result = await enableJobAssignment(job._id, applicant._id);
+      
+      if (result.statusCode === 200) {
+        console.log("Job successfully assigned:", result);
         setAssignSuccess(true);
         
         // Navigate to assigned jobs page after a short delay
         setTimeout(() => {
           handleNavigate();
         }, 1500);
-      }, 1000); // Simulate a brief loading state
-      
+      } else {
+        throw new Error(result.message || "Failed to assign job");
+      }
     } catch (error) {
       console.error("Error assigning job:", error);
       setAssignError(error.message || 'An error occurred while assigning the job');
+    } finally {
       setAssigning(false);
     }
   };
