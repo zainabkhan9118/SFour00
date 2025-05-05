@@ -44,13 +44,20 @@ export const updateLocation = async (jobId, locationData) => {
 export const updateStatusByQR = async (jobId, qrData) => {
   const jobSeekerId = localStorage.getItem("jobSeekerId");
   
+  // Enhanced payload with job information
+  const enhancedPayload = {
+    ...qrData,
+    jobId: jobId, // Include job ID in the payload for validation
+    jobSeekerId: jobSeekerId,
+    timestamp: new Date().toISOString() // Add timestamp for security
+  };
+  
   console.log(`Making QR status update request for job ${jobId}:`, {
     endpoint: `${BASE_URL}/apply/${jobId}/update-status-by-qr`,
-    jobSeekerId,
-    qrData
+    payload: enhancedPayload
   });
   
-  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, qrData, {
+  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, enhancedPayload, {
     headers: {
       'jobSeekerId': jobSeekerId,
       'Content-Type': 'application/json'

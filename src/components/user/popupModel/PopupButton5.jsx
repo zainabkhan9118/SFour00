@@ -17,119 +17,77 @@ const QRScannerComponent = ({ onScan }) => {
   const canvasRef = useRef(null);
   const [cameraStatus, setCameraStatus] = useState("initializing"); // initializing, active, error
   const streamRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const scanIntervalRef = useRef(null);
 
   useEffect(() => {
     console.log("QR Scanner component mounted");
-    let animationFrame = null;
     let mounted = true;
 
-    // Initialize camera with better settings for QR scanning
+    // Initialize camera with basic settings first, then try to enhance
     const initCamera = async () => {
-      console.log("Initializing camera with enhanced settings...");
+      console.log("Initializing camera with basic settings...");
       try {
-        // Set camera constraints with more specific settings for QR scanning
-        const cameraConstraints = {
-          video: {
-            facingMode: "environment", // Try back camera first
-            width: { ideal: 1280, min: 720 },
-            height: { ideal: 720, min: 480 },
-            // Important camera settings for better QR detection
-            zoom: 1.0, // Default zoom level (some devices support changing this)
-            focusMode: "continuous", // Keep trying to focus
-            focusDistance: 0.5, // Mid-range focus (if supported)
-            exposureMode: "auto",
-            whiteBalanceMode: "auto",
-            advanced: [
-              { focusMode: "continuous" },
-              { exposureMode: "continuous" }
-            ]
-          },
-          audio: false,
+        // First try with very basic settings to ensure compatibility
+        const basicConstraints = {
+          video: { facingMode: "environment" },
+          audio: false
         };
 
-        // Try to access camera with enhanced settings
+        console.log("Trying camera access with basic settings");
         let stream;
+        
         try {
-          console.log("Trying back camera with enhanced settings");
-          stream = await navigator.mediaDevices.getUserMedia(cameraConstraints);
-          console.log("Successfully accessed back camera with enhanced settings");
-
-          // Try to apply advanced camera settings if available
-          const videoTrack = stream.getVideoTracks()[0];
-          if (videoTrack && typeof videoTrack.applyConstraints === 'function') {
-            try {
-              await videoTrack.applyConstraints({
-                advanced: [
-                  { focusMode: "continuous" },
-                  { exposureCompensation: 0.5 }, // Slightly brighter
-                  { sharpness: 1.0 }, // Increase sharpness if available
-                  { brightness: 0.6 } // Slightly brighter
-                ]
-              });
-              console.log("Applied advanced camera settings");
-            } catch (err) {
-              console.log("Could not apply advanced camera settings:", err);
-              // Continue with default settings
-            }
-          }
-        } catch (err) {
-          console.log("Back camera access failed, trying front camera:", err);
-
-          // Try front camera as fallback
-          const frontCameraConstraints = {
-            ...cameraConstraints,
-            video: {
-              ...cameraConstraints.video,
-              facingMode: "user"
-            }
+          stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+          console.log("Successfully accessed camera with basic settings");
+        } catch (basicErr) {
+          console.log("Basic camera access failed, trying fallback:", basicErr);
+          
+          // Last resort - try with minimal constraints
+          const fallbackConstraints = { 
+            video: true, 
+            audio: false 
           };
-
-          stream = await navigator.mediaDevices.getUserMedia(frontCameraConstraints);
-          console.log("Successfully accessed front camera");
+          
+          stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+          console.log("Successfully accessed camera with fallback settings");
         }
 
-        // Store reference to stream for cleanup
+        // Store stream for cleanup
         streamRef.current = stream;
-
+        
         if (!mounted) {
           // Component unmounted during async operation
-          stream.getTracks().forEach((track) => track.stop());
+          stream.getTracks().forEach(track => track.stop());
           return;
         }
 
-        // Set stream to video element
+        // Connect stream to video element
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.setAttribute("playsinline", true); // required for iOS Safari
-
-          // Set important video settings that help with QR detection
           videoRef.current.setAttribute("autoplay", true);
-          videoRef.current.style.transform = ""; // Clear any transforms that might affect detection
-
-          // Wait for video to be ready
+          
+          // Wait for video to be ready and play it
           videoRef.current.onloadedmetadata = () => {
             if (!mounted) return;
-
-            videoRef.current
-              .play()
+            
+            videoRef.current.play()
               .then(() => {
                 console.log("Camera video playing successfully");
                 setCameraStatus("active");
-
-                // Request animation frame for smoother experience
-                requestAnimationFrame(() => {
-                  // Start scanning with a slight delay to ensure camera is fully initialized
-                  setTimeout(() => {
-                    console.log("Starting QR scanning with enhanced detection");
-                    scanQRCode();
-                  }, 500);
-                });
+                
+                // Start scanning with regular interval instead of animation frame
+                // This helps with performance and reliability
+                scanIntervalRef.current = setInterval(() => {
+                  scanQRCode();
+                }, 200); // Scan 5 times per second
               })
-              .catch((err) => {
+              .catch(err => {
                 console.error("Error playing video:", err);
                 onScan(null, {
                   name: "PlayError",
-                  message: "Could not play camera video: " + err.message,
+                  message: "Could not play camera video: " + err.message
                 });
                 setCameraStatus("error");
               });
@@ -146,12 +104,7 @@ const QRScannerComponent = ({ onScan }) => {
 
     // Function to scan QR code from video frame using jsQR
     const scanQRCode = () => {
-      if (
-        !mounted ||
-        !videoRef.current ||
-        !canvasRef.current ||
-        cameraStatus !== "active"
-      ) {
+      if (!mounted || !videoRef.current || !canvasRef.current || cameraStatus !== "active") {
         return;
       }
 
@@ -168,151 +121,69 @@ const QRScannerComponent = ({ onScan }) => {
 
           // Draw current video frame to canvas
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Get image data for processing
+          const imageData = context.getImageData(
+            0, 0, canvas.width, canvas.height
+          );
+          
+          // Attempt to find QR code in standard mode
+          const code = jsQR(
+            imageData.data,
+            imageData.width,
+            imageData.height,
+            { inversionAttempts: "dontInvert" }
+          );
 
-          // Apply image processing to enhance contrast for better QR detection
-          try {
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
+          if (code) {
+            console.log("QR code found (standard):", code.data);
+            
+            // Visual feedback (draw box around QR code)
+            context.beginPath();
+            context.lineWidth = 4;
+            context.strokeStyle = "#FF5700";
+            context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+            context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
+            context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
+            context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
+            context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+            context.stroke();
 
-            // Apply adaptive contrast enhancement to make QR codes more visible
-            const enhancedData = enhanceImageForQRDetection(data, canvas.width, canvas.height);
-
-            // Create a new ImageData with enhanced pixels
-            const enhancedImageData = new ImageData(
-              new Uint8ClampedArray(enhancedData),
-              canvas.width,
-              canvas.height
-            );
-
-            // Use both original and enhanced images for scanning
-            detectQRCode(imageData);
-            setTimeout(() => detectQRCode(enhancedImageData), 0);
-          } catch (err) {
-            console.warn("Image enhancement failed, trying normal scan:", err);
-            // If enhancement fails, fall back to normal scan
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            detectQRCode(imageData);
+            // Clear scanning interval when QR code is found
+            if (scanIntervalRef.current) {
+              clearInterval(scanIntervalRef.current);
+              scanIntervalRef.current = null;
+            }
+            
+            // Send successful result
+            onScan({ text: code.data }, null);
+            return;
           }
-        } else {
-          // Video not ready yet, continue scanning
-          if (mounted) {
-            animationFrame = requestAnimationFrame(scanQRCode);
+          
+          // If no QR code found with standard mode, try inverted
+          const codeInverted = jsQR(
+            imageData.data,
+            imageData.width,
+            imageData.height,
+            { inversionAttempts: "onlyInvert" }
+          );
+          
+          if (codeInverted) {
+            console.log("QR code found (inverted):", codeInverted.data);
+            
+            // Clear scanning interval
+            if (scanIntervalRef.current) {
+              clearInterval(scanIntervalRef.current);
+              scanIntervalRef.current = null;
+            }
+            
+            onScan({ text: codeInverted.data }, null);
+            return;
           }
         }
       } catch (err) {
         console.error("Error in scan loop:", err);
-        // Try to continue scanning
-        if (mounted) {
-          animationFrame = requestAnimationFrame(scanQRCode);
-        }
-      }
-    };
-
-    // Function to enhance image data to make QR codes more visible from distance
-    const enhanceImageForQRDetection = (data, width, height) => {
-      const enhancedData = new Uint8ClampedArray(data.length);
-
-      // Copy original data
-      for (let i = 0; i < data.length; i++) {
-        enhancedData[i] = data[i];
-      }
-
-      // Increase contrast and apply edge enhancement
-      for (let i = 0; i < data.length; i += 4) {
-        // Calculate grayscale
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-
-        // Apply adaptive threshold for better QR detection
-        const threshold = 127;
-        const value = avg > threshold ? 255 : 0;
-
-        // Increase contrast dramatically for distant QR codes
-        enhancedData[i] = value;        // R
-        enhancedData[i + 1] = value;    // G
-        enhancedData[i + 2] = value;    // B
-        // Keep alpha channel unchanged
-      }
-
-      return enhancedData;
-    };
-
-    // Separate function to detect QR codes from image data
-    const detectQRCode = (imageData) => {
-      if (!mounted) return;
-
-      // Try multiple detection strategies for better sensitivity
-
-      // 1. Use jsQR with high sensitivity settings
-      const code = jsQR(
-        imageData.data,
-        imageData.width,
-        imageData.height,
-        {
-          inversionAttempts: "attemptBoth", // Try both inverted and non-inverted images
-          dontInvert: false,
-          canOverwriteImage: true,
-          greediness: 1, // Maximum greediness for pattern detection
-          maxNumTemplates: 8, // Maximum number of templates to attempt
-        }
-      );
-
-      if (code) {
-        console.log("QR code found using jsQR with high sensitivity:", code.data);
-        onScan({ text: code.data }, null);
-
-        // Visual feedback (draw box around QR code)
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        context.beginPath();
-        context.lineWidth = 4;
-        context.strokeStyle = "#FF5700";
-        context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-        context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
-        context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
-        context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
-        context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-        context.stroke();
-      } else {
-        // 2. Try BarcodeDetector API if available
-        if (window.BarcodeDetector) {
-          try {
-            const barcodeDetector = new window.BarcodeDetector({
-              formats: ["qr_code"],
-            });
-
-            barcodeDetector.detect(imageData)
-              .then((barcodes) => {
-                if (barcodes.length > 0) {
-                  const qrData = barcodes[0].rawValue;
-                  console.log("QR code detected using BarcodeDetector:", qrData);
-                  onScan({ text: qrData }, null);
-                  return;
-                }
-                // Continue scanning if no QR code found
-                if (mounted) {
-                  animationFrame = requestAnimationFrame(scanQRCode);
-                }
-              })
-              .catch((err) => {
-                console.warn("BarcodeDetector error:", err);
-                // Continue scanning
-                if (mounted) {
-                  animationFrame = requestAnimationFrame(scanQRCode);
-                }
-              });
-          } catch (err) {
-            console.warn("BarcodeDetector unavailable:", err);
-            // Continue scanning
-            if (mounted) {
-              animationFrame = requestAnimationFrame(scanQRCode);
-            }
-          }
-        } else {
-          // No QR code found, continue scanning
-          if (mounted) {
-            animationFrame = requestAnimationFrame(scanQRCode);
-          }
-        }
+        // Continue scanning - errors here are common and usually temporary
       }
     };
 
@@ -324,17 +195,24 @@ const QRScannerComponent = ({ onScan }) => {
       console.log("QR Scanner component unmounting, cleaning up...");
       mounted = false;
 
+      // Clear scan interval if active
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
+      
       // Cancel animation frame if active
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
 
       // Stop camera stream
       if (streamRef.current) {
         const tracks = streamRef.current.getTracks();
-        tracks.forEach((track) => {
+        tracks.forEach(track => {
           track.stop();
-          console.log("Camera track stopped");
+          console.log("Camera track stopped:", track.kind);
         });
         streamRef.current = null;
       }
@@ -377,7 +255,7 @@ const QRScannerComponent = ({ onScan }) => {
 
           {/* Scanning visual guide */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            {/* Center scanning box - made larger to capture QR codes from further away */}
+            {/* Center scanning box */}
             <div className="w-64 h-64 border-2 border-orange-500 rounded-lg relative">
               {/* Corner elements for better visual guidance */}
               <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-500"></div>
@@ -391,7 +269,7 @@ const QRScannerComponent = ({ onScan }) => {
 
             {/* Instructions */}
             <p className="mt-4 text-sm text-white bg-black bg-opacity-60 px-3 py-1 rounded-full">
-              Hold QR code in view - can detect from any distance
+              Hold QR code in view to scan
             </p>
           </div>
 
@@ -643,12 +521,29 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
         throw new Error("Job ID not found. Please select a job first.");
       }
 
-      console.log(`Calling updateStatusByQR for job ${currentJobId} with QR code: ${dataToUse}`);
+      // Get job seeker ID from localStorage
+      const jobSeekerId = localStorage.getItem("jobSeekerId");
+      
+      if (!jobSeekerId) {
+        throw new Error("User ID not found. Please log in again.");
+      }
 
-      // Call the API with the jobId and correctly formatted QR code data
-      const response = await updateStatusByQR(currentJobId, {
-        qrCodeData: dataToUse // Ensure proper property name matching backend expectation
-      });
+      // Create an enhanced QR code data object with job details
+      const enhancedQrData = {
+        qrCodeData: dataToUse,
+        jobId: currentJobId,
+        jobSeekerId: jobSeekerId,
+        jobTitle: jobDetails?.jobTitle || '',
+        companyName: jobDetails?.companyId?.companyName || '',
+        jobDate: jobDetails?.workDate || new Date().toISOString(),
+        // Include any other useful job information
+        pricePerHour: jobDetails?.pricePerHour || 0
+      };
+
+      console.log(`Calling updateStatusByQR for job ${currentJobId} with enhanced data:`, enhancedQrData);
+
+      // Call the API with the jobId and enhanced QR code data
+      const response = await updateStatusByQR(currentJobId, enhancedQrData);
 
       console.log("API Response:", response);
 
