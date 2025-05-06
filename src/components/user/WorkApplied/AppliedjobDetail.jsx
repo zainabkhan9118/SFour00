@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { getJobDetailsById } from '../../../api/jobApplicationApi';
 import salary from "../../../assets/images/salary.png";
 import { AiOutlineInfoCircle } from "react-icons/ai"; 
+import { IoMdArrowBack } from "react-icons/io";
 import PopupInprogess from '../popupModel/popupModel-Inprogress/PopupInprogess';
 import { format } from 'date-fns';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -58,6 +59,7 @@ const AppliedjobDetail = () => {
     const [error, setError] = useState(null);
     const { id } = useParams();
     const { theme } = useContext(ThemeContext) || { theme: 'light' };
+    const navigate = useNavigate();
 
     useEffect(() => {
       const fetchJobDetails = async () => {
@@ -68,7 +70,7 @@ const AppliedjobDetail = () => {
             setLoading(false);
             return;
           }
-
+    
           const details = await getJobDetailsById(jobSeekerId, id);
           
           if (!details) {
@@ -76,14 +78,20 @@ const AppliedjobDetail = () => {
             setLoading(false);
             return;
           }
-
-          // Validate required fields
-          if (!details.jobTitle || !details.companyId) {
-            setError('Invalid job data received');
+    
+          // Enhanced validation
+          if (!details.jobTitle || !details.companyId || !details.pricePerHour) {
+            console.warn('Incomplete job data:', details);
+            setError('Job data is incomplete');
             setLoading(false);
             return;
           }
-
+    
+          // Ensure workDate is properly formatted
+          if (details.workDate && typeof details.workDate === 'string') {
+            details.workDate = new Date(details.workDate);
+          }
+    
           setJobDetails(details);
         } catch (error) {
           console.error('Error fetching job details:', error);
@@ -92,7 +100,7 @@ const AppliedjobDetail = () => {
           setLoading(false);
         }
       };
-
+    
       if (id) {
         fetchJobDetails();
       }
@@ -153,6 +161,27 @@ const AppliedjobDetail = () => {
         <div className="flex flex-col flex-1">
           
           <div className="min-h-screen py-4 px-5 md:p-10">
+          <div className="mb-4">
+          <button 
+            onClick={() => navigate('/User-workInprogess')} 
+            className="flex items-center gap-2 text-orange-500 hover:text-orange-600 transition-colors"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span className="font-medium">Back </span>
+          </button>
+        </div>
             <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-6 text-right`}>
               <span>Find Job</span> / <span>{jobDetails.jobTitle}</span> /{" "}
               <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Job Details</span>

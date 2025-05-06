@@ -220,18 +220,57 @@ const _getCompletedJobs = async (jobSeekerId) => {
 };
 
 const _getJobDetailsById = async (jobSeekerId, jobId) => {
-  const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
-    params: { 
-      status: "inProgress",
-      jobId: jobId 
-    },
-    headers: {
-      'accept': '*/*',
-      'Content-Type': 'application/json'
+  try {
+    console.log(`Fetching job details for jobId: ${jobId} and jobSeekerId: ${jobSeekerId}`);
+    
+    // Use the correct endpoint based on backend implementation
+    // Make a request to get the job application details which contain the job info
+    const appResponse = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+      params: { 
+        jobId: jobId 
+      },
+      headers: {
+        'jobSeekerId': jobSeekerId,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Find the specific job in the response
+    if (appResponse?.data?.data && Array.isArray(appResponse.data.data)) {
+      const matchingJob = appResponse.data.data.find(job => 
+        (job.jobId?._id === jobId) || (job.jobId === jobId)
+      );
+      
+      if (matchingJob?.jobId) {
+        return matchingJob.jobId;
+      }
     }
-  });
-  
-  return response.data?.data?.[0]?.jobId;
+    
+    // If not found through application, try fetching all jobs and filter manually
+    console.log("Job not found in applications, trying alternative approach...");
+    const jobsResponse = await axios.get(`${BASE_URL}/jobs`, {
+      headers: {
+        'jobSeekerId': jobSeekerId,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (jobsResponse?.data?.data && Array.isArray(jobsResponse.data.data)) {
+      const job = jobsResponse.data.data.find(item => 
+        item._id === jobId
+      );
+      
+      if (job) {
+        return job;
+      }
+    }
+    
+    console.warn(`Job with ID ${jobId} not found in any endpoint`);
+    return null;
+  } catch (error) {
+    console.error('Error in _getJobDetailsById:', error);
+    throw error;
+  }
 };
 
 /**
@@ -270,7 +309,33 @@ export const getCompletedJobs = async (jobSeekerId) => {
 export const getJobDetailsById = async (jobSeekerId, jobId) => {
   try {
     console.log(`Fetching job details for jobId: ${jobId} and jobSeekerId: ${jobSeekerId}`);
-    return cachedApiCall(_getJobDetailsById, [jobSeekerId, jobId], `job-details-${jobSeekerId}-${jobId}`, 2 * 60 * 1000);
+    
+    // Create a unique request ID for this specific call
+    const requestId = `job-details-request-${jobSeekerId}-${jobId}`;
+    
+    // Check if this request is already in progress
+    if (window.__pendingJobRequests && window.__pendingJobRequests[requestId]) {
+      console.log(`Request already in progress for ${jobId}, waiting for result`);
+      return window.__pendingJobRequests[requestId];
+    }
+    
+    // Initialize pending requests object if not exists
+    if (!window.__pendingJobRequests) {
+      window.__pendingJobRequests = {};
+    }
+    
+    // Store the promise for this request
+    const requestPromise = cachedApiCall(_getJobDetailsById, [jobSeekerId, jobId], 
+      `job-details-${jobSeekerId}-${jobId}`, 2 * 60 * 1000);
+      
+    window.__pendingJobRequests[requestId] = requestPromise;
+    
+    // When request completes, remove it from pending
+    requestPromise.finally(() => {
+      delete window.__pendingJobRequests[requestId];
+    });
+    
+    return requestPromise;
   } catch (error) {
     if (error.response) {
       throw new Error(error.response.data?.message || 'Server error occurred');

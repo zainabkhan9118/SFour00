@@ -74,9 +74,20 @@ const UserWorkInprogess = () => {
     fetchInProgressJobs();
   }, [BASEURL]);
 
-  const handleNavigate = (jobId) => {
-    navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
-  };
+  const handleNavigate = (applicationData) => {
+  // Extract the correct job ID from the nested structure
+  let jobId;
+  if (applicationData.jobId && typeof applicationData.jobId === 'object') {
+    jobId = applicationData.jobId._id;
+  } else if (typeof applicationData.jobId === 'string') {
+    jobId = applicationData.jobId;
+  } else {
+    console.error("Could not find valid job ID in:", applicationData);
+    return;
+  }
+  console.log(`Navigating to job details with ID: ${jobId}`);
+  navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
+};
 
   if (loading) {
     return (
@@ -157,7 +168,7 @@ const UserWorkInprogess = () => {
                         <BookmarkIcon />
                       </button>
                       <button
-                        onClick={() => handleNavigate(job._id)}
+                        onClick={() => handleNavigate(application)}
                         className="bg-[#1F2B44] text-white font-semibold w-full sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-gray-800 transition-colors"
                       >
                         Book Off
