@@ -203,7 +203,7 @@ const AppliedjobDetail = () => {
                       <img src={salary} className="w-8 h-8" alt="" />
                     </div>
                     <div>
-                      <p className={theme === 'dark' ? 'text-gray-400 text-sm' : 'text-gray-500 text-sm'}>Salary</p>
+                      <p className={theme === 'dark' ? 'text-gray-400 text-sm' : 'text-gray-500 text-sm'}>Hourly Rate</p>
                       <p className={`font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>${jobDetails.pricePerHour}/hr</p>
                     </div>
                   </div>

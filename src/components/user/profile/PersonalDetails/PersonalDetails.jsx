@@ -73,6 +73,10 @@ const PersonalDetails = () => {
     navigate("/edit-utr-number");
   };
 
+  const handleEditNINNumber = () => {
+    navigate("/edit-nin-number");
+  };
+
   const handleEditCertificate = () => {
     navigate("/edit-certificate");
   };
@@ -358,7 +362,7 @@ const PersonalDetails = () => {
                       <FaIdCard className="text-gray-600 dark:text-gray-400 mt-1" />
                       <div className="ml-2">
                         <h4 className="font-bold dark:text-white">
-                          License
+                          SIA License
                           <FaCheckCircle className="text-green-500 text-sm inline mr-1" />
                         </h4>
                       </div>
@@ -379,6 +383,19 @@ const PersonalDetails = () => {
                     <FaArrowRight
                       className="text-gray-500 dark:text-gray-400 mt-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                       onClick={handleEditUTRNumber}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-start">
+                    <div className="flex">
+                      <FaFileAlt className="text-gray-600 dark:text-gray-400 mt-1" />
+                      <div className="ml-2">
+                        <h4 className="font-bold dark:text-white">NIN Number</h4>
+                      </div>
+                    </div>
+                    <FaArrowRight
+                      className="text-gray-500 dark:text-gray-400 mt-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
+                      onClick={handleEditNINNumber}
                     />
                   </div>
                 </div>

@@ -336,7 +336,7 @@ export default function JobDetails() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Salary</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Hourly Rate</div>
                 <div className="font-bold text-gray-900 dark:text-white">${job.pricePerHour || "35"}/hr</div>
               </div>
             </div>

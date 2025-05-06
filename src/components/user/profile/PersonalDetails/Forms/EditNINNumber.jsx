@@ -1,0 +1,273 @@
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
+import { FiArrowRight } from "react-icons/fi";
+import UserSidebar from "../../UserSidebar";
+import LoadingSpinner from "../../../../common/LoadingSpinner";
+import { useToast } from "../../../../notifications/ToastManager";
+import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
+import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
+import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
+import { ThemeContext } from "../../../../../context/ThemeContext";
+import axios from 'axios';
+import { getAuth } from 'firebase/auth';
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Function to get NIN data
+export const getNinData = async () => {
+  try {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    const firebaseId = currentUser.uid;
+    const response = await axios.get(`${BASE_URL}/job-seeker`, {
+      headers: {
+        'firebase-id': firebaseId,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data?.data?.NINumber || null;
+  } catch (error) {
+    console.error('Error fetching NIN data:', error);
+    throw error;
+  }
+};
+
+// Function to update NIN number only
+export const updateNinData = async (NINumber) => {
+  try {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    const firebaseId = currentUser.uid;
+
+    // First get all current user data
+    try {
+      const response = await axios.get(`${BASE_URL}/job-seeker`, {
+        headers: {
+          'firebase-id': firebaseId,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Get the current data
+      const currentData = response.data?.data;
+      
+      if (!currentData) {
+        throw new Error("Failed to fetch current user data");
+      }
+      
+      // Only update if the NIN number is different
+      if (currentData.NINumber !== NINumber) {
+        // Clean up address objects by removing _id properties
+        const cleanedAddresses = (currentData.address || []).map(addr => ({
+          address: addr.address,
+          duration: addr.duration,
+          isCurrent: addr.isCurrent
+          // Exclude the _id property
+        }));
+        
+        // For PATCH requests, we must include all required fields
+        // Based on the API documentation, and remove any _id properties
+        const updateData = {
+          fullname: currentData.fullname,
+          address: cleanedAddresses, // Use the cleaned address array without _id properties
+          shortBio: currentData.shortBio || "",
+          NINumber: NINumber // Update the NIN number
+        };
+
+        const updateResponse = await axios.patch(`${BASE_URL}/job-seeker`, 
+          updateData,
+          {
+            headers: {
+              'firebase-id': firebaseId,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        return updateResponse.data;
+      }
+
+      return { message: "NIN number unchanged" };
+    } catch (error) {
+      console.error('Error fetching or updating NIN data:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateNinData:', error);
+    throw error;
+  }
+};
+
+const EditNINNumber = () => {
+  const navigate = useNavigate();
+  const [ninNumber, setNinNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
+  const { checkProfileCompletion } = useProfileCompletion();
+  const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  // Add state for responsive design
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [redirectPath, setRedirectPath] = useState("");
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  useEffect(() => {
+    const fetchNINNumber = async () => {
+      setIsLoading(true);
+      try {
+        const currentNIN = await getNinData();
+        if (currentNIN) {
+          setNinNumber(currentNIN);
+        }
+      } catch (error) {
+        console.error("Failed to fetch NIN number:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNINNumber();
+  }, []);
+  
+  const handleChange = (e) => {
+    setNinNumber(e.target.value);
+  };
+  
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      await updateNinData(ninNumber);
+      showSuccess("NIN number updated successfully!");
+      setSuccessMessage("NIN number updated successfully!");
+      setRedirectPath("/User-PersonalDetails");
+      setShowSuccessPopup(true);
+      checkProfileCompletion();
+    } catch (error) {
+      console.error("Failed to update NIN number:", error);
+      setErrorMessage(error.message || "Failed to update NIN number");
+      setShowErrorPopup(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleBack = () => {
+    navigate("/User-PersonalDetails");
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    navigate('/User-PersonalDetails');
+  };
+  
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+      {isLoading && <LoadingSpinner />}
+
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="hidden md:block md:w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
+          <UserSidebar />
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1">
+        {/* Mobile Header with Sidebar - Shown only on Mobile */}
+        {isMobile && (
+          <div className="md:hidden">
+            <UserSidebar isMobile={true} />
+          </div>
+        )}
+        
+        <div className="p-4 md:p-6 overflow-auto">
+          {/* Header with back button */}
+          <div className="flex items-center mb-4">
+            <button onClick={handleBack} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center">
+              <FaArrowLeft className="mr-2" />
+              <span className="font-medium text-black dark:text-white">NIN Number</span>
+            </button>
+          </div>
+          
+          {/* NIN Number Form */}
+          <div className="w-full max-w-2xl mx-auto">
+            <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
+              {/* NIN Number Input */}
+              <div className="space-y-2">
+                <label htmlFor="ninNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  National Insurance Number (NIN)
+                </label>
+                <input
+                  id="ninNumber"
+                  type="text"
+                  value={ninNumber}
+                  onChange={handleChange}
+                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  placeholder="e.g. AB123456C"
+                  aria-describedby="ninNumberHelp"
+                />
+                <p id="ninNumberHelp" className="text-xs text-gray-500 dark:text-gray-400">
+                  Your National Insurance Number is a unique code used to identify you for tax purposes.
+                </p>
+              </div>
+              
+              {/* Save Button */}
+              <button 
+                type="submit" 
+                className="w-full bg-orange-500 text-white font-medium p-4 rounded-full hover:bg-orange-600 transition flex items-center justify-center"
+              >
+                <span>Save Edits</span>
+                <FiArrowRight className="ml-2" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message={successMessage}
+          redirectPath={redirectPath}
+          onClose={handleCloseSuccessPopup}
+        />
+      )}
+
+      {showErrorPopup && (
+        <ProfileErrorPopup
+          message={errorMessage}
+          onClose={handleCloseErrorPopup}
+        />
+      )}
+    </div>
+  );
+};
+
+export default EditNINNumber;

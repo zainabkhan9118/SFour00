@@ -16,6 +16,7 @@ const EditPersonalDetails = lazy(() => import("../components/user/profile/Person
 const EditExperience = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditExperience"));
 const EditEducation = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditEducation"));
 const EditUTRNumber = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditUTRNumber"));
+const EditNINNumber = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditNINNumber"));
 const EditCertificate = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditCertificate"));
 const EditLicense = lazy(() => import("../components/user/profile/PersonalDetails/Forms/EditLicense"));
 const FAQSection = lazy(() => import("../components/user/profile/Faqs/Faqs"));
@@ -61,6 +62,7 @@ const UserRoutes = [
   <Route key="edit-experience" path="/edit-experience" element={<SuspenseWrapper><WithUserLayout Component={EditExperience} /></SuspenseWrapper>} />,
   <Route key="edit-education" path="/edit-education" element={<SuspenseWrapper><WithUserLayout Component={EditEducation} /></SuspenseWrapper>} />,
   <Route key="edit-utr-number" path="/edit-utr-number" element={<SuspenseWrapper><WithUserLayout Component={EditUTRNumber} /></SuspenseWrapper>} />,
+  <Route key="edit-nin-number" path="/edit-nin-number" element={<SuspenseWrapper><WithUserLayout Component={EditNINNumber} /></SuspenseWrapper>} />,
   <Route key="edit-certificate" path="/edit-certificate" element={<SuspenseWrapper><WithUserLayout Component={EditCertificate} /></SuspenseWrapper>} />,
   <Route key="edit-license" path="/edit-license" element={<SuspenseWrapper><WithUserLayout Component={EditLicense} /></SuspenseWrapper>} />,
   <Route key="User-FAQSection" path="/User-FAQSection" element={<SuspenseWrapper><WithUserLayout Component={FAQSection} /></SuspenseWrapper>} />,

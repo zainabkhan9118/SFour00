@@ -36,6 +36,7 @@ const EditLicense = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
+  const [hasVehicle, setHasVehicle] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -69,6 +70,7 @@ const EditLicense = () => {
           const license = response.data.data;
           setLicenseNumber(license.licenseNumber);
           setDateOfExpiry(license.dateOfExpiry ? new Date(license.dateOfExpiry).toISOString().split('T')[0] : "");
+          setHasVehicle(license.hasVehicle || false);
 
           setOriginalValues({
             licenseNumber: license.licenseNumber,
@@ -118,6 +120,7 @@ const EditLicense = () => {
 
       formData.append('licenseNumber', licenseNumber);
       formData.append('dateOfExpiry', new Date(dateOfExpiry).toISOString());
+      formData.append('hasVehicle', hasVehicle);
       if (selectedFile instanceof File) {
         formData.append('licensePicPdf', selectedFile);
       }
@@ -323,6 +326,26 @@ const EditLicense = () => {
                 </div>
                 <p id="licenseFileHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Upload a scan or photo of your security license document
+                </p>
+              </div>
+
+              {/* Has a car checkbox */}
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    id="hasVehicle"
+                    type="checkbox"
+                    className="h-5 w-5 text-orange-500 rounded focus:ring-orange-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    checked={hasVehicle}
+                    onChange={(e) => setHasVehicle(e.target.checked)}
+                    aria-describedby="hasVehicleHelp"
+                  />
+                  <label htmlFor="hasVehicle" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    I have a car
+                  </label>
+                </div>
+                <p id="hasVehicleHelp" className="text-xs text-gray-500 dark:text-gray-400">
+                  Check this box if you have a car available for work transportation
                 </p>
               </div>
 
