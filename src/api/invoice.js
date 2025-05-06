@@ -56,7 +56,7 @@ export const createInvoice = async (jobId, jobSeekerId, invoiceData = {}) => {
  */
 const _getInvoices = async (jobSeekerId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/invoices/${jobSeekerId}`, {
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}/invoices`, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -80,7 +80,7 @@ export const getInvoices = async (jobSeekerId) => {
  */
 const _getInvoiceById = async (jobSeekerId, invoiceId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/invoices/${jobSeekerId}/${invoiceId}`, {
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}/invoices/${invoiceId}`, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -94,4 +94,32 @@ const _getInvoiceById = async (jobSeekerId, invoiceId) => {
 
 export const getInvoiceById = async (jobSeekerId, invoiceId) => {
   return cachedApiCall(_getInvoiceById, [jobSeekerId, invoiceId], `invoice-${jobSeekerId}-${invoiceId}`, 5 * 60 * 1000);
+};
+
+/**
+ * Download invoices PDF for a job seeker
+ * @param {string} jobSeekerId - The job seeker's ID
+ * @returns {Promise} - Promise with the PDF blob
+ */
+export const downloadInvoicePDF = async (jobSeekerId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/apply/${jobSeekerId}/invoices/pdf`, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      responseType: 'blob' // Important for binary data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error downloading invoice PDF:', error);
+    
+    if (error.response) {
+      const message = error.response.data?.message || 'Failed to download invoice PDF';
+      throw new Error(message);
+    } else if (error.request) {
+      throw new Error('No response received from server. Please check your connection.');
+    } else {
+      throw new Error(error.message || 'An error occurred while downloading the invoice PDF');
+    }
+  }
 };

@@ -1,69 +1,24 @@
 import React, { useState, useEffect, useContext } from "react";
-import { CheckCircle, MapPin } from "lucide-react";
+import { Download, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import UserSidebar from "../UserSidebar";
 import LoadingSpinner from "../../../common/LoadingSpinner";
 import { ThemeContext } from "../../../../context/ThemeContext";
-
-const invoices = [
-  {
-    id: 1,
-    iconColor: "#4CD964",
-    iconText: "Up",
-    role: "Networking Engineer",
-    location: "Washington",
-    rate: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    iconColor: "#FF2D55",
-    iconText: "🎨",
-    role: "Product Designer",
-    location: "Dhaka",
-    rate: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    iconColor: "#000000",
-    iconText: "",
-    role: "Junior Graphic Designer",
-    location: "Brazil",
-    rate: "$12/hr",
-    date: "Feb 2, 2019 19:28",
-    status: "Completed",
-    logoType: "apple",
-  },
-  {
-    id: 4,
-    iconColor: "#0078D7",
-    iconText: "",
-    role: "Visual Designer",
-    location: "Wisconsin",
-    rate: "$12/hr",
-    date: "Dec 7, 2019 23:26",
-    status: "Completed",
-    logoType: "microsoft",
-  },
-  {
-    id: 5,
-    iconColor: "#1DA1F2",
-    iconText: "",
-    role: "Marketing Officer",
-    location: "United States",
-    rate: "$12/hr",
-    date: "Dec 4, 2019 21:42",
-    status: "Completed",
-    logoType: "twitter",
-  },
-];
+import { getInvoices, downloadInvoicePDF } from "../../../../api/invoice";
+import { format, parseISO } from "date-fns";
+import ErrorPopup from "../../popupModel/ErrorPopup";
 
 const InvoiceList = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [invoices, setInvoices] = useState([]);
+  const [error, setError] = useState(null);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -75,45 +30,112 @@ const InvoiceList = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Function to render the appropriate icon
-  const renderIcon = (invoice) => {
-    if (invoice.logoType === "apple") {
-      return (
-        <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: invoice.iconColor }}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="#ffffff">
-            <path d="M15.7 8.65c0-1.95 1.05-3.35 3.2-3.35-0.8-1.1-2.35-1.85-3.7-1.85-1.5-0.15-3.15 0.9-3.85 0.9-0.75 0-2.15-0.9-3.45-0.9-1.8 0-3.75 1.35-4.6 3.45-1.05 2.7-0.25 6.7 1.5 8.9 1 1.4 2.15 2.95 3.65 2.9 1.45-0.05 2-0.9 3.75-0.9 1.7 0 2.2 0.9 3.7 0.85 1.55-0.05 2.55-1.35 3.45-2.75 0.7-0.95 1.2-2.05 1.5-3.2-2.35-1.05-3.15-3-3.15-5.05zM12.95 2.8c0.8-0.95 1.25-2.25 1.1-3.55-1.25 0.15-2.45 0.85-3.2 1.85-0.7 0.8-1.3 2.05-1.15 3.25 1.35 0.1 2.6-0.6 3.25-1.55z"></path>
-          </svg>
-        </div>
-      );
-    } else if (invoice.logoType === "microsoft") {
-      return (
-        <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: invoice.iconColor }}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="#ffffff">
-            <path d="M9.5 0h-9.5v9.5h9.5v-9.5z"></path>
-            <path d="M20 0h-9.5v9.5h9.5v-9.5z"></path>
-            <path d="M9.5 10.5h-9.5v9.5h9.5v-9.5z"></path>
-            <path d="M20 10.5h-9.5v9.5h9.5v-9.5z"></path>
-          </svg>
-        </div>
-      );
-    } else if (invoice.logoType === "twitter") {
-      return (
-        <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: invoice.iconColor }}>
-          <svg width="20" height="16" viewBox="0 0 20 16" fill="#ffffff">
-            <path d="M20 1.9c-0.7 0.3-1.5 0.5-2.4 0.6 0.9-0.5 1.5-1.3 1.8-2.2-0.8 0.5-1.7 0.8-2.6 1-0.7-0.8-1.8-1.3-3-1.3-2.3 0-4.1 1.9-4.1 4.1 0 0.3 0 0.6 0.1 0.9-3.4-0.2-6.4-1.8-8.4-4.3-0.4 0.7-0.6 1.5-0.6 2.3 0 1.4 0.7 2.6 1.8 3.4-0.7-0-1.3-0.2-1.9-0.5-0-0-0-0-0-0 0 2 1.4 3.7 3.3 4-0.3 0.1-0.7 0.1-1 0.1-0.3 0-0.5-0-0.7-0.1 0.5 1.6 2 2.8 3.8 2.9-1.4 1.1-3.1 1.8-5 1.8-0.3 0-0.6-0-0.9-0.1 1.8 1.1 3.9 1.8 6.1 1.8 7.4 0 11.4-6.1 11.4-11.4 0-0.2 0-0.4-0-0.5 0.8-0.6 1.4-1.3 2-2.1z"></path>
-          </svg>
-        </div>
-      );
-    } else {
-      return (
-        <div 
-          className="flex items-center justify-center w-10 h-10 rounded-full text-white" 
-          style={{ backgroundColor: invoice.iconColor }}
-        >
-          {invoice.iconText}
-        </div>
-      );
+  // Fetch invoices data
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setIsLoading(true);
+        const jobSeekerId = localStorage.getItem("jobSeekerId");
+        if (!jobSeekerId) {
+          throw new Error("User not logged in");
+        }
+
+        const response = await getInvoices(jobSeekerId);
+        if (response && response.data) {
+          setInvoices(response.data);
+          setTotalPages(Math.ceil(response.data.length / itemsPerPage));
+        } else {
+          setInvoices([]);
+          setTotalPages(1);
+        }
+      } catch (err) {
+        console.error("Error fetching invoices:", err);
+        setError(err.message || "Failed to load invoices");
+        setShowErrorPopup(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, [itemsPerPage]);
+
+  // Calculate total hours between start and end times
+  const calculateTotalHours = (startTime, endTime) => {
+    try {
+      // Parse the time strings in 24-hour format: "HH:MM"
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+      
+      // Convert to minutes
+      const startTotalMinutes = startHour * 60 + startMinute;
+      let endTotalMinutes = endHour * 60 + endMinute;
+      
+      // Handle overnight shifts
+      if (endTotalMinutes < startTotalMinutes) {
+        endTotalMinutes += 24 * 60;
+      }
+      
+      // Return hours with decimal precision
+      return ((endTotalMinutes - startTotalMinutes) / 60).toFixed(2);
+    } catch (e) {
+      console.error("Error calculating hours:", e);
+      return "NaN";
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, "MMMM d, yyyy");
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Download invoice as PDF
+  const downloadInvoice = async (jobSeekerId, invoiceId) => {
+    try {
+      setIsLoading(true);
+      
+      // Use the API function to get the PDF blob
+      const pdfBlob = await downloadInvoicePDF(jobSeekerId);
+      
+      // Create a blob URL for the PDF data
+      const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${invoiceId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      setError(error.message || "Failed to download invoice");
+      setShowErrorPopup(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to render company logo or initials
+  const renderInitials = (title) => {
+    // Get initial letter from job title or default to 'J'
+    const initial = (title || 'J').charAt(0).toUpperCase();
+    
+    return (
+      <div 
+        className="flex items-center justify-center w-12 h-12 rounded-full text-white text-lg font-bold bg-orange-500"
+      >
+        {initial}
+      </div>
+    );
   };
 
   return (
@@ -137,39 +159,116 @@ const InvoiceList = () => {
         )}
         
         <div className="p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-5 shadow-md">
-            <h2 className="text-2xl font-bold mb-6 dark:text-white">Invoices</h2>
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6 dark:text-white">Invoices</h1>
             
-            {/* Invoice Table - Responsive Design */}
-            {invoices.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="flex flex-col md:grid md:grid-cols-4 items-center border-b dark:border-gray-700 last:border-b-0 py-4"
-              >
-                <div className="flex items-center space-x-4 w-full md:w-auto mb-3 md:mb-0">
-                  {renderIcon(invoice)}
-                  <div>
-                    <h2 className="font-semibold dark:text-white">{invoice.role}</h2>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                      <MapPin size={14} className="mr-1" />
-                      {invoice.location} &nbsp; <span className="text-gray-400 dark:text-gray-500">{invoice.rate}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 text-center my-2 md:my-0">{invoice.date}</div>
-                <div className="text-green-500 dark:text-green-400 flex items-center justify-center my-2 md:my-0">
-                  <CheckCircle size={16} className="mr-1" /> {invoice.status}
-                </div>
-                <div className="flex justify-center md:justify-end mt-2 md:mt-0 w-full">
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    See Invoice
-                  </button>
-                </div>
+            {invoices.length === 0 && !isLoading ? (
+              <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No invoices</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  You haven't completed any jobs yet.
+                </p>
               </div>
-            ))}
+            ) : (
+              /* Invoice List - Matching the provided design */
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow divide-y divide-gray-200 dark:divide-gray-700">
+                {invoices
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((invoice) => {
+                    const hours = calculateTotalHours(invoice.startTime, invoice.endTime);
+                    
+                    return (
+                      <div key={invoice._id} className="flex items-center p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                        {/* Left side - Initial and Location */}
+                        <div className="flex items-center space-x-4 flex-1">
+                          {renderInitials(invoice.jobTitle)}
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-gray-600 dark:text-gray-300">Remote</span>
+                              <span className="text-gray-500 dark:text-gray-400">${invoice.pricePerHour}/hr</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Middle - Date and Time */}
+                        <div className="hidden md:flex flex-col items-start flex-1">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            <span className="text-gray-600 dark:text-gray-300">{formatDate(invoice.workDate)}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{invoice.startTime} - {invoice.endTime} ({hours} hrs)</span>
+                          </div>
+                        </div>
+
+                        {/* Status and Amount */}
+                        <div className="flex flex-col items-end md:items-center flex-1">
+                          <div className="flex items-center">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                <circle cx="4" cy="4" r="3" />
+                              </svg>
+                              Completed
+                            </span>
+                            <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                              ${Number.isNaN(parseFloat(hours) * invoice.pricePerHour) ? 'NaN' : (parseFloat(hours) * invoice.pricePerHour).toFixed(2)}
+                            </span>
+                          </div>
+
+                          {/* Download Button */}
+                          <button 
+                            onClick={() => downloadInvoice(invoice.jobSeekerId, invoice._id)}
+                            className="mt-2 inline-flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                          >
+                            <Download className="-ml-1 mr-2 h-4 w-4" aria-hidden="true" />
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            <div className="flex justify-between items-center mt-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous
+              </button>
+              <span className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
+      
+      {showErrorPopup && (
+        <ErrorPopup 
+          message={error} 
+          onClose={() => setShowErrorPopup(false)} 
+        />
+      )}
     </div>
   );
 };
