@@ -125,7 +125,7 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
               id: companyId || doc.id,
               name: detailedCompany.companyName || companyData.companyName || "Unknown Company",
               role: "Company",
-              avatar: detailedCompany.companyLogo || "https://i.pravatar.cc/100",
+              avatar: detailedCompany.companyLogo || "https://i.pravatar.cc/150",
               time: "Now",
               isOnline: true,
               address: detailedCompany.address || "",
@@ -153,9 +153,11 @@ const ChatSidebar = ({ onSelect, selectedContact }) => {
 
       if (newContacts.length > 0) {
         setContacts(prev => [...prev, ...newContacts]);
-      } else if (hasMore) {
-        // If we got no new contacts but there might be more, try fetching again
-        setTimeout(() => fetchNextCompany(), 100);
+        // Only try for more if we got new companies
+      } else {
+        // If we got no new contacts, we're probably at the end
+        console.log("[ChatSidebar] No new contacts found, stopping pagination");
+        setHasMore(false);
       }
     } catch (error) {
       console.error("[ChatSidebar] Error fetching companies:", error);
