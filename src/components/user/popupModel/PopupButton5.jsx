@@ -533,11 +533,11 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
         qrCodeData: dataToUse,
         jobId: currentJobId,
         jobSeekerId: jobSeekerId,
-        jobTitle: jobDetails?.jobTitle || '',
-        companyName: jobDetails?.companyId?.companyName || '',
-        jobDate: jobDetails?.workDate || new Date().toISOString(),
+       // jobTitle: jobDetails?.jobTitle || '',
+        //companyName: jobDetails?.companyId?.companyName || '',
+        //jobDate: jobDetails?.workDate || new Date().toISOString(),
         // Include any other useful job information
-        pricePerHour: jobDetails?.pricePerHour || 0
+        //pricePerHour: jobDetails?.pricePerHour || 0
       };
 
       console.log(`Calling updateStatusByQR for job ${currentJobId} with enhanced data:`, enhancedQrData);

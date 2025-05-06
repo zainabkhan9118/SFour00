@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Link, useParams } from "react-router-dom";
 import { getJobDetailsById } from '../../../api/jobApplicationApi';
 import salary from "../../../assets/images/salary.png";
@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { ThemeContext } from '../../../context/ThemeContext';
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -17,15 +18,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const MapModal = ({ isOpen, onClose, position }) => {
+const MapModal = ({ isOpen, onClose, position, theme }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-4 border-b flex justify-between items-center">
+      <div className={`${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'} rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col`}>
+        <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b flex justify-between items-center`}>
           <h2 className="text-xl font-semibold">Job Location</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">×</button>
+          <button onClick={onClose} className={`${theme === 'dark' ? 'text-gray-300 hover:text-gray-100' : 'text-gray-500 hover:text-gray-700'}`}>×</button>
         </div>
         <div className="h-[500px] w-full">
           <MapContainer
@@ -56,6 +57,7 @@ const AppliedjobDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { id } = useParams();
+    const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
     useEffect(() => {
       const fetchJobDetails = async () => {
@@ -146,14 +148,14 @@ const AppliedjobDetail = () => {
     }
 
     return (
-      <div className="flex flex-row min-h-screen">
+      <div className={`flex flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
        
         <div className="flex flex-col flex-1">
           
           <div className="min-h-screen py-4 px-5 md:p-10">
-            <div className="text-sm text-gray-500 mb-6 text-right">
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-6 text-right`}>
               <span>Find Job</span> / <span>{jobDetails.jobTitle}</span> /{" "}
-              <span className="text-gray-700">Job Details</span>
+              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Job Details</span>
             </div>
 
             <div className="mb-4">
@@ -168,14 +170,14 @@ const AppliedjobDetail = () => {
                   </div>
 
                   <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                    <h1 className={`text-xl md:text-2xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                       {jobDetails.jobTitle}
                     </h1>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <span className="text-xs px-3 py-1 rounded-full border border-gray-300 text-gray-700">
+                      <span className={`text-xs px-3 py-1 rounded-full border ${theme === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>
                         {jobDetails.jobDuration}
                       </span>
-                      <span className="text-xs px-3 py-1 rounded-full border border-gray-300 text-gray-700">
+                      <span className={`text-xs px-3 py-1 rounded-full border ${theme === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>
                         {jobDetails.companyId?.address || "Location not specified"}
                       </span>
                     </div>
@@ -184,10 +186,10 @@ const AppliedjobDetail = () => {
 
                 <div className="flex flex-col items-end">
                   <div className="text-left text-sm">
-                    <p className="text-black w-full md:w-[235px]">
+                    <p className={theme === 'dark' ? 'text-gray-300' : 'text-black'}>
                       Use this PIN code to confirm your booking and respond to the alert.
                     </p>
-                    <div className="mt-2 flex items-center justify-center w-full rounded-xl md:w-[235px] h-[48px] bg-gray-300 px-4 py-2 font-semibold tracking-widest">
+                    <div className={`mt-2 flex items-center justify-center w-full rounded-xl md:w-[235px] h-[48px] ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'} px-4 py-2 font-semibold tracking-widest`}>
                       {jobDetails.jobPin || "No PIN"}
                     </div>
                   </div>
@@ -201,8 +203,8 @@ const AppliedjobDetail = () => {
                       <img src={salary} className="w-8 h-8" alt="" />
                     </div>
                     <div>
-                      <p className="text-gray-500 text-sm">Salary</p>
-                      <p className="font-semibold text-gray-600">${jobDetails.pricePerHour}/hr</p>
+                      <p className={theme === 'dark' ? 'text-gray-400 text-sm' : 'text-gray-500 text-sm'}>Salary</p>
+                      <p className={`font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>${jobDetails.pricePerHour}/hr</p>
                     </div>
                   </div>
                 </div>
@@ -225,21 +227,21 @@ const AppliedjobDetail = () => {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-600">Timings</div>
-                    <div className="font-bold text-gray-700">
+                    <div className={theme === 'dark' ? 'text-sm text-gray-400' : 'text-sm text-gray-600'}>Timings</div>
+                    <div className={`font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       {format(new Date(jobDetails.workDate), 'MMMM dd, yyyy')}
                     </div>
-                    <div className="text-xs text-gray-500">{jobDetails.startTime} - {jobDetails.endTime}</div>
+                    <div className={theme === 'dark' ? 'text-xs text-gray-400' : 'text-xs text-gray-500'}>{jobDetails.startTime} - {jobDetails.endTime}</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h2 className="text-2xl md:text-3xl text-gray-800 font-bold mb-4">
+              <h2 className={`text-2xl md:text-3xl ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'} font-bold mb-4`}>
                 Job Description
               </h2>
-              <div className="space-y-4 text-gray-700 text-sm md:text-base leading-relaxed">
+              <div className={`space-y-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} text-sm md:text-base leading-relaxed`}>
                 <p>{jobDetails.jobDescription}</p>
               </div>
             </div>
@@ -247,7 +249,7 @@ const AppliedjobDetail = () => {
             {/* Share */}
             <div className="mt-8 pt-4">
               <div className="flex flex-col md:flex-row items-center gap-4">
-                <span className="text-sm font-medium">Share this job:</span>
+                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Share this job:</span>
                 <div className="flex gap-3">
                   <button className="flex items-center gap-1 text-blue-600 text-sm">
                     <svg
@@ -288,29 +290,29 @@ const AppliedjobDetail = () => {
                 </div>
               </div>
               <div className="flex flex-row justify-end mt-10">
-                <div className="flex  space-x-4">
+                <div className="flex space-x-4">
                   <button 
                     onClick={() => setIsInProgressOpen(true)} 
-                    className="w-[200px] h-[50px] bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200"
+                    className={`w-[200px] h-[50px] bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200 ${theme === 'dark' ? 'hover:bg-orange-700' : 'hover:bg-orange-600'}`}
                   >
                     Book Off
                   </button>
                   
-                  <button className="w-[200px] h-[50px] px-6 py-2 bg-[#1F2B44] text-white font-semibold rounded-full hover:bg-gray-900 transition duration-200">
+                  <button className={`w-[200px] h-[50px] px-6 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1F2B44] hover:bg-gray-900'} text-white font-semibold rounded-full transition duration-200`}>
                     Message
                   </button>
                   <button 
                     onClick={() => setIsMapOpen(true)} 
                     disabled={!jobDetails.latitude || !jobDetails.longitude}
-                    className="w-[200px] h-[50px] px-6 py-2 bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`w-[200px] h-[50px] px-6 py-2 bg-[#FD7F00] text-white font-semibold rounded-full ${theme === 'dark' ? 'hover:bg-orange-700' : 'hover:bg-orange-600'} transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     View Map
                   </button>
                 </div>
               </div>
 
-              <div className="flex justify-end items-center gap-1 text-base text-gray-500 hover:text-gray-700 cursor-pointer mt-3 mr-3">
-                <AiOutlineInfoCircle className="text-gray-400 text-lg " />{" "}
+              <div className={`flex justify-end items-center gap-1 text-base ${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} cursor-pointer mt-3 mr-3`}>
+                <AiOutlineInfoCircle className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'} text-lg`} />{" "}
                 <Link to='/User-reportProblem'>Report a Problem</Link>
               </div>
             </div>
@@ -325,6 +327,7 @@ const AppliedjobDetail = () => {
             isOpen={isMapOpen}
             onClose={() => setIsMapOpen(false)}
             position={{ lat: jobDetails.latitude, lng: jobDetails.longitude }}
+            theme={theme}
           />
         )}
       </div>
