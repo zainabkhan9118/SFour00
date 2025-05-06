@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { getJobDetailsById } from '../../../api/jobApplicationApi';
+import { createInvoice } from '../../../api/invoice'; // Import the invoice API
 import salary from "../../../assets/images/salary.png";
 import { AiOutlineInfoCircle } from "react-icons/ai"; 
 import { IoMdArrowBack } from "react-icons/io";
 import PopupInprogess from '../popupModel/popupModel-Inprogress/PopupInprogess';
+import InvoiceSuccessPopup from '../popupModel/InvoiceSuccessPopup'; // Import the success popup
+import ErrorPopup from '../popupModel/ErrorPopup'; // Import the error popup
 import { format } from 'date-fns';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ThemeContext } from '../../../context/ThemeContext';
+
 
 // Fix Leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -54,9 +58,14 @@ const MapModal = ({ isOpen, onClose, position, theme }) => {
 const AppliedjobDetail = () => {
     const [isInProgressOpen, setIsInProgressOpen] = useState(false);
     const [isMapOpen, setIsMapOpen] = useState(false);
+    const [isInvoiceSuccessOpen, setIsInvoiceSuccessOpen] = useState(false);
+    const [invoiceDetails, setInvoiceDetails] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [jobDetails, setJobDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [errorPopupMessage, setErrorPopupMessage] = useState('');
+    const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
     const { id } = useParams();
     const { theme } = useContext(ThemeContext) || { theme: 'light' };
     const navigate = useNavigate();
@@ -105,6 +114,71 @@ const AppliedjobDetail = () => {
         fetchJobDetails();
       }
     }, [id]);
+
+    // Handler for booking a job and creating an invoice
+    const handleBookJob = async () => {
+      try {
+        setIsLoading(true);
+        const jobSeekerId = localStorage.getItem("jobSeekerId");
+        
+        if (!jobSeekerId) {
+          setErrorPopupMessage("Please login to book this job");
+          setIsErrorPopupOpen(true);
+          return;
+        }
+
+        if (!jobDetails) {
+          setErrorPopupMessage("Job details not available");
+          setIsErrorPopupOpen(true);
+          return;
+        }
+
+        // Calculate total hours from start time to end time
+        const startTimeParts = jobDetails.startTime.split(':');
+        const endTimeParts = jobDetails.endTime.split(':');
+        const startHour = parseInt(startTimeParts[0], 10);
+        const endHour = parseInt(endTimeParts[0], 10);
+        const totalHours = endHour - startHour;
+
+        // Calculate total price
+        const totalPrice = totalHours * jobDetails.pricePerHour;
+
+        // Create invoice data based on job details
+        const invoiceData = {
+          startTime: jobDetails.startTime,
+          endTime: jobDetails.endTime,
+          pricePerHour: jobDetails.pricePerHour,
+          workDate: jobDetails.workDate,
+          totalHours: totalHours,
+          totalPrice: totalPrice
+        };
+
+        // Call the API to create an invoice
+        const response = await createInvoice(id, jobSeekerId, invoiceData);
+
+        // If successful, show success popup with invoice details
+        if (response && response.success) {
+          const formattedInvoiceDetails = {
+            ...invoiceData,
+            workDate: format(new Date(jobDetails.workDate), 'MMMM dd, yyyy')
+          };
+          
+          setInvoiceDetails(formattedInvoiceDetails);
+          setIsInvoiceSuccessOpen(true);
+          
+          // Additional actions after successful booking can be added here
+        } else {
+          setErrorPopupMessage(response?.message || "Failed to create invoice");
+          setIsErrorPopupOpen(true);
+        }
+      } catch (error) {
+        console.error("Error booking job:", error);
+        setErrorPopupMessage(error.message || "An error occurred while creating the invoice");
+        setIsErrorPopupOpen(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     if (loading) {
       return (
@@ -321,10 +395,21 @@ const AppliedjobDetail = () => {
               <div className="flex flex-row justify-end mt-10">
                 <div className="flex space-x-4">
                   <button 
-                    onClick={() => setIsInProgressOpen(true)} 
-                    className={`w-[200px] h-[50px] bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200 ${theme === 'dark' ? 'hover:bg-orange-700' : 'hover:bg-orange-600'}`}
+                    onClick={handleBookJob} 
+                    disabled={isLoading}
+                    className={`w-[200px] h-[50px] bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200 ${theme === 'dark' ? 'hover:bg-orange-700' : 'hover:bg-orange-600'} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Book Off
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      'Book Off'
+                    )}
                   </button>
                   
                   <button className={`w-[200px] h-[50px] px-6 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1F2B44] hover:bg-gray-900'} text-white font-semibold rounded-full transition duration-200`}>
@@ -357,6 +442,18 @@ const AppliedjobDetail = () => {
             onClose={() => setIsMapOpen(false)}
             position={{ lat: jobDetails.latitude, lng: jobDetails.longitude }}
             theme={theme}
+          />
+        )}
+        {isInvoiceSuccessOpen && (
+          <InvoiceSuccessPopup 
+            onClose={() => setIsInvoiceSuccessOpen(false)} 
+            invoiceDetails={invoiceDetails} 
+          />
+        )}
+        {isErrorPopupOpen && (
+          <ErrorPopup 
+            onClose={() => setIsErrorPopupOpen(false)} 
+            message={errorPopupMessage} 
           />
         )}
       </div>
