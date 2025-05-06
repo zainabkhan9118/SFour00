@@ -25,6 +25,7 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
   const handleAssignJob = async () => {
     if (!job || !job._id || !applicant || !applicant._id) {
       setAssignError("Missing job or applicant information");
+      console.error("Missing required parameters:", { job: job || "missing", applicant: applicant || "missing" });
       return;
     }
     
@@ -32,8 +33,15 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
       setAssigning(true);
       setAssignError(null);
       
+      console.log("Assigning job with params:", {
+        jobId: job._id,
+        jobSeekerId: applicant._id
+      });
+      
       // Call the API to enable job assignment
       const result = await enableJobAssignment(job._id, applicant._id);
+      
+      console.log("Assignment API response:", result);
       
       if (result.statusCode === 200) {
         console.log("Job successfully assigned:", result);
@@ -48,7 +56,8 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
       }
     } catch (error) {
       console.error("Error assigning job:", error);
-      setAssignError(error.message || 'An error occurred while assigning the job');
+      console.error("Error details:", error.response?.data || error.message);
+      setAssignError(error.response?.data?.message || error.message || 'An error occurred while assigning the job');
     } finally {
       setAssigning(false);
     }

@@ -113,23 +113,48 @@ export const enableJobAssignment = async (jobId, jobSeekerId) => {
   try {
     console.log('Enabling assignment for job ID:', jobId, 'to job seeker ID:', jobSeekerId);
     
-    const response = await axios.patch(
-      `${BASE_URL}/apply/${jobId}/enable-assignment`, 
-      { 
-        isAssignable: true,
-        jobSeekerId: jobSeekerId 
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+    if (!jobId || !jobSeekerId) {
+      throw new Error('Missing required parameters: jobId or jobSeekerId');
+    }
+    
+    // Request body should only contain isAssignable flag
+    const payload = { 
+      isAssignable: true
+    };
+    
+    console.log('Request URL:', `${BASE_URL}/apply/${jobId}/enable-assignment`);
+    console.log('Request payload:', JSON.stringify(payload));
+    console.log('Request headers:', { jobSeekerId });
+    
+    // Make the API call with the correct structure:
+    // - jobId as path parameter
+    // - jobSeekerId as header
+    // - isAssignable as the only body parameter
+    const response = await axios({
+      method: 'PATCH',
+      url: `${BASE_URL}/apply/${jobId}/enable-assignment`,
+      data: payload,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'jobSeekerId': jobSeekerId
       }
-    );
+    });
+    
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
     
     return response.data;
   } catch (error) {
-    console.error('Error enabling job assignment:', error);
+    // Enhanced error logging
+    console.error('Error enabling job assignment - Full error:', error);
+    
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error headers:', error.response.headers);
+      console.error('Error data:', error.response.data);
+    }
+    
     throw error;
   }
 };
@@ -202,41 +227,6 @@ export const toggleJobBookmark = async (jobId, isBookmarked) => {
     return response.data;
   } catch (error) {
     console.error('Error toggling job bookmark:', error);
-    throw error;
-  }
-};
-
-/**
- * Assign a job to a specific job seeker
- * @param {string} jobId - The ID of the job
- * @param {string} jobSeekerId - The ID of the job seeker
- * @returns {Promise} - Promise with the response data
- */
-export const assignJob = async (jobId, jobSeekerId) => {
-  try {
-    console.log('Assigning job ID:', jobId, 'to job seeker ID:', jobSeekerId);
-    
-    // Step 1: First enable assignment for this job-seeker combination
-    const enableResponse = await enableJobAssignment(jobId, jobSeekerId);
-    console.log('Job assignment enabled:', enableResponse);
-    
-    // Step 2: Then make the actual assignment
-    const response = await axios.post(
-      `${BASE_URL}/apply/${jobId}/assign`, 
-      { 
-        jobSeekerId: jobSeekerId 
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      }
-    );
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error assigning job:', error);
     throw error;
   }
 };
