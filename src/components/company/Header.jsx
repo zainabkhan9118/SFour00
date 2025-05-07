@@ -16,6 +16,7 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const [companyProfile, setCompanyProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasProfile, setHasProfile] = useState(false);
   const [activePage, setActivePage] = useState("");
   const { theme, toggleTheme } = useContext(ThemeContext) || { theme: 'light', toggleTheme: () => {} };
 
@@ -34,16 +35,42 @@ const Header = () => {
             // Try to get profile from localStorage first for quick loading
             const storedProfile = localStorage.getItem('companyProfile');
             if (storedProfile) {
-              setCompanyProfile(JSON.parse(storedProfile));
+              const parsedProfile = JSON.parse(storedProfile);
+              
+              // Verify this profile belongs to the current user
+              if (parsedProfile && parsedProfile.firebaseUID === user.uid) {
+                setCompanyProfile(parsedProfile);
+                setHasProfile(!!parsedProfile.companyName);
+              } else {
+                // Clear invalid profile data
+                localStorage.removeItem('companyProfile');
+              }
             }
             
             // Fetch fresh data from API using the structured API function
             const response = await getCompanyProfile(user.uid);
+            
+            // Only set the profile if the data belongs to this user and contains required fields
             if (response && response.data) {
+              // Check if profile has essential data
+              const hasEssentialData = response.data.companyName && 
+                                       response.data.companyEmail;
+              
               setCompanyProfile(response.data);
+              setHasProfile(hasEssentialData);
+              
+              // Store in localStorage for quick loading next time
+              if (hasEssentialData) {
+                localStorage.setItem('companyProfile', JSON.stringify(response.data));
+              }
+            } else {
+              // If no valid profile data, ensure we show the placeholder
+              setHasProfile(false);
+              setCompanyProfile(null);
             }
           } catch (error) {
             console.error("Error fetching company profile:", error);
+            setHasProfile(false);
           }
         } else {
           // If not logged in, redirect to login
@@ -116,7 +143,6 @@ const Header = () => {
   const title = getPageTitle();
 
   return (
-
     <div className={`sticky top-0 z-10 flex justify-between items-center px-4 md:px-6 py-3 md:py-4 shadow-sm ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} transition-colors duration-200`}>
 
       {/* Title - only shown if there's a title for the current route */}
@@ -134,15 +160,45 @@ const Header = () => {
 
         {/* Company Info */}
         <div className="flex items-center space-x-2">
-          <img
-            src={companyProfile?.companyLogo || logo}
-            alt="Company Logo"
-            className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200"
-          />
-          <span className="font-medium text-sm md:text-base max-w-[100px] md:max-w-[200px] truncate">
-            {companyProfile?.companyName || "Company Name"}
-          </span>
-          <span className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></span>
+          {loading ? (
+            <div className="w-8 h-8 md:w-10 md:h-10">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : hasProfile ? (
+            // Show actual company data if profile exists and has name
+            <>
+              <img
+                src={companyProfile?.companyLogo || logo}
+                alt="Company Logo"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200"
+              />
+              <span className="font-medium text-sm md:text-base max-w-[100px] md:max-w-[200px] truncate">
+                {companyProfile?.companyName || "Company Name"}
+              </span>
+              <span className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></span>
+            </>
+          ) : (
+            // Show placeholder for new companies without profiles
+            <>
+              <div 
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 border border-gray-200 cursor-pointer"
+                onClick={handleProfileClick}
+              >
+                <FaUsers className="text-lg" />
+              </div>
+              <div 
+                className="flex flex-col cursor-pointer"
+                onClick={handleProfileClick}
+              >
+                <span className="font-medium text-sm md:text-base text-gray-600 dark:text-gray-300">
+                  New Company
+                </span>
+                <span className="text-xs text-orange-500">
+                  Complete Profile
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
