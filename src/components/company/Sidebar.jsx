@@ -7,17 +7,17 @@ import { ThemeContext } from "../../context/ThemeContext";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
 import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
-import { getCompanyProfile } from "../../api/companyApi";
 import CompanyProfileCompletionPopup from "./profile/CompanyProfileCompletionPopup";
+import { useCompanyProfileCompletion } from "../../context/profile/CompanyProfileCompletionContext";
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [routes, setRoutes] = useState({});
   const [loading, setLoading] = useState(true);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(true);
   const [showCompletionPopup, setShowCompletionPopup] = useState(false);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { isProfileComplete, isLoading, checkProfileCompletion } = useCompanyProfileCompletion();
   
   const location = useLocation();
   const currentPath = location.pathname;
@@ -33,56 +33,6 @@ export default function Sidebar() {
     // For routes, check if current path equals or starts with the route path
     return currentPath === path || currentPath.startsWith(path);
   };
-
-  // Check if company profile is complete
-  useEffect(() => {
-    const checkProfileCompleteness = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
-        
-        const response = await getCompanyProfile(user.uid);
-        if (response && response.data) {
-          const data = response.data;
-          
-          // Check required fields
-          const requiredFields = [
-            'companyName',
-            'companyContact',
-            'companyEmail',
-            'address',
-            'bio',
-            'manager'
-          ];
-          
-          const managerFields = data.manager ? ['managerName', 'managerEmail', 'managerPhone'] : [];
-          
-          // Check if required fields exist and are not empty
-          const mainFieldsComplete = requiredFields.every(field => {
-            if (field === 'manager') {
-              return data.manager ? true : false;
-            }
-            return data[field] && data[field].trim() !== '';
-          });
-          
-          // Check if manager information is complete if manager object exists
-          const managerFieldsComplete = data.manager ? 
-            managerFields.every(field => data.manager[field] && data.manager[field].trim() !== '') : 
-            false;
-            
-          const profileComplete = mainFieldsComplete && (data.manager ? managerFieldsComplete : true);
-          setIsProfileComplete(profileComplete);
-        } else {
-          setIsProfileComplete(false);
-        }
-      } catch (error) {
-        console.error("Error checking profile completeness:", error);
-        setIsProfileComplete(false);
-      }
-    };
-    
-    checkProfileCompleteness();
-  }, []);
 
   useEffect(() => {
     // Load routes configuration
@@ -106,18 +56,35 @@ export default function Sidebar() {
   };
 
   // Handler for route navigation with profile check
-  const handleNavigation = (e, path) => {
+  const handleNavigation = async (e, path) => {
+    // Always allow navigation to profile page
     if (path === routes.profile) {
-      // Always allow navigation to profile page
       navigate(path);
       return;
     }
     
-    if (!isProfileComplete) {
-      e.preventDefault();
-      setShowCompletionPopup(true);
-    } else {
+    // Use cached result if available
+    if (localStorage.getItem("companyProfileComplete") === "true") {
+      return; // Allow navigation
+    }
+    
+    // If context says we're complete and not loading, allow navigation
+    if (isProfileComplete && !isLoading) {
+      return;
+    }
+    
+    // Otherwise check profile completion
+    e.preventDefault();
+    
+    // Wait for the profile check to complete
+    const isComplete = await checkProfileCompletion(true);
+    
+    // If profile is complete, navigate to the intended path
+    if (isComplete) {
       navigate(path);
+    } else {
+      // Otherwise show popup
+      setShowCompletionPopup(true);
     }
   };
 
@@ -151,6 +118,16 @@ export default function Sidebar() {
   const handleCloseCompletionPopup = () => {
     setShowCompletionPopup(false);
   };
+
+  // Determine if we should disable options based on profile completion
+  const shouldDisableOptions = () => {
+    if (localStorage.getItem("companyProfileComplete") === "true") {
+      return false;
+    }
+    return !isLoading && !isProfileComplete;
+  };
+
+  const disabledStatus = shouldDisableOptions();
 
   return (
     <>
@@ -190,37 +167,53 @@ export default function Sidebar() {
           </div>
         ) : (
           <nav className="flex flex-col space-y-8 mb-auto">
-            <div 
-              className={`flex items-center space-x-3 ${isActive(routes.profile) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
-              onClick={(e) => handleNavigation(e, routes.profile)}
-            >
-              <FaUser className="h-5 w-5" />
-              <span>Profile</span>
-            </div>
+            <Link to={routes.profile}>
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.profile) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaUser className="h-5 w-5" />
+                <span>Profile</span>
+              </div>
+            </Link>
             
-            <div 
-              className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+            <Link 
+              to={routes.chat}
               onClick={(e) => handleNavigation(e, routes.chat)}
+              className={disabledStatus ? "cursor-not-allowed" : ""}
             >
-              <FaComments className="h-5 w-5" />
-              <span>Chat</span>
-            </div>
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.chat) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaComments className="h-5 w-5" />
+                <span>Chat</span>
+              </div>
+            </Link>
 
-            <div 
-              className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+            <Link 
+              to={routes.notifications}
               onClick={(e) => handleNavigation(e, routes.notifications)}
+              className={disabledStatus ? "cursor-not-allowed" : ""}
             >
-              <FaBell className="h-5 w-5" />
-              <span>Notifications</span>
-            </div>
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.notifications) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaBell className="h-5 w-5" />
+                <span>Notifications</span>
+              </div>
+            </Link>
             
-            <div 
-              className={`flex items-center space-x-3 ${isActive(routes.qrCode) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+            <Link 
+              to={routes.qrCode}
               onClick={(e) => handleNavigation(e, routes.qrCode)}
+              className={disabledStatus ? "cursor-not-allowed" : ""}
             >
-              <FaQrcode className="h-5 w-5" />
-              <span>QR Code</span>
-            </div>
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.qrCode) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaQrcode className="h-5 w-5" />
+                <span>QR Code</span>
+              </div>
+            </Link>
           </nav>
         )}
 
