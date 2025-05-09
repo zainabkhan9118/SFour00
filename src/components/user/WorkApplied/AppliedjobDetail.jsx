@@ -427,7 +427,7 @@ const AppliedjobDetail = () => {
 
               <div className={`flex justify-end items-center gap-1 text-base ${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} cursor-pointer mt-3 mr-3`}>
                 <AiOutlineInfoCircle className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'} text-lg`} />{" "}
-                <Link to='/User-reportProblem'>Report a Problem</Link>
+                <Link to={`/User-reportProblem/${id}`}>Report a Problem</Link>
               </div>
             </div>
           </div>
