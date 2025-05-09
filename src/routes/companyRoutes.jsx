@@ -29,6 +29,7 @@ const EditContactForm = lazy(() => import("../components/company/profile/EditCon
 const EditEmailForm = lazy(() => import("../components/company/profile/EditEmailForm"));
 const EditManagerForm = lazy(() => import("../components/company/profile/EditManagerForm"));
 const MapExample = lazy(() => import("../components/company/profile/test"));
+const JobReportLogs = lazy(() => import("../components/company/profile/jobs/reportlogs/JobReportLogs"));
 
 // Suspense wrapper component with spinner
 const SuspenseWrapper = ({ children }) => (
@@ -66,6 +67,7 @@ const CompanyRoutes = [
   <Route key="chat-support" path="/chat-support" element={<CompanyLayoutWrapper component={ChatSupport} />} />,
   <Route key="in-progress" path="/in-progress" element={<CompanyLayoutWrapper component={Inprogess} />} />,
   <Route key="inProgress-jobDetail" path="/inProgress-jobDetail/:jobId" element={<CompanyLayoutWrapper component={InProgressJobDetail} />} />,
+  <Route key="job-report-logs" path="/job-report-logs/:jobId" element={<CompanyLayoutWrapper component={JobReportLogs} />} />,
   <Route key="completed-job" path="/completed-job" element={<CompanyLayoutWrapper component={Completed} />} />,
   <Route key="completed-jobDetail" path="/completed-jobDetail/:jobId" element={<CompanyLayoutWrapper component={CompletedJobDetail} />} />,
   <Route key="faq" path="/faq" element={<CompanyLayoutWrapper component={FAQ} />} />,

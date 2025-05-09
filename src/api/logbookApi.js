@@ -110,3 +110,37 @@ export const getLogbookEntries = async (jobId, jobSeekerId) => {
     throw error;
   }
 };
+
+/**
+ * Get company logbooks for a specific job
+ * @param {string} companyId - The company ID (header parameter)
+ * @param {string} jobId - The ID of the job (path parameter)
+ * @returns {Promise} - Promise with the company logbook entries
+ */
+export const getCompanyLogbooks = async (companyId, jobId) => {
+  try {
+    console.log(`GET ${BASE_URL}/log-book/${jobId}/company/logbooks`);
+
+    const response = await axios.get(`${BASE_URL}/log-book/${jobId}/company/logbooks`, {
+      headers: {
+        'companyId': companyId // Header parameter as shown in the API documentation
+      }
+    });
+    
+    console.log('Fetched company logbook entries:', response.status, response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching company logbook entries:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      jobId,
+      companyId
+    });
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
+};
