@@ -63,6 +63,7 @@ const MapModal = ({ isOpen, onClose, location }) => {
 
 const InProgressJobDetail = () => {
   const { jobId } = useParams();
+  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,6 +72,10 @@ const InProgressJobDetail = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const [isReportLogsOpen, setIsReportLogsOpen] = useState(false);
+  const [reportLogs, setReportLogs] = useState([]);
+  const [reportLogsLoading, setReportLogsLoading] = useState(false);
+  const [reportLogsError, setReportLogsError] = useState(null);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -378,8 +383,15 @@ const InProgressJobDetail = () => {
               <button className="bg-[#1F2B44] dark:bg-gray-700 w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-gray-800 dark:hover:bg-gray-800 transition">
                 VIEW ALERT LOGS
               </button>
+              
               <button className="bg-[#FD7F00] dark:bg-orange-500 w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-orange-600 dark:hover:bg-orange-600 transition">
                 MESSAGE WORKER
+              </button>
+              <button 
+                onClick={() => navigate(`/job-report-logs/${jobId}`)}
+                className="bg-[#1F2B44] dark:bg-gray-700 w-full sm:w-auto px-4 sm:px-8 py-3 rounded-full text-sm sm:text-base text-white font-medium hover:bg-gray-800 dark:hover:bg-gray-800 transition"
+              >
+                VIEW REPORT LOGS
               </button>
             </div>
           </div>
