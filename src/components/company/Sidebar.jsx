@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaUser, FaComments, FaBriefcase, FaBell, FaQrcode, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaComments, FaBriefcase, FaBell, FaQrcode, FaSignOutAlt, FaUsers } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../../config/firebaseConfig";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getCompanyProfile } from "../../api/companyApi";
 import { ThemeContext } from "../../context/ThemeContext";
 import logo from "../../assets/images/logo.png";
 import LoadingSpinner from "../common/LoadingSpinner";
@@ -16,6 +18,10 @@ export default function Sidebar() {
   const [loading, setLoading] = useState(true);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [showCompletionPopup, setShowCompletionPopup] = useState(false);
+  const [user, setUser] = useState(null);
+  const [companyProfile, setCompanyProfile] = useState(null);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [logoLoading, setLogoLoading] = useState(true);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const { isProfileComplete, isLoading, checkProfileCompletion } = useCompanyProfileCompletion();
   
@@ -33,6 +39,69 @@ export default function Sidebar() {
     // For routes, check if current path equals or starts with the route path
     return currentPath === path || currentPath.startsWith(path);
   };
+
+  // Fetch user and company data on component mount
+  useEffect(() => {
+    const fetchUserAndCompanyData = async () => {
+      setLogoLoading(true);
+      const auth = getAuth();
+      
+      // Use Firebase's auth state listener
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          setUser(user);
+          
+          try {
+            // Try to get profile from localStorage first for quick loading
+            const storedProfile = localStorage.getItem('companyProfile');
+            if (storedProfile) {
+              const parsedProfile = JSON.parse(storedProfile);
+              
+              // Verify this profile belongs to the current user
+              if (parsedProfile && parsedProfile.firebaseUID === user.uid) {
+                setCompanyProfile(parsedProfile);
+                setHasProfile(!!parsedProfile.companyName);
+              } else {
+                // Clear invalid profile data
+                localStorage.removeItem('companyProfile');
+              }
+            }
+            
+            // Fetch fresh data from API using the structured API function
+            const response = await getCompanyProfile(user.uid);
+            
+            // Only set the profile if the data belongs to this user and contains required fields
+            if (response && response.data) {
+              // Check if profile has essential data
+              const hasEssentialData = response.data.companyName && 
+                                       response.data.companyEmail;
+              
+              setCompanyProfile(response.data);
+              setHasProfile(hasEssentialData);
+              
+              // Store in localStorage for quick loading next time
+              if (hasEssentialData) {
+                localStorage.setItem('companyProfile', JSON.stringify(response.data));
+              }
+            } else {
+              // If no valid profile data, ensure we show the placeholder
+              setHasProfile(false);
+              setCompanyProfile(null);
+            }
+          } catch (error) {
+            console.error("Error fetching company profile:", error);
+            setHasProfile(false);
+          }
+        }
+        setLogoLoading(false);
+      });
+      
+      // Cleanup subscription
+      return () => unsubscribe();
+    };
+    
+    fetchUserAndCompanyData();
+  }, []);
 
   useEffect(() => {
     // Load routes configuration
@@ -86,6 +155,11 @@ export default function Sidebar() {
       // Otherwise show popup
       setShowCompletionPopup(true);
     }
+  };
+
+  // Handler for profile click
+  const handleProfileClick = () => {
+    navigate("/company-profile");
   };
 
   // Handler for logout functionality using structured approach
@@ -158,7 +232,22 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex justify-center mb-10">
-          <img src={logo} alt="Logo" className="w-24 mb-4" />
+          {logoLoading ? (
+            <div className="w-24 h-24 flex items-center justify-center">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : hasProfile ? (
+            // Show actual company logo if profile exists and has a logo
+            <img 
+              src={companyProfile?.companyLogo || logo} 
+              alt="Company Logo" 
+              className="w-24 h-24 object-contain mb-4"
+              onClick={handleProfileClick}
+            />
+          ) : (
+            // Show default logo for new companies
+            <img src={logo} alt="Logo" className="w-24 mb-4" />
+          )}
         </div>
 
         {loading ? (

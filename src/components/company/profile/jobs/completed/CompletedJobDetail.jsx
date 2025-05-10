@@ -65,13 +65,43 @@ const CompletedJobDetail = () => {
   const formatTime = (timeString) => {
     return timeString || "";
   };
-
   const getAssignedUser = () => {
-    if (!job || !job.jobId || !job.jobId.applicantsList) return null;
+    // First check if job has userJobRel (most common structure)
+    if (job?.userJobRel && job.userJobRel.length > 0) {
+      // Check if userId contains fullname
+      if (job.userJobRel[0].userId && job.userJobRel[0].userId.fullname) {
+        return job.userJobRel[0].userId;
+      }
+      
+      // Check if jobSeekerId is an object with fullname
+      if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
+        return job.userJobRel[0].jobSeekerId;
+      }
+    }
     
-    return job.jobId.applicantsList.find(
-      user => user._id === job.jobSeekerId
-    );
+    // Check for direct jobSeekerId reference
+    if (job?.jobSeekerId && typeof job.jobSeekerId === 'object' && job.jobSeekerId.fullname) {
+      return job.jobSeekerId;
+    }
+    
+    // Check the applicantsList in jobId (specific to completed jobs)
+    if (job?.jobId?.applicantsList && job.jobId.applicantsList.length > 0) {
+      // Try to find the assigned applicant matching the jobSeekerId
+      if (job.jobSeekerId) {
+        const assignedUser = job.jobId.applicantsList.find(
+          user => user._id === job.jobSeekerId
+        );
+        
+        if (assignedUser) {
+          return assignedUser;
+        }
+      }
+      
+      // If no specific match, return the first applicant
+      return job.jobId.applicantsList[0];
+    }
+    
+    return null;
   };
 
   const formatLocation = (lat, lng) => {
@@ -216,17 +246,16 @@ const CompletedJobDetail = () => {
                     e.target.onerror = null; 
                     e.target.src = qr;
                   }}
-                />
-                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                />                <div className="flex flex-col gap-2 w-full sm:w-auto">
                   <div className="border-2 border-dashed border-gray-400 dark:border-gray-500 px-3 sm:px-4 py-2 rounded-full w-full sm:w-[284px] h-auto sm:h-[48px] text-gray-800 dark:text-gray-200">
-                    <span className="text-sm sm:text-base font-bold text-gray-700 dark:text-gray-300">Assigned To: </span>
+                    <span className="text-sm sm:text-base font-bold text-gray-700 dark:text-gray-300">Completed By: </span>
                     <span className="text-sm sm:text-base">
                       {assignedUser ? assignedUser.fullname : "Not assigned"}
                     </span>
                   </div>
                   <div className="border-2 border-dashed border-[#FD7F00] dark:border-orange-500 px-3 sm:px-4 py-2 rounded-full w-auto sm:w-[181px] h-auto sm:h-[48px] text-[#FD7F00] dark:text-orange-400">
                     <span className="text-sm sm:text-base font-semibold">Status: </span>
-                    <span className="text-sm sm:text-base capitalize">{job.status || "Unknown"}</span>
+                    <span className="text-sm sm:text-base capitalize">Book Off</span>
                   </div>
                 </div>
               </div>

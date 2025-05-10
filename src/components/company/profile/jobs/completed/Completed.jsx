@@ -19,7 +19,6 @@ const Completed = () => {
   const handleJobClick = (jobId) => {
     navigate(`/completed-jobDetail/${jobId}`);
   };
-
   useEffect(() => {
     const fetchCompletedJobs = async () => {
       try {
@@ -30,7 +29,21 @@ const Completed = () => {
         const result = await getJobsByStatus(companyId, JobStatus.COMPLETED);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
-          setCompletedJobs(result.data);
+          // Process the jobs data for consistent access
+          const processedJobs = result.data.map(job => {
+            // Ensure we have all the necessary data even if the structure varies
+            return {
+              ...job, // Keep original data
+              _id: job._id || job.jobId?._id,
+              jobId: job.jobId || {},
+              completedDate: job.completedDate || job.updatedAt,
+              // Include worker relationship info from all possible sources
+              userJobRel: job.userJobRel || [],
+              jobSeekerId: job.jobSeekerId || null
+            };
+          });
+          
+          setCompletedJobs(processedJobs);
         } else {
           throw new Error("Invalid response format");
         }
@@ -58,18 +71,41 @@ const Completed = () => {
       minute: '2-digit'
     });
   };
-
   const getAssignedJobseekerName = (job) => {
-    if (job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId) {
-      return job.userJobRel[0].userId.fullname || "Assigned Worker";
+    // Check for userJobRel first (most common structure)
+    if (job.userJobRel && job.userJobRel.length > 0) {
+      // Check if userId is an object with fullname property
+      if (job.userJobRel[0].userId && job.userJobRel[0].userId.fullname) {
+        return job.userJobRel[0].userId.fullname;
+      }
+      
+      // Check if jobSeekerId is available as an object
+      if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
+        return job.userJobRel[0].jobSeekerId.fullname || "Worker";
+      }
     }
     
+    // Check for direct jobSeekerId reference
+    if (job.jobSeekerId) {
+      // If jobSeekerId is an object with fullname
+      if (typeof job.jobSeekerId === 'object' && job.jobSeekerId.fullname) {
+        return job.jobSeekerId.fullname;
+      }
+    }
+    
+    // Check for jobId.applicantsList structure (specific to completed jobs)
     if (job.jobId && job.jobId.applicantsList && job.jobId.applicantsList.length > 0) {
+      // Try to find the assigned applicant
       const assignedUser = job.jobId.applicantsList.find(
         user => user._id === job.jobSeekerId
       );
       
-      return assignedUser ? assignedUser.fullname : "Assigned Worker";
+      if (assignedUser && assignedUser.fullname) {
+        return assignedUser.fullname;
+      }
+      
+      // If no match found, use the first applicant as fallback
+      return job.jobId.applicantsList[0].fullname || "Worker";
     }
     
     return "Not assigned";
@@ -146,11 +182,10 @@ const Completed = () => {
                       <FaCheck className="mr-1" />
                       Completed
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
+                  </div>                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
                     <FaRegBookmark className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-lg sm:text-xl" />
                     <button className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded-full text-xs sm:text-sm font-medium">
+                      <span className="font-bold">Completed By: </span>
                       {getAssignedJobseekerName(job)}
                     </button>
                   </div>

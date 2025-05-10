@@ -83,19 +83,22 @@ const Inprogess = () => {
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
           console.log("In-progress jobs data:", result.data);
-          
-          // Map the data for consistent access
+            // Map the data for consistent access
           const processedJobs = result.data.map(job => {
             // Make sure to access the job information correctly
             const jobData = job.jobId || job;
             const companyData = jobData.companyId || {};
             
             return {
-              _id: job._id,
+              _id: job._id || jobData._id,
               jobTitle: jobData.jobTitle || "Untitled Job", 
               pricePerHour: jobData.pricePerHour || "300.0",
               startTime: job.startTime || job.updatedAt,
+              location: companyData.address || jobData.location || "Location not specified",
+              // Include all possible user relationship data for worker information
               userJobRel: job.userJobRel || [],
+              jobSeekerId: job.jobSeekerId || null,
+              applicantsList: jobData.applicantsList || [],
               companyLogo: companyData.companyLogo || null
             };
           });
@@ -144,12 +147,40 @@ const Inprogess = () => {
       day: 'numeric'
     });
   };
-
   // Get assigned jobseeker name
   const getAssignedJobseekerName = (job) => {
-    return job.userJobRel && job.userJobRel.length > 0 && job.userJobRel[0].userId
-      ? job.userJobRel[0].userId.fullname
-      : "Not Assigned";
+    // Check for userJobRel first (most common structure)
+    if (job.userJobRel && job.userJobRel.length > 0) {
+      // Check if userId is an object with fullname property
+      if (job.userJobRel[0].userId && job.userJobRel[0].userId.fullname) {
+        return job.userJobRel[0].userId.fullname;
+      }
+      
+      // Check if jobSeekerId is available as an object
+      if (job.userJobRel[0].jobSeekerId && typeof job.userJobRel[0].jobSeekerId === 'object') {
+        return job.userJobRel[0].jobSeekerId.fullname || "Assigned Worker";
+      }
+    }
+    
+    // Check for direct jobSeekerId reference
+    if (job.jobSeekerId) {
+      // If jobSeekerId is an object with fullname
+      if (typeof job.jobSeekerId === 'object' && job.jobSeekerId.fullname) {
+        return job.jobSeekerId.fullname;
+      }
+    }
+    
+    // Fall back to applicantsList structure
+    if (job.applicantsList && job.applicantsList.length > 0) {
+      const assignedApplicant = job.applicantsList.find(applicant => 
+        applicant.status === JobStatus.ASSIGNED || 
+        applicant.status === "ASSIGNED"
+      ) || job.applicantsList[0];
+      
+      return assignedApplicant.fullname || "Assigned Worker";
+    }
+    
+    return "Not assigned";
   };
 
   if (loading) {
@@ -198,11 +229,10 @@ const Inprogess = () => {
 
                     <div className="flex-grow sm:w-[200px] md:w-[300px]">
                       <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{job.jobTitle}</h2>
-                      <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm gap-2">
-                        <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm gap-2">                      <div className="flex items-center gap-1">
                           <FaMapMarkerAlt className="text-gray-500 dark:text-gray-400" />
                           <span>{job.location || "Location not specified"}</span>
-                        </div>
+                      </div>
                         <span className="hidden sm:inline">•</span>
                         <span>${job.pricePerHour || 0}/hr</span>
                       </div>
@@ -220,8 +250,8 @@ const Inprogess = () => {
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-6">
-                    <FaRegBookmark className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-lg sm:text-xl" />
-                    <button className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full text-xs sm:text-sm font-medium">
+                    <FaRegBookmark className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-lg sm:text-xl" />                    <button className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full text-xs sm:text-sm font-medium">
+                      <span className="font-bold">Assigned To: </span>
                       {getAssignedJobseekerName(job)}
                     </button>
                   </div>
