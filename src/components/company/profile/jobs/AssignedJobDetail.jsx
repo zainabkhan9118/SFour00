@@ -90,7 +90,6 @@ const AssignedJobDetail = () => {
   const formatTime = (timeString) => {
     return timeString || "";
   };
-
   useEffect(() => {
     const fetchJobDetails = async () => {
       if (!jobId) return;
@@ -115,7 +114,19 @@ const AssignedJobDetail = () => {
           
           if (foundJob) {
             console.log("Found job details:", foundJob);
-            setJob(foundJob);
+            
+            // Process the job data to ensure all necessary information is available
+            const processedJob = {
+              ...foundJob,
+              // Ensure jobId is always an object
+              jobId: foundJob.jobId || {},
+              // Make sure status is available
+              status: foundJob.status || JobStatus.ASSIGNED,
+              // Ensure userJobRel is always an array
+              userJobRel: foundJob.userJobRel || []
+            };
+            
+            setJob(processedJob);
           } else {
             throw new Error("Job not found");
           }
@@ -362,10 +373,9 @@ const AssignedJobDetail = () => {
               <div className="border-2 border-dashed border-gray-400 dark:border-gray-300 px-3 md:px-4 py-2 rounded-full text-gray-800 dark:text-gray-200 text-sm md:text-base">
                 <span className="font-bold text-gray-700 dark:text-gray-300">Assigned To: </span>
                 <span>{getAssignedWorkerName()}</span>
-              </div>
-              <div className="border-2 border-dashed border-[#FD7F00] dark:border-orange-500 px-3 md:px-4 py-2 rounded-full text-[#FD7F00] dark:text-orange-500 text-sm md:text-base">
+              </div>              <div className="border-2 border-dashed border-[#FD7F00] dark:border-orange-500 px-3 md:px-4 py-2 rounded-full text-[#FD7F00] dark:text-orange-500 text-sm md:text-base">
                 <span className="font-semibold">Status: </span>
-                <span>{job.status || JobStatus.ASSIGNED}</span>
+                <span>Book On Pending</span>
               </div>
             </div>
           </div>
