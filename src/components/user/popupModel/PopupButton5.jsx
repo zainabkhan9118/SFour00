@@ -318,6 +318,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
           setError("User ID not found. Please try logging in again.");
           return;
         }
+        
 
         // Fetch job details - use the assigned jobs endpoint directly as it's more reliable
         const BASE_URL = import.meta.env.VITE_BASE_URL;
