@@ -16,8 +16,16 @@ import CompanyProfileCompletionPopup from "./CompanyProfileCompletionPopup";
 import LogoutSuccessPopup from "../../user/popupModel/LogoutSuccessPopup";
 import { ThemeContext } from "../../../context/ThemeContext";
 
+const CompanyProfileSkeleton = () => (
+  <div className="flex items-center p-4 animate-pulse">
+    <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+    <div className="ml-2 h-4 w-24 bg-gray-200 rounded"></div>
+  </div>
+);
+
 const CompanySideBar = ({ isMobile = false }) => {
   const [companyData, setCompanyData] = useState(null);
+  const [imageError, setImageError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -47,42 +55,60 @@ const CompanySideBar = ({ isMobile = false }) => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchCompanyData = async (user) => {
-      if (!user) {
-        console.error("User not authenticated");
+      if (!user || !isMounted) {
+        console.error("User not authenticated or component unmounted");
         setIsLoading(false);
         return;
       }
 
       try {
+        // Try to get data from localStorage first
+        const cachedData = localStorage.getItem('companyData');
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          setCompanyData(parsedData);
+          setIsLoading(false);
+        }
+
+        // Fetch fresh data from the API
         const response = await axios.get('/api/company', {
           headers: {
             "firebase-id": user.uid
           }
         });
-        if (response.data && response.data.data) {
+        
+        if (response.data?.data && isMounted) {
           setCompanyData(response.data.data);
+          // Cache the fresh data
+          localStorage.setItem('companyData', JSON.stringify(response.data.data));
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     setIsLoading(true);
     const auth = getAuth();
     
-    // Use Firebase's auth state listener instead of immediately checking currentUser
+    // Use Firebase's auth state listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+      if (user && isMounted) {
         fetchCompanyData(user);
       } else {
         setIsLoading(false);
       }
     });
     
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // Toggle sidebar on mobile
@@ -290,6 +316,27 @@ const CompanySideBar = ({ isMobile = false }) => {
     </nav>
   );
 
+  // Profile info component - reused in both mobile and desktop versions
+  const CompanyProfileInfo = () => (
+    <div className="flex items-center p-4 border-b dark:border-gray-700">
+      {isLoading ? (
+        <CompanyProfileSkeleton />
+      ) : (
+        <>
+          <img
+            src={!imageError ? (companyData?.companyLogo || company) : company}
+            alt="Company Logo"
+            className="w-8 h-8 rounded-full object-cover"
+            onError={() => setImageError(true)}
+          />
+          <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
+            {companyData?.companyName || "Company Name"}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
   // Mobile version of the sidebar
   if (isMobile) {
     return (
@@ -297,16 +344,7 @@ const CompanySideBar = ({ isMobile = false }) => {
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden transition-colors duration-200">
           {/* Mobile header with menu button */}
           <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-            <div className="flex items-center">
-              <img
-                src={companyData?.companyLogo || company}
-                alt="Company Logo"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
-                {companyData?.companyName || "Company Name"}
-              </span>
-            </div>
+            <CompanyProfileInfo />
             <button 
               onClick={toggleSidebar}
               className="text-gray-600 dark:text-gray-400 focus:outline-none"
@@ -350,17 +388,7 @@ const CompanySideBar = ({ isMobile = false }) => {
   return (
     <>
       <div className="h-full bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden transition-colors duration-200">
-        {/* Profile quick info - smaller height */}
-        <div className="flex items-center p-4 border-b dark:border-gray-700">
-          <img
-            src={companyData?.companyLogo || company}
-            alt="Company Logo"
-            className="w-8 h-8 rounded-full object-cover"
-          />
-          <span className="ml-2 font-medium text-sm text-gray-800 dark:text-white truncate">
-            {companyData?.companyName || "Company Name"}
-          </span>
-        </div>
+        <CompanyProfileInfo />
         
         {/* Navigation links - more compact */}
         <div className="p-4">

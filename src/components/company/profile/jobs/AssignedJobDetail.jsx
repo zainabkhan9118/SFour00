@@ -158,8 +158,6 @@ const AssignedJobDetail = () => {
       // Use the getWorkerLocation function from locationApi.js
       const result = await getWorkerLocation(companyId, jobId);
       
-      console.log("Worker location API response:", result);
-      
       if (result.statusCode === 200) {
         // If data is available, use it
         if (result.data && result.data.jobSeekerLatitude && result.data.jobSeekerLongitude) {
@@ -173,7 +171,6 @@ const AssignedJobDetail = () => {
             latitude: 34.1973229,
             longitude: 73.2422251
           });
-          console.log("Using default location as API returned null data");
         }
         // Open map modal in both cases
         setIsMapOpen(true);
@@ -212,12 +209,27 @@ const AssignedJobDetail = () => {
     // Check if we found a firebase ID, if not, just redirect to the general chat
     if (workerFirebaseId) {
       // Navigate to chat with the specific worker
-      navigate(`/chat?workerId=${workerFirebaseId}`);
+      navigate(`/chat?workerFirebaseId=${workerFirebaseId}`);
     } else {
       // No specific worker ID found, just go to the chat page
       navigate('/chat');
     }
   };
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    // Initial fetch
+    trackWorker();
+
+    // Set up interval for every 10 minutes (600000 ms)
+    const intervalId = setInterval(() => {
+      trackWorker();
+    }, 600000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [jobId]);
 
   if (loading) {
     return (
@@ -388,8 +400,9 @@ const AssignedJobDetail = () => {
             </p>
             <div className="flex flex-col sm:flex-row mt-4 gap-3">
               <button
-                onClick={() => trackWorker()}
-                className="bg-[#FD7F00] dark:bg-orange-500 w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal hover:bg-orange-600 dark:hover:bg-orange-600 transition">
+                onClick={trackWorker}
+                className="bg-[#FD7F00] dark:bg-orange-500 hover:bg-orange-600 dark:hover:bg-orange-600 w-full sm:w-[220px] h-[46px] md:h-[56px] text-white px-4 md:px-6 py-2 rounded-full text-sm md:text-base font-normal transition"
+              >
                 Track Worker
               </button>
               <button 
