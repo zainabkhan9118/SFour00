@@ -717,11 +717,6 @@ const JobPosting = () => {
             checkpoints: newCheckpoints
           };
         });
-        
-        // Clean up the container
-        if (container) {
-          document.body.removeChild(container);
-        }
       }
     };
     
@@ -730,27 +725,66 @@ const JobPosting = () => {
       import('../../user/popupModel/PopupButton5'),
       import('react-dom/client')
     ]).then(([{ default: PopupButton5 }, ReactDOMClient]) => {
-      // Use React 18's createRoot API
-      const root = ReactDOMClient.createRoot(container);
-      
-      root.render(
-        <PopupButton5 
-          onClose5={() => {
-            // Clean up when popup is closed
-            if (container) {
-              // Unmount component using root.unmount()
-              root.unmount();
-              document.body.removeChild(container);
+      let root = null;
+      try {
+        // Use React 18's createRoot API
+        root = ReactDOMClient.createRoot(container);
+        
+        const cleanup = () => {
+          try {
+            // Use a try-catch for each cleanup operation
+            if (root) {
+              try {
+                root.unmount();
+              } catch (unmountError) {
+                console.error("Error unmounting component:", unmountError);
+              }
             }
-          }}
-          onQRScanned={handleQRScan}
-          useQROnly={true} // Special flag to indicate we only want QR functionality
-        />
-      );
+            
+            if (document.body.contains(container)) {
+              try {
+                document.body.removeChild(container);
+              } catch (removeError) {
+                console.error("Error removing container:", removeError);
+              }
+            }
+          } catch (cleanupError) {
+            console.error("Error during cleanup:", cleanupError);
+          }
+        };
+        
+        root.render(
+          <PopupButton5 
+            onClose5={cleanup}
+            onQRScanned={handleQRScan}
+            useQROnly={true}
+          />
+        );
+      } catch (err) {
+        console.error("Error rendering QR scanner:", err);
+        if (root) {
+          try {
+            root.unmount();
+          } catch (unmountError) {
+            console.error("Error unmounting on error:", unmountError);
+          }
+        }
+        if (document.body.contains(container)) {
+          try {
+            document.body.removeChild(container);
+          } catch (removeError) {
+            console.error("Error removing container on error:", removeError);
+          }
+        }
+      }
     }).catch(err => {
       console.error("Error loading QR scanner:", err);
-      if (container) {
-        document.body.removeChild(container);
+      if (document.body.contains(container)) {
+        try {
+          document.body.removeChild(container);
+        } catch (removeError) {
+          console.error("Error removing container on load error:", removeError);
+        }
       }
     });
   };
