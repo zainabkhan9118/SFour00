@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from 'axios';
+import { getCompanyProfile } from "../../../api/companyApi";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import vector1 from "../../../assets/images/vector1.png";
@@ -26,14 +26,14 @@ const CompanyProfileSkeleton = () => (
 const CompanySideBar = ({ isMobile = false }) => {
   const [companyData, setCompanyData] = useState(null);
   const [imageError, setImageError] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const { isProfileComplete, isLoading: profileLoading, checkProfileCompletion } = useCompanyProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation(); 
   const currentPath = location.pathname;
 
   // Fetch user and company data using the structured API approach
@@ -72,17 +72,13 @@ const CompanySideBar = ({ isMobile = false }) => {
           setIsLoading(false);
         }
 
-        // Fetch fresh data from the API
-        const response = await axios.get('/api/company', {
-          headers: {
-            "firebase-id": user.uid
-          }
-        });
+        // Fetch fresh data from the API using getCompanyProfile
+        const response = await getCompanyProfile(user.uid);
         
-        if (response.data?.data && isMounted) {
-          setCompanyData(response.data.data);
+        if (response?.data && isMounted) {
+          setCompanyData(response.data);
           // Cache the fresh data
-          localStorage.setItem('companyData', JSON.stringify(response.data.data));
+          localStorage.setItem('companyData', JSON.stringify(response.data));
         }
       } catch (error) {
         console.error("Error fetching company data:", error);
