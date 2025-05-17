@@ -450,7 +450,7 @@ export default function MyWorkAssignedPage() {
                     <div className="flex items-center col-span-1 sm:col-span-2 md:col-span-2 space-x-4">
                       <div className="w-12 h-12 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
                         <LazyImage
-                          src={job.companyLogo || companyImage}
+                          src={job.companyId?.companyLogo || companyImage}
                           alt={job.jobTitle || "Company"}
                           className="w-full h-full object-cover"
                           fallbackSrc={companyImage}
