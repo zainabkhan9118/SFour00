@@ -26,14 +26,14 @@ const CompanyProfileSkeleton = () => (
 const CompanySideBar = ({ isMobile = false }) => {
   const [companyData, setCompanyData] = useState(null);
   const [imageError, setImageError] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [isLoading, setIsLoading] = useState(true);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const { isProfileComplete, isLoading: profileLoading, checkProfileCompletion } = useCompanyProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation(); 
   const currentPath = location.pathname;
 
   // Fetch user and company data using the structured API approach
