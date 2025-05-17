@@ -17,7 +17,9 @@ const Job = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobsPerPage] = useState(10);
+  const [jobsPerPage, setJobsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
     const { profileName } = useContext(AppContext);
   
@@ -26,9 +28,13 @@ const Job = () => {
     const getJobs = async () => {
       try {
         setLoading(true);
-        const response = await fetchAllJobs();
-        if (response && response.data) {
+        const response = await fetchAllJobs(currentPage, jobsPerPage);
+        
+        if (response && response.statusCode === 200) {
           setJobs(response.data);
+          // Check if there are more jobs after current batch
+          setHasNextPage(response.hasMore);
+          console.log('Current page:', currentPage, 'Jobs:', response.data.length);
         } else {
           setError("No jobs data found");
         }
@@ -39,9 +45,9 @@ const Job = () => {
         setLoading(false);
       }
     };
-    
+
     getJobs();
-  }, []);
+  }, [currentPage, jobsPerPage]);
   
   const toggleBookmark = (id) => {
     setJobs(jobs.map(job => 
@@ -49,23 +55,14 @@ const Job = () => {
     ));
   };
   
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.jobTitle.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = !locationTerm || 
-      (job.companyId && job.companyId.address && job.companyId.address.toLowerCase().includes(locationTerm.toLowerCase()));
-    return matchesSearch && matchesLocation;
-  });
-
-  // Get current jobs for pagination
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  // Remove client-side pagination calculations
+  const filteredJobs = jobs;
 
   // Change page
-  const paginate = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
+  const paginate = async (pageNumber) => {
+    if (pageNumber >= 1) { // Remove upper limit check since we use hasNextPage
       setCurrentPage(pageNumber);
+      window.scrollTo(0, 0);
     }
   };
   
@@ -85,6 +82,13 @@ const Job = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Handle jobs per page selection
+  const handleJobsPerPageChange = (e) => {
+    const selectedValue = parseInt(e.target.value);
+    setJobsPerPage(selectedValue);
+    setCurrentPage(1); // Reset to the first page
   };
 
   return (
@@ -138,6 +142,21 @@ const Job = () => {
               </a>
             </div>
 
+            {/* Jobs Per Page Selection */}
+            <div className="mb-4 flex items-center space-x-4">
+              <label htmlFor="jobsPerPage" className="text-gray-700 dark:text-gray-300">Show:</label>
+              <select
+                id="jobsPerPage"
+                value={jobsPerPage}
+                onChange={handleJobsPerPageChange}
+                className="p-2 rounded-lg border dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              >
+                <option value={10}>10</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
             {loading ? (
               <div className="flex justify-center items-center h-40">
                 <LoadingSpinner />
@@ -153,7 +172,7 @@ const Job = () => {
             ) : (
               <>
                 <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm transition-colors duration-200">
-                  {currentJobs.map((job) => (
+                  {filteredJobs.map((job) => (
                     <div 
                       key={job._id} 
                       className="flex flex-col md:flex-row md:items-center p-3 md:p-4 border-b dark:border-gray-700 last:border-none space-y-3 md:space-y-0"
@@ -220,47 +239,29 @@ const Job = () => {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {jobs.length > 0 && (
                   <div className="flex justify-center items-center mt-6 space-x-2">
-                    <button
-                      onClick={() => paginate(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`p-2 rounded-lg ${
-                        currentPage === 1
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
+                    {currentPage > 1 && (
+                      <button
+                        onClick={() => paginate(currentPage - 1)}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    )}
                     
-                    <div className="flex space-x-1">
-                      {[...Array(totalPages)].map((_, index) => (
-                        <button
-                          key={index + 1}
-                          onClick={() => paginate(index + 1)}
-                          className={`px-3 py-1 rounded-lg ${
-                            currentPage === index + 1
-                              ? 'bg-orange-500 text-white'
-                              : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          {index + 1}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="px-4 py-2">
+                      Page <span className="inline-flex justify-center w-8 h-8 text-white bg-orange-500">{currentPage}</span>
+                    </span>
 
-                    <button
-                      onClick={() => paginate(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`p-2 rounded-lg ${
-                        currentPage === totalPages
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                    {hasNextPage && (
+                      <button
+                        onClick={() => paginate(currentPage + 1)}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 )}
               </>
