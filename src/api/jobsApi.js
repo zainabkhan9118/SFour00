@@ -178,9 +178,9 @@ export const getJobsByStatus = async (companyId, status) => {
 };
 
 // Original function kept for reference and direct use when needed
-const _fetchAllJobs = async () => {
+const _fetchAllJobs = async (page = 1, limit = 10) => {
   try {
-    const response = await axios.get(`${BASE_URL}/jobs`);
+    const response = await axios.get(`${BASE_URL}/jobs?page=${page}&limit=${limit}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching jobs:', error);
@@ -189,8 +189,23 @@ const _fetchAllJobs = async () => {
 };
 
 // Cached version of fetchAllJobs - 5 minute cache by default
-export const fetchAllJobs = async () => {
-  return cachedApiCall(_fetchAllJobs, [], 'all-jobs');
+export const fetchAllJobs = async (page = 1, limit = 10) => {
+  try {
+    console.log('Fetching jobs for page:', page, 'limit:', limit);
+    
+    const response = await axios.get(`${BASE_URL}/jobs?page=${page}&limit=${limit}`);
+    
+    return {
+      statusCode: 200,
+      data: response.data.data || [],
+      hasMore: response.data.data?.length === limit, // If we got full page, there might be more
+      total: response.data.total || 0,
+      currentPage: page
+    };
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    throw error;
+  }
 };
 
 // Original function kept for reference
