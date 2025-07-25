@@ -13,6 +13,8 @@ import { createNewJobSeekerProfile, updatePersonalDetails } from "../../../../..
 import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../popupModel/ProfileSuccessPopup";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -23,6 +25,7 @@ const EditPersonalDetails = () => {
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { profileSteps, getNextStep } = useProfileSteps(); // Use the profile steps hook
   const [formData, setFormData] = useState({
     name: "Henry Kanwil",
     addresses: [{ address: "", duration: "", isCurrent: false }],
@@ -37,6 +40,43 @@ const EditPersonalDetails = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
 
+
+  const [isChecked, setIsChecked] = useState(false);
+
+
+ const handleCheckboxChange = () => {
+    setIsChecked(!isChecked);
+  };
+
+  // This useEffect will run when the component mounts to check if license data already exists
+  useEffect(() => {
+    const fetchLicenseData = async () => {
+      if (isDataAlreadyPosted) {
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        
+        try {
+          const response = await axios.get(`${BASEURL}/job-seeker`, {
+            headers: {
+              "firebase-id": `${currentUser.uid}`,
+            },
+          });
+          
+          if (response.data?.data?.licencseStatue !== undefined) {
+            setIsChecked(response.data.data.licencseStatue);
+          }
+        } catch (error) {
+          console.error("Error fetching license data:", error);
+        }
+      }
+    };
+    
+    fetchLicenseData();
+  }, [isDataAlreadyPosted]);
+
+  
+  
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -169,11 +209,20 @@ const EditPersonalDetails = () => {
         )
       );
 
+      // Add the license checkbox state to the form data
+      formDataToSend.append("licencseStatue", isChecked);
+      console.log("Sending license status:", isChecked);
+
       if (profileImage instanceof File) {
         formDataToSend.append("profilePic", profileImage);
       }
 
       if (isDataAlreadyPosted) {
+        // Log the form data for debugging
+        for (let pair of formDataToSend.entries()) {
+          console.log(pair[0] + ': ' + pair[1]);
+        }
+        
         const response = await updatePersonalDetails(firebaseId, formDataToSend);
         console.log("Profile updated successfully:", response);
 
@@ -184,9 +233,16 @@ const EditPersonalDetails = () => {
         }
 
         showSuccess("Profile updated successfully!");
-        setSuccessMessage("Your profile has been updated successfully.");
-        setRedirectPath("/User-PersonalDetails");
-        setShowSuccessPopup(true);
+        localStorage.setItem("personalDetails", "completed");
+        
+        // Find the current step and navigate to the next step in the sequence
+        const currentStepId = 1; // Personal Details is step 1 in the sequence
+        const nextStep = getNextStep(currentStepId);
+        if (nextStep) {
+          navigate(nextStep.path);
+        } else {
+          navigate('/User-PersonalDetails');
+        }
 
         await checkProfileCompletion();
       } else {
@@ -201,6 +257,7 @@ const EditPersonalDetails = () => {
           fullname: formData.name,
           shortBio: formData.bio,
           address: formData.addresses,
+          LicenseStatus: isChecked,
           profilePic: profileImage instanceof File ? profileImage : undefined,
         });
 
@@ -322,6 +379,9 @@ const EditPersonalDetails = () => {
               <span className="font-medium text-black dark:text-white">Edit Personal Details</span>
             </button>
           </div>
+          
+          {/* Progress Tracker */}
+          <ProgressTracker steps={profileSteps} />
 
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">
@@ -428,7 +488,8 @@ const EditPersonalDetails = () => {
                   </div>
                 ))}
 
-                <button
+                
+                              <button
                   type="button"
                   onClick={addAddress}
                   className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-orange-500 hover:text-orange-500 dark:hover:text-orange-400 transition"
@@ -438,6 +499,19 @@ const EditPersonalDetails = () => {
                 </button>
               </div>
 
+              <div className="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <input
+                  id="has-license"
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={handleCheckboxChange}
+                  className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded"
+                />
+                <label htmlFor="has-license" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Do you have a license?
+                </label>
+              </div>
+              
               <div className="space-y-2">
                 <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Short Bio
@@ -464,6 +538,8 @@ const EditPersonalDetails = () => {
                 disabled={isLoading}
                 aria-label="Save profile changes"
               >
+
+
                 <span>{isLoading ? "Loading..." : "Save Edits"}</span>
                 {!isLoading && <FiArrowRight className="ml-2" />}
               </button>
