@@ -10,6 +10,8 @@ import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const EditEducation = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const EditEducation = () => {
   const { showSuccess, showError, showInfo } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { profileSteps, getNextStep, markStepComplete } = useProfileSteps(); // Use the profile steps hook
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
@@ -208,8 +211,22 @@ const EditEducation = () => {
 
       // Show success message
       showSuccess("Education details saved successfully!");
+      
+      // Mark education step as complete
+      markStepComplete('Education');
+      localStorage.setItem("hasEducation", "true");
+      
+      // Set success popup
       setSuccessMessage("Education details saved successfully!");
-      setRedirectPath("/User-PersonalDetails");
+      
+      // Find the next step in the sequence
+      const nextStep = getNextStep('Education');
+      if (nextStep) {
+        setRedirectPath(nextStep.path);
+      } else {
+        setRedirectPath('/User-PersonalDetails');
+      }
+      
       setShowSuccessPopup(true);
 
       // Check profile completion status
@@ -296,8 +313,14 @@ const EditEducation = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    // Navigate to experience form next
-    navigate('/edit-experience');
+    // Navigate to the next step in the sequence
+    markStepComplete('Education');
+    const nextStep = getNextStep('Education');
+    if (nextStep) {
+      navigate(nextStep.path);
+    } else {
+      navigate('/User-PersonalDetails');
+    }
   };
 
   return (
@@ -324,6 +347,9 @@ const EditEducation = () => {
               <span className="font-medium text-black dark:text-white">Education</span>
             </button>
           </div>
+          
+          {/* Progress Tracker */}
+          <ProgressTracker steps={profileSteps} />
 
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">

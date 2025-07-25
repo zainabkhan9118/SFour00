@@ -9,6 +9,9 @@ import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
+import { BiErrorCircle } from "react-icons/bi";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -18,6 +21,7 @@ const EditCertificate = () => {
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { profileSteps, getNextStep } = useProfileSteps(); // Use the custom hook with getNextStep
   const [issueDate, setIssueDate] = React.useState("");
   const [organization, setOrganization] = React.useState("");
   const [selectedFile, setSelectedFile] = React.useState(null);
@@ -27,6 +31,8 @@ const EditCertificate = () => {
   const [showSuccessPopup, setShowSuccessPopup] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState("");
   const [redirectPath, setRedirectPath] = React.useState("");
+  const [formErrors, setFormErrors] = React.useState({});
+  const [showErrorPopup, setShowErrorPopup] = React.useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -83,6 +89,20 @@ const EditCertificate = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Form validation
+    const errors = {};
+    if (!issueDate) errors.issueDate = "Issue date is required";
+    if (!organization) errors.organization = "Organization name is required";
+    if (!selectedFile && !certificateId) errors.file = "Certificate document is required";
+    
+    // If there are errors, show them and don't proceed
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setShowErrorPopup(true);
+      return;
+    }
+    
     setIsLoading(true);
     const jobSeekerId = localStorage.getItem("jobSeekerId");
     
@@ -117,11 +137,15 @@ const EditCertificate = () => {
           const certId = response.data.data._id;
           if (certId) {
             localStorage.setItem("certificateId", certId);
-            showSuccess("Certificate added successfully!");
-            setSuccessMessage("Certificate added successfully!");
-            setRedirectPath("/User-PersonalDetails");
-            setShowSuccessPopup(true);
             checkProfileCompletion();
+            // Find the current step and navigate to the next step in the sequence
+            const currentStepId = 4; // Certificate is step 4 in the new sequence
+            const nextStep = getNextStep(currentStepId);
+            if (nextStep) {
+              navigate(nextStep.path);
+            } else {
+              navigate('/User-PersonalDetails');
+            }
           }
         }
       } else {
@@ -135,11 +159,15 @@ const EditCertificate = () => {
             }
           }
         );
-        showSuccess("Certificate updated successfully!");
-        setSuccessMessage("Certificate updated successfully!");
-        setRedirectPath("/User-PersonalDetails");
-        setShowSuccessPopup(true);
         checkProfileCompletion();
+        // Find the current step and navigate to the next step in the sequence
+        const currentStepId = 4; // Certificate is step 4 in the new sequence
+        const nextStep = getNextStep(currentStepId);
+        if (nextStep) {
+          navigate(nextStep.path);
+        } else {
+          navigate('/User-PersonalDetails');
+        }
       }
     } catch (error) {
       console.error('API Error:', error.response || error);
@@ -168,6 +196,41 @@ const EditCertificate = () => {
     setShowSuccessPopup(false);
     // Navigate to license form next
     navigate('/edit-license');
+  };
+  
+  const closeErrorPopup = () => {
+    setShowErrorPopup(false);
+  };
+  
+  // Error Popup Component
+  const ErrorPopup = ({ errors, onClose }) => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl w-full max-w-md">
+          <div className="flex items-center mb-4 text-red-500">
+            <BiErrorCircle className="text-2xl mr-2" />
+            <h3 className="text-lg font-semibold">Form Validation Errors</h3>
+          </div>
+          
+          <div className="mb-4">
+            <ul className="list-disc pl-5 space-y-1">
+              {Object.values(errors).map((error, index) => (
+                <li key={index} className="text-red-500">{error}</li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -205,18 +268,26 @@ const EditCertificate = () => {
             )}
           </div>
           
+          {/* Use the reusable Progress Tracker component */}
+          <ProgressTracker steps={profileSteps} />
+          
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4">
               <div className="space-y-2">
                 <label htmlFor="issueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Issue Date
+                  Issue Date <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="issueDate"
                   type="date"
                   value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  onChange={(e) => {
+                    setIssueDate(e.target.value);
+                    setFormErrors({...formErrors, issueDate: null});
+                  }}
+                  className={`w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none ${
+                    formErrors.issueDate ? 'border-2 border-red-500' : ''
+                  }`}
                   placeholder="Select Issue Date"
                   required
                   aria-describedby="issueDateHelp"
@@ -224,18 +295,26 @@ const EditCertificate = () => {
                 <p id="issueDateHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   The date when the certificate was issued
                 </p>
+                {formErrors.issueDate && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.issueDate}</p>
+                )}
               </div>
               
               <div className="space-y-2">
                 <label htmlFor="organization" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Organization Name
+                  Organization Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="organization"
                   type="text"
                   value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                  className="w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  onChange={(e) => {
+                    setOrganization(e.target.value);
+                    setFormErrors({...formErrors, organization: null});
+                  }}
+                  className={`w-full p-4 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none ${
+                    formErrors.organization ? 'border-2 border-red-500' : ''
+                  }`}
                   placeholder="Enter Organization Name"
                   required
                   aria-describedby="organizationHelp"
@@ -243,14 +322,19 @@ const EditCertificate = () => {
                 <p id="organizationHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   The institution or organization that issued the certificate
                 </p>
+                {formErrors.organization && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.organization}</p>
+                )}
               </div>
               
               <div className="space-y-2">
                 <label htmlFor="certificateFile" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Certificate Document
+                  Certificate Document <span className="text-red-500">*</span>
                 </label>
                 <div 
-                  className="border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-8 bg-orange-50 dark:bg-gray-800 cursor-pointer flex flex-col items-center justify-center h-40"
+                  className={`border-2 ${
+                    formErrors.file ? 'border-red-500' : 'border-dashed border-orange-300 dark:border-orange-700'
+                  } rounded-lg p-8 bg-orange-50 dark:bg-gray-800 cursor-pointer flex flex-col items-center justify-center h-40`}
                   onClick={() => fileInputRef.current.click()}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -265,6 +349,7 @@ const EditCertificate = () => {
                     e.currentTarget.classList.remove('bg-orange-100', 'dark:bg-gray-700');
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                       setSelectedFile(e.dataTransfer.files[0]);
+                      setFormErrors({...formErrors, file: null});
                     }
                   }}
                   aria-describedby="certificateFileHelp"
@@ -292,13 +377,19 @@ const EditCertificate = () => {
                     ref={fileInputRef} 
                     className="hidden" 
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      handleFileChange(e);
+                      setFormErrors({...formErrors, file: null});
+                    }}
                     aria-label="Upload certificate document"
                   />
                 </div>
                 <p id="certificateFileHelp" className="text-xs text-gray-500 dark:text-gray-400">
                   Upload a scan or photo of your certificate (PDF, Word, or image formats)
                 </p>
+                {formErrors.file && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.file}</p>
+                )}
               </div>
               
               <button 
@@ -319,6 +410,13 @@ const EditCertificate = () => {
           message={successMessage}
           redirectPath={redirectPath}
           onClose={handleCloseSuccessPopup}
+        />
+      )}
+      
+      {showErrorPopup && (
+        <ErrorPopup 
+          errors={formErrors}
+          onClose={closeErrorPopup}
         />
       )}
     </div>
