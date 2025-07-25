@@ -132,32 +132,126 @@ const AppliedjobDetail = () => {
           setIsErrorPopupOpen(true);
           return;
         }
+        
+        // Debug job details
+        console.log("Job Details for invoice:", {
+          id: id,
+          jobSeekerId: jobSeekerId,
+          jobTitle: jobDetails.jobTitle,
+          startTime: jobDetails.startTime,
+          endTime: jobDetails.endTime,
+          workDate: jobDetails.workDate,
+          pricePerHour: jobDetails.pricePerHour
+        });
+
+        // Check if startTime and endTime are available - use default values if missing
+        console.log("Time values:", { 
+          startTime: jobDetails.startTime, 
+          endTime: jobDetails.endTime 
+        });
+        
+        // Assign default values if missing
+        const startTime = jobDetails.startTime || "09:00";
+        const endTime = jobDetails.endTime || "17:00";
+        
+        console.log("Using time values:", { startTime, endTime });
 
         // Calculate total hours from start time to end time
-        const startTimeParts = jobDetails.startTime.split(':');
-        const endTimeParts = jobDetails.endTime.split(':');
-        const startHour = parseInt(startTimeParts[0], 10);
-        const endHour = parseInt(endTimeParts[0], 10);
-        const totalHours = endHour - startHour;
+        let totalHours = 0;
+        let totalPrice = 0;
+        
+        try {
+          const startTimeParts = startTime.split(':');
+          const endTimeParts = endTime.split(':');
+          const startHour = parseInt(startTimeParts[0], 10);
+          const endHour = parseInt(endTimeParts[0], 10);
+          
+          // Validate parsed hours
+          if (isNaN(startHour) || isNaN(endHour)) {
+            throw new Error("Invalid time format");
+          }
+          
+          totalHours = endHour - startHour;
+          
+          // Make sure totalHours is positive
+          if (totalHours <= 0) {
+            totalHours = 1; // Default to minimum 1 hour
+          }
+          
+          // Calculate total price
+          totalPrice = totalHours * jobDetails.pricePerHour;
+        } catch (error) {
+          console.error("Error parsing time values:", error);
+          setErrorPopupMessage("Invalid time format for this job");
+          setIsErrorPopupOpen(true);
+          setIsLoading(false);
+          return;
+        }
 
-        // Calculate total price
-        const totalPrice = totalHours * jobDetails.pricePerHour;
+        // Format the date for the API request (YYYY-MM-DD)
+        let formattedDate = '';
+        try {
+          // Check if workDate is available
+          if (!jobDetails.workDate) {
+            console.warn("Work date is missing, using current date as fallback");
+            formattedDate = format(new Date(), 'yyyy-MM-dd');
+          } else {
+            // Try to format the date
+            const dateObj = new Date(jobDetails.workDate);
+            
+            // Verify the date is valid
+            if (isNaN(dateObj.getTime())) {
+              throw new Error("Invalid date format");
+            }
+            
+            formattedDate = format(dateObj, 'yyyy-MM-dd');
+            console.log("Formatted work date:", formattedDate);
+          }
+        } catch (error) {
+          console.error("Error formatting date:", error);
+          // If date can't be formatted, use current date as fallback
+          formattedDate = format(new Date(), 'yyyy-MM-dd');
+          console.log("Using fallback date:", formattedDate);
+        }
+
+        // Validate pricePerHour
+        if (!jobDetails.pricePerHour || isNaN(jobDetails.pricePerHour)) {
+          console.error("Invalid price per hour:", jobDetails.pricePerHour);
+          setErrorPopupMessage("Price information is not available for this job");
+          setIsErrorPopupOpen(true);
+          setIsLoading(false);
+          return;
+        }
 
         // Create invoice data based on job details
         const invoiceData = {
-          startTime: jobDetails.startTime,
-          endTime: jobDetails.endTime,
-          pricePerHour: jobDetails.pricePerHour,
-          workDate: jobDetails.workDate,
+          startTime: startTime,
+          endTime: endTime,
+          pricePerHour: Number(jobDetails.pricePerHour),
+          workDate: formattedDate,
           totalHours: totalHours,
           totalPrice: totalPrice
         };
+        
+        // Final validation to ensure all fields are present
+        if (!invoiceData.startTime || !invoiceData.endTime || !invoiceData.workDate) {
+          console.error("Incomplete invoice data:", invoiceData);
+          setErrorPopupMessage("Cannot create invoice with incomplete data");
+          setIsErrorPopupOpen(true);
+          setIsLoading(false);
+          return;
+        }
 
+        console.log('Creating invoice with data:', invoiceData);
+        
         // Call the API to create an invoice
         const response = await createInvoice(id, jobSeekerId, invoiceData);
 
+        console.log('Invoice API response:', response);
+
         // If successful, show success popup with invoice details
-        if (response && response.success) {
+        // The API might return different response structures, handling both possibilities
+        if (response && (response.success || response.data)) {
           const formattedInvoiceDetails = {
             ...invoiceData,
             workDate: format(new Date(jobDetails.workDate), 'MMMM dd, yyyy')

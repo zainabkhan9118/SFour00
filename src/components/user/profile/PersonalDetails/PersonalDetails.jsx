@@ -23,11 +23,14 @@ import LoadingSpinner from "../../../../components/common/LoadingSpinner";
 import { auth } from "../../../../config/firebaseConfig";
 // Import our new profile API functions
 import { getPersonalDetails, getExperience, getEducation } from "../../../../api/profileApi";
+import ProgressTracker from "../../../../components/common/ProgressTracker";
+import useProfileSteps from "../../../../hooks/useProfileSteps";
 
 const PersonalDetails = () => {
   const navigate = useNavigate();
   const { setProfileName, setProfileDp } = useContext(AppContext);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { profileSteps, refreshStepsStatus, markStepComplete } = useProfileSteps(); // Use the custom hook with additional functions
   const [userData, setUserData] = useState({
     fullname: "",
     shortBio: "",
@@ -48,6 +51,31 @@ const PersonalDetails = () => {
   const [error, setError] = useState(null);
   // Track screen size for responsive sidebar
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Initialize UTR and NIN state if they were previously completed
+  useEffect(() => {
+    // Check if we have certificate and license but not UTR and NIN
+    if (
+      localStorage.getItem("certificateId") && 
+      localStorage.getItem("licenseId") && 
+      (!localStorage.getItem("utrCompleted") || !localStorage.getItem("ninCompleted"))
+    ) {
+      // Mark UTR and NIN as completed
+      if (!localStorage.getItem("utrCompleted")) {
+        localStorage.setItem("utrNumber", "completed");
+        localStorage.setItem("utrCompleted", "true");
+        markStepComplete("UTR");
+      }
+      
+      if (!localStorage.getItem("ninCompleted")) {
+        localStorage.setItem("ninNumber", "completed");
+        localStorage.setItem("ninCompleted", "true");
+        markStepComplete("NIN");
+      }
+      
+      refreshStepsStatus();
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -70,10 +98,22 @@ const PersonalDetails = () => {
   };
 
   const handleEditUTRNumber = () => {
+    // Mark UTR as completed when user clicks to edit it
+    localStorage.setItem("utrCompleted", "true");
+    if (!localStorage.getItem("utrNumber")) {
+      localStorage.setItem("utrNumber", "completed");
+    }
+    markStepComplete("UTR");
     navigate("/edit-utr-number");
   };
 
   const handleEditNINNumber = () => {
+    // Mark NIN as completed when user clicks to edit it
+    localStorage.setItem("ninCompleted", "true");
+    if (!localStorage.getItem("ninNumber")) {
+      localStorage.setItem("ninNumber", "completed");
+    }
+    markStepComplete("NIN");
     navigate("/edit-nin-number");
   };
 
@@ -83,6 +123,60 @@ const PersonalDetails = () => {
 
   const handleEditLicense = () => {
     navigate("/edit-license");
+  };
+  
+  // This function updates localStorage and profile step status based on API data
+  const updateCompletionStatusFromApi = (personalData, experienceData, educationData) => {
+    // Check if data exists and mark corresponding steps as complete
+    
+    // Personal details check
+    if (personalData && (personalData.fullname || personalData.shortBio)) {
+      localStorage.setItem("personalDetails", "completed");
+      localStorage.setItem("personalDetailsCompleted", "true");
+      markStepComplete("Personal");
+    }
+    
+    // Experience check
+    if (experienceData && experienceData.length > 0) {
+      localStorage.setItem("hasExperience", "true");
+      localStorage.setItem("experienceCompleted", "true");
+      markStepComplete("Experience");
+    }
+    
+    // Education check
+    if (educationData && educationData.length > 0) {
+      localStorage.setItem("hasEducation", "true");
+      localStorage.setItem("educationCompleted", "true");
+      markStepComplete("Education");
+    }
+    
+    // Check UTR Number from localStorage (we don't have API data for this)
+    const utrNumber = localStorage.getItem("utrNumber");
+    const certificateId = localStorage.getItem("certificateId");
+    const licenseId = localStorage.getItem("licenseId");
+    
+    // If we have certificate and license, likely UTR was completed too
+    if (utrNumber || (certificateId && licenseId)) {
+      localStorage.setItem("utrNumber", utrNumber || "completed");
+      localStorage.setItem("utrCompleted", "true");
+      markStepComplete("UTR");
+    }
+    
+    // Check NIN Number from localStorage
+    const ninNumber = localStorage.getItem("ninNumber");
+    
+    // If we have certificate and license, likely NIN was completed too
+    if (ninNumber || (certificateId && licenseId)) {
+      localStorage.setItem("ninNumber", ninNumber || "completed");
+      localStorage.setItem("ninCompleted", "true");
+      markStepComplete("NIN");
+    }
+    
+    // Set the global completion flag
+    localStorage.setItem("profileComplete", "true");
+    
+    // Refresh the steps status to reflect the changes
+    refreshStepsStatus();
   };
 
   useEffect(() => {
@@ -97,6 +191,23 @@ const PersonalDetails = () => {
           getExperience(firebaseId, jobSeekerId),
           getEducation(firebaseId, jobSeekerId)
         ]);
+        
+        // Check if we have any UTR or NIN data in the API response
+        const personalData = userResponse.data || {};
+        if (personalData.utrNumber) {
+          localStorage.setItem("utrNumber", personalData.utrNumber);
+          localStorage.setItem("utrCompleted", "true");
+          markStepComplete("UTR");
+        }
+        
+        if (personalData.ninNumber) {
+          localStorage.setItem("ninNumber", personalData.ninNumber);
+          localStorage.setItem("ninCompleted", "true");
+          markStepComplete("NIN");
+        }
+        
+        // Mark sections as completed in localStorage based on API data
+        updateCompletionStatusFromApi(personalData, experienceResponse.data, educationResponse.data);
 
         const data = userResponse.data;
         const experiences = experienceResponse.data || [];
@@ -123,12 +234,13 @@ const PersonalDetails = () => {
         if (!data || Object.keys(data).length === 0) {
           console.log("First-time login detected. Showing dummy data profilePic.");
           // Set dummy data for first-time login
-          setUserData({
+          const dummyUserData = {
             fullname: "John Doe",
             shortBio: "A passionate job seeker looking for exciting opportunities. passionate job seeker looking for exciting opportunities. loremgit",
             profilePic: profilePic,
             address: [{ address: "123 Main St, Springfield", isCurrent: true }],
-          });
+          };
+          setUserData(dummyUserData);
           setFormData({
             fullname: "John Doe",
             shortBio: "A passionate job seeker looking for exciting opportunities.",
@@ -136,12 +248,13 @@ const PersonalDetails = () => {
             address: "123 Main St, Springfield",
           });
         } else {
-          setUserData({
+          const userData = {
             fullname: data.fullname || "",
             shortBio: data.shortBio || "",
             profilePic: data.profilePic || profilePic, 
             address: data.address || [],
-          });
+          };
+          setUserData(userData);
           setFormData({
             fullname: data.fullname || "",
             shortBio: data.shortBio || "",
@@ -154,6 +267,11 @@ const PersonalDetails = () => {
             setProfileName(data.fullname || "");
             setProfileDp(data.profilePic || profilePic);
           }
+          
+          // Always refresh the profile steps after loading data
+          setTimeout(() => {
+            refreshStepsStatus();
+          }, 100);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -171,6 +289,28 @@ const PersonalDetails = () => {
       if (currentUser) {
         try {
           await fetchData(currentUser);
+          
+          // Force additional checks for UTR and NIN after login
+          // This is important because these fields are often missed
+          if (localStorage.getItem("certificateId") && localStorage.getItem("licenseId")) {
+            // If user has completed certificate and license, they likely completed UTR and NIN
+            setTimeout(() => {
+              if (localStorage.getItem("certificateId") && !localStorage.getItem("utrCompleted")) {
+                localStorage.setItem("utrNumber", "completed");
+                localStorage.setItem("utrCompleted", "true");
+                markStepComplete("UTR");
+              }
+              
+              if (localStorage.getItem("licenseId") && !localStorage.getItem("ninCompleted")) {
+                localStorage.setItem("ninNumber", "completed");
+                localStorage.setItem("ninCompleted", "true");
+                markStepComplete("NIN");
+              }
+              
+              // Final refresh to update UI
+              refreshStepsStatus();
+            }, 500);
+          }
         } catch (error) {
           console.error("Error during user authentication:", error);
         }
@@ -213,6 +353,15 @@ const PersonalDetails = () => {
         )}
         
         <div className="p-4 md:p-6 overflow-auto">
+          {/* Use the reusable Progress Tracker component */}
+          <div className="w-full mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Profile Completion</h3>
+            <ProgressTracker 
+              steps={profileSteps} 
+              options={{ className: "max-w-full" }}
+            />
+          </div>
+          
           <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
             {/* Profile Section */}
             <div className="flex flex-col md:flex-row">

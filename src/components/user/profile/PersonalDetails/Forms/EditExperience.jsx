@@ -10,6 +10,8 @@ import { useProfileCompletion } from "../../../../../context/profile/ProfileComp
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -26,6 +28,7 @@ const EditExperience = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [redirectPath, setRedirectPath] = useState("");
+  const { profileSteps, getNextStep, markStepComplete } = useProfileSteps();
   const [formData, setFormData] = useState({
     experiences: [
       { 
@@ -230,7 +233,19 @@ const EditExperience = () => {
       if (successfulExperiences.length > 0) {
         console.log('Successfully saved experiences:', successfulExperiences);
         setSuccessMessage("Experiences saved successfully!");
-        setRedirectPath("/User-PersonalDetails");
+        
+        // Mark this step as complete and set localStorage flag
+        markStepComplete('Experience');
+        localStorage.setItem("hasExperience", "true");
+        
+        // Get the next step and set it as the redirect path
+        const nextStep = getNextStep('Experience');
+        if (nextStep) {
+          setRedirectPath(nextStep.path);
+        } else {
+          setRedirectPath("/User-PersonalDetails");
+        }
+        
         setShowSuccessPopup(true);
         checkProfileCompletion();
       } else {
@@ -311,8 +326,14 @@ const EditExperience = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    // Navigate to certificate form next
-    navigate('/edit-certificate');
+    // Mark the experience step as complete and navigate to the next step
+    markStepComplete('Experience');
+    const nextStep = getNextStep('Experience');
+    if (nextStep) {
+      navigate(nextStep.path);
+    } else {
+      navigate('/User-PersonalDetails');
+    }
   };
 
   const handleCloseErrorPopup = () => {
@@ -343,6 +364,9 @@ const EditExperience = () => {
               <span className="font-medium text-black dark:text-white">Experience</span>
             </button>
           </div>
+
+          {/* Use the reusable Progress Tracker component */}
+          <ProgressTracker steps={profileSteps} />
 
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">

@@ -10,6 +10,8 @@ import { useProfileCompletion } from "../../../../../context/profile/ProfileComp
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -18,6 +20,7 @@ const EditLicense = () => {
   const fileInputRef = useRef(null);
   const { showSuccess } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { profileSteps, getNextStep, markStepComplete } = useProfileSteps();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const [licenseNumber, setLicenseNumber] = useState("");
   const [dateOfExpiry, setDateOfExpiry] = useState("");
@@ -166,7 +169,18 @@ const EditLicense = () => {
           localStorage.setItem("licenseId", newLicenseId);
           showSuccess("License added successfully!");
           setSuccessMessage("License added successfully!");
-          setRedirectPath("/User-PersonalDetails");
+          
+          // Mark this step as complete
+          markStepComplete('License');
+          
+          // Get the next step and set it as the redirect path
+          const nextStep = getNextStep('License');
+          if (nextStep) {
+            setRedirectPath(nextStep.path);
+          } else {
+            setRedirectPath("/User-PersonalDetails");
+          }
+          
           setShowSuccessPopup(true);
         }
       }
@@ -190,8 +204,14 @@ const EditLicense = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    // Navigate to UTR number form next
-    navigate('/edit-utr-number');
+    // Mark this step as complete and navigate to the next step
+    markStepComplete('License');
+    const nextStep = getNextStep('License');
+    if (nextStep) {
+      navigate(nextStep.path);
+    } else {
+      navigate('/User-PersonalDetails');
+    }
   };
 
   const handleCloseErrorPopup = () => {
@@ -227,6 +247,9 @@ const EditLicense = () => {
               </span>
             </button>
           </div>
+          
+          {/* Use the reusable Progress Tracker component */}
+          <ProgressTracker steps={profileSteps} />
 
           <div className="w-full max-w-2xl mx-auto">
             <form onSubmit={handleSave} className="flex flex-col space-y-4 p-4">

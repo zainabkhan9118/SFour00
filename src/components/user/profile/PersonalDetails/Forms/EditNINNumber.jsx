@@ -11,6 +11,8 @@ import ProfileErrorPopup from "../../../../user/popupModel/ProfileErrorPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -116,6 +118,7 @@ const EditNINNumber = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
+  const { profileSteps, getNextStep, markStepComplete } = useProfileSteps();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   // Add state for responsive design
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -163,7 +166,19 @@ const EditNINNumber = () => {
       await updateNinData(ninNumber);
       showSuccess("NIN number updated successfully!");
       setSuccessMessage("NIN number updated successfully!");
-      setRedirectPath("/User-PersonalDetails");
+      
+      // Mark this step as complete
+      markStepComplete('NIN');
+      localStorage.setItem("ninNumber", ninNumber || "completed");
+      
+      // Get the next step and set it as the redirect path
+      const nextStep = getNextStep('NIN');
+      if (nextStep) {
+        setRedirectPath(nextStep.path);
+      } else {
+        setRedirectPath("/User-PersonalDetails");
+      }
+      
       setShowSuccessPopup(true);
       checkProfileCompletion();
     } catch (error) {
@@ -181,7 +196,13 @@ const EditNINNumber = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    navigate('/User-PersonalDetails');
+    // Navigate to the next step or back to profile if this is the last step
+    const nextStep = getNextStep('NIN');
+    if (nextStep) {
+      navigate(nextStep.path);
+    } else {
+      navigate('/User-PersonalDetails');
+    }
   };
   
   const handleCloseErrorPopup = () => {
@@ -216,6 +237,9 @@ const EditNINNumber = () => {
               <span className="font-medium text-black dark:text-white">NIN Number</span>
             </button>
           </div>
+          
+          {/* Use the reusable Progress Tracker component */}
+          <ProgressTracker steps={profileSteps} />
           
           {/* NIN Number Form */}
           <div className="w-full max-w-2xl mx-auto">
