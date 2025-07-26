@@ -9,6 +9,8 @@ import { useToast } from "../../../../notifications/ToastManager";
 import { useProfileCompletion } from "../../../../../context/profile/ProfileCompletionContext";
 import ProfileSuccessPopup from "../../../../user/popupModel/ProfileSuccessPopup";
 import { ThemeContext } from "../../../../../context/ThemeContext";
+import ProgressTracker from "../../../../common/ProgressTracker";
+import useProfileSteps from "../../../../../hooks/useProfileSteps";
 
 const EditUTRNumber = () => {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ const EditUTRNumber = () => {
   const { showSuccess, showError } = useToast();
   const { checkProfileCompletion } = useProfileCompletion();
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+  const { profileSteps, getNextStep, markStepComplete } = useProfileSteps();
   // Add state for responsive design
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -61,7 +64,18 @@ const EditUTRNumber = () => {
       await updateUtrData(utrNumber);
       showSuccess("UTR number updated successfully!");
       setSuccessMessage("UTR number updated successfully!");
-      setRedirectPath("/User-PersonalDetails");
+      
+      // Mark this step as complete
+      markStepComplete('UTR');
+      
+      // Get the next step and set it as the redirect path
+      const nextStep = getNextStep('UTR');
+      if (nextStep) {
+        setRedirectPath(nextStep.path);
+      } else {
+        setRedirectPath("/User-PersonalDetails");
+      }
+      
       setShowSuccessPopup(true);
       checkProfileCompletion();
     } catch (error) {
@@ -78,8 +92,13 @@ const EditUTRNumber = () => {
 
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false);
-    // Navigate back to profile since this is the last step
-    navigate('/User-PersonalDetails');
+    // Navigate to the next step or back to profile if this is the last step
+    const nextStep = getNextStep('UTR');
+    if (nextStep) {
+      navigate(nextStep.path);
+    } else {
+      navigate('/User-PersonalDetails');
+    }
   };
 
   return (
@@ -110,6 +129,9 @@ const EditUTRNumber = () => {
               <span className="font-medium text-black dark:text-white">UTR Number</span>
             </button>
           </div>
+          
+          {/* Use the reusable Progress Tracker component */}
+          <ProgressTracker steps={profileSteps} />
           
           {/* UTR Number Form */}
           <div className="w-full max-w-2xl mx-auto">
