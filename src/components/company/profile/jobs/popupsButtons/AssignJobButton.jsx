@@ -47,9 +47,9 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
         console.log("Job successfully assigned:", result);
         setAssignSuccess(true);
         
-        // Navigate to assigned jobs page after a short delay
+        // Navigate to recent jobs page after a short delay
         setTimeout(() => {
-          handleNavigate();
+          navigate('/recents-jobs');
         }, 1500);
       } else {
         throw new Error(result.message || "Failed to assign job");
@@ -75,11 +75,14 @@ const AssignJobButton = ({ onClose, applicant, job }) => {
         </div>
 
         {/* Modal Content */}
-        <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-900">Alert!</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-900">
+          {assignSuccess ? "Success!" : "Alert!"}
+        </h2>
         
         {assignSuccess ? (
+          
           <p className="text-green-500 text-center mt-2 w-full max-w-xs md:w-[421px] h-auto md:h-[52px] text-base sm:text-lg px-2">
-            Job successfully assigned to {applicant?.fullname || "the applicant"}. Redirecting...
+            Job successfully assigned to {applicant?.fullname || "the applicant"}. Redirecting to recent jobs...
           </p>
         ) : (
           <p className="text-gray-500 text-center mt-2 w-full max-w-xs md:w-[421px] h-auto md:h-[52px] text-base sm:text-lg px-2">

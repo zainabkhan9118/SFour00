@@ -14,6 +14,7 @@ import ReactDOM from 'react-dom';
 import { IoCloseCircleOutline } from "react-icons/io5";
 
 import CompanyProfileCompletionCheck from "./CompanyProfileCompletionCheck";
+import ProfileSuccessPopup from "../../user/popupModel/ProfileSuccessPopup";
 
 // Fix default icon issue with Leaflet in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -230,10 +231,7 @@ const JobPosting = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  
-  
-  const startTimePickerRef = useRef(null);
-  const endTimePickerRef = useRef(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   
   
   const [formData, setFormData] = useState({
@@ -243,8 +241,11 @@ const JobPosting = () => {
     longitude: null,
     jobLocation: "", 
     workDate: "", 
-    startTime: "",
-    endTime: "",
+    days: [{
+     day: "Monday",
+     startTime: "",
+     endTime: ""
+    }],
     jobPin: Array(4).fill(""), 
     checkpoints: [{ 
       name: "Location A", 
@@ -301,6 +302,43 @@ const JobPosting = () => {
       ...prevData,
       [name]: value,
     }));
+  };
+
+  // Handle day schedule changes
+  const handleDayChange = (index, field, value) => {
+    setFormData(prevData => {
+      const newDays = [...prevData.days];
+      newDays[index] = {
+        ...newDays[index],
+        [field]: value
+      };
+      return {
+        ...prevData,
+        days: newDays
+      };
+    });
+  };
+
+  // Add new day schedule
+  const addDaySchedule = () => {
+    setFormData(prevData => ({
+      ...prevData,
+      days: [...prevData.days, {
+        day: "Monday",
+        startTime: "",
+        endTime: ""
+      }]
+    }));
+  };
+
+  // Remove day schedule
+  const removeDaySchedule = (index) => {
+    if (formData.days.length > 1) {
+      setFormData(prevData => ({
+        ...prevData,
+        days: prevData.days.filter((_, i) => i !== index)
+      }));
+    }
   };
   
   // Handle showing the map and getting user's location
@@ -388,19 +426,12 @@ const JobPosting = () => {
       };
     });
   };
-  
 
-  const formatTimeForAPI = (time24h) => {
-    if (!time24h) return "";
-    
-    const [hour, minute] = time24h.split(':');
-    const hourNum = parseInt(hour, 10);
-    const period = hourNum >= 12 ? 'PM' : 'AM';
-    const hour12 = hourNum % 12 || 12; 
-    
-    return `${hour12.toString().padStart(2, '0')}:${minute} ${period}`;
+  // Handle success popup close
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    navigate('/recents-jobs');
   };
-
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -425,8 +456,7 @@ const JobPosting = () => {
         longitude: formData.longitude || 0.0,
         jobLocation: formData.jobLocation,
         workDate: formData.workDate,
-        startTime: formatTimeForAPI(formData.startTime),
-        endTime: formatTimeForAPI(formData.endTime),
+        days: formData.days.filter(day => day.day && day.startTime && day.endTime),
         jobPin: parseInt(formData.jobPin.join(''), 10) || 0,
         checkpoints: formData.checkpoints.map(cp => ({
           name: cp.name, 
@@ -434,8 +464,6 @@ const JobPosting = () => {
         })),
         alertDuration: parseInt(formData.alertDuration) || 30,
         jobDescription: formData.jobDescription,
-        noOfApplicants: 0,
-        applicantsList: [], 
         jobDuration: formData.jobDuration,
         jobStatus: "open", 
         companyId: companyId 
@@ -448,11 +476,13 @@ const JobPosting = () => {
       
       console.log("Job created successfully:", response);
       setSubmitSuccess(true);
+      setShowSuccessPopup(true);
       
-      // Navigate to recent jobs page after successful job creation
+      // Auto-close popup and navigate after delay
       setTimeout(() => {
+        setShowSuccessPopup(false);
         navigate('/recents-jobs');
-      }, 1500);
+      }, 3000);
     } catch (error) {
       console.error("Error creating job:", error);
       
@@ -480,10 +510,18 @@ const JobPosting = () => {
   // Handle clicking outside of time pickers to close them
   useEffect(() => {
     function handleClickOutside(event) {
-      if (startTimePickerRef.current && !startTimePickerRef.current.contains(event.target)) {
+      // Check if click is outside any time picker modal
+      const timePickerModals = document.querySelectorAll('.absolute.top-full');
+      let clickedOutside = true;
+      
+      timePickerModals.forEach(modal => {
+        if (modal.contains(event.target)) {
+          clickedOutside = false;
+        }
+      });
+      
+      if (clickedOutside) {
         setShowStartTimePicker(false);
-      }
-      if (endTimePickerRef.current && !endTimePickerRef.current.contains(event.target)) {
         setShowEndTimePicker(false);
       }
     }
@@ -492,7 +530,7 @@ const JobPosting = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [startTimePickerRef, endTimePickerRef]);
+  }, []);
 
  
   useEffect(() => {
@@ -530,170 +568,6 @@ const JobPosting = () => {
     const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
     
     return { hours, minutes };
-  };
-  
-  // Improved time picker with AM/PM format option and better UX
-  const TimePicker = ({ timeType, onSelect, pickerRef }) => {
-    const [view, setView] = useState('hour');
-    const [period, setPeriod] = useState('AM');
-    const hourOptions = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-    const minuteOptions = ['00', '15', '30', '45'];
-    
-    const handleHourSelect = (hour) => {
-      const hour24 = period === 'PM' && hour !== '12' 
-        ? (parseInt(hour, 10) + 12).toString() 
-        : (period === 'AM' && hour === '12' ? '00' : hour);
-      
-      onSelect(timeType, hour24, view === 'minute' ? formData[timeType]?.split(':')[1] || '00' : '00');
-      setView('minute');
-    };
-    
-    const handleMinuteSelect = (minute) => {
-      const hourPart = formData[timeType]?.split(':')[0] || '00';
-      onSelect(timeType, hourPart, minute);
-    };
-    
-    const togglePeriod = () => {
-      const newPeriod = period === 'AM' ? 'PM' : 'AM';
-      setPeriod(newPeriod);
-      
-      // Update time if already selected
-      if (formData[timeType]) {
-        const [hour, minute] = formData[timeType].split(':');
-        let hourNum = parseInt(hour, 10);
-        
-        if (newPeriod === 'PM' && hourNum < 12) {
-          hourNum += 12;
-        } else if (newPeriod === 'AM' && hourNum >= 12) {
-          hourNum -= 12;
-        }
-        
-        onSelect(timeType, hourNum.toString().padStart(2, '0'), minute);
-      }
-    };
-    
-    // Format displayed time in 12-hour format
-    const formatDisplayTime = () => {
-      if (!formData[timeType]) return '--:--';
-      
-      const [hour, minute] = formData[timeType].split(':');
-      const hourNum = parseInt(hour, 10);
-      const hour12 = hourNum % 12 || 12;
-      const periodStr = hourNum >= 12 ? 'PM' : 'AM';
-      
-      return `${hour12}:${minute} ${periodStr}`;
-    };
-    
-    return (
-      <div
-        ref={pickerRef}
-        className="absolute transform -translate-y-full -mt-2 left-0 bg-white shadow-xl rounded-lg z-20 border"
-        style={{ width: '240px' }}
-      >
-        <div className="p-3 border-b bg-blue-50 flex justify-between items-center">
-          <h3 className="font-medium text-gray-800">{view === 'hour' ? 'Select Hour' : 'Select Minute'}</h3>
-          <div className="text-lg font-semibold text-blue-700">{formatDisplayTime()}</div>
-        </div>
-        
-        <div className="p-4">
-          {view === 'hour' ? (
-            <div>
-              <div className="grid grid-cols-3 gap-2">
-                {hourOptions.map(hour => (
-                  <button
-                    key={hour}
-                    type="button"
-                    className="flex items-center justify-center w-16 h-10 rounded 
-                      bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white transition-colors"
-                    onClick={() => handleHourSelect(hour)}
-                  >
-                    {hour}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setPeriod('AM')}
-                  className={`px-4 py-2 rounded-full font-medium 
-                    ${period === 'AM' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-800'}`}
-                >
-                  AM
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriod('PM')}
-                  className={`px-4 py-2 ml-2 rounded-full font-medium 
-                    ${period === 'PM' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-800'}`}
-                >
-                  PM
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="grid grid-cols-2 gap-3">
-                {minuteOptions.map(minute => (
-                  <button
-                    key={minute}
-                    type="button"
-                    className="flex items-center justify-center w-full h-12 rounded 
-                      bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white transition-colors"
-                    onClick={() => handleMinuteSelect(minute)}
-                  >
-                    :{minute}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="mt-3 flex justify-start">
-                <button
-                  type="button"
-                  onClick={() => setView('hour')}
-                  className="px-3 py-1 text-sm text-blue-600 hover:underline"
-                >
-                  ← Back to hours
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="p-3 border-t bg-gray-50 flex justify-between">
-          <button
-            type="button"
-            className="px-3 py-2 text-gray-600 hover:text-gray-800"
-            onClick={() => {
-              if (timeType === 'startTime') {
-                setShowStartTimePicker(false);
-              } else {
-                setShowEndTimePicker(false);
-              }
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-            onClick={() => {
-              if (timeType === 'startTime') {
-                setShowStartTimePicker(false);
-              } else {
-                setShowEndTimePicker(false);
-              }
-            }}
-          >
-            Done
-          </button>
-        </div>
-      </div>
-    );
   };
 
   // Improved function to open scanner for a specific checkpoint
@@ -869,13 +743,6 @@ const JobPosting = () => {
             </div>
           )}
           
-          {/* Show success message if job was created successfully */}
-          {submitSuccess && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-              Job posted successfully! Redirecting to jobs page...
-            </div>
-          )}
-          
           <form className="space-y-6 w-full lg:w-[992px]" onSubmit={handleSubmit}>
             <div className="mb-6">
               <input
@@ -943,48 +810,317 @@ const JobPosting = () => {
               />
             </div>
 
-            <div className="flex flex-col md:flex-row md:space-x-6 mb-6">
-              <div className="relative w-full md:w-1/2 mb-6 md:mb-0">
-                <input
-                  type="text"
-                  name="startTime"
-                  placeholder="Start Time"
-                  className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none pr-10 cursor-pointer"
-                  value={formData.startTime}
-                  onChange={handleChange}
-                  onClick={() => setShowStartTimePicker(true)}
-                  readOnly
-                  required
-                />
-                <IoIosTimer className="absolute top-[22px] right-3 transform -translate-y-1/2 text-2xl text-gray-800" />
-                {showStartTimePicker && (
-                  <TimePicker 
-                    timeType="startTime" 
-                    onSelect={handleTimeSelect} 
-                    pickerRef={startTimePickerRef}
-                  />
-                )}
+            {/* Days Schedule Section */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold mb-4">Work Days Schedule</h3>
+              
+              <div className="space-y-4">
+                {formData.days.map((daySchedule, index) => (
+                  <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50">
+                    {/* Day Selection */}
+                    <div className="w-32">
+                      <select
+                        value={daySchedule.day}
+                        onChange={(e) => handleDayChange(index, 'day', e.target.value)}
+                        className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none"
+                      >
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                      </select>
+                    </div>
+
+                    {/* Start Time */}
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Start Time (e.g., 9:00 AM)"
+                        className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
+                        value={(() => {
+                          if (!daySchedule.startTime) return '';
+                          const [hourStr, minute] = daySchedule.startTime.split(':');
+                          const hour24 = parseInt(hourStr);
+                          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                          const ampm = hour24 < 12 ? 'AM' : 'PM';
+                          return `${hour12}:${minute} ${ampm}`;
+                        })()}
+                        onClick={() => setShowStartTimePicker(`start-${index}`)}
+                        readOnly
+                      />
+                      <IoIosTimer className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      
+                      {/* Start Time Picker Modal */}
+                      {showStartTimePicker === `start-${index}` && (
+                        <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-full">
+                          <div className="p-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="font-medium">Select Start Time</h4>
+                              <button
+                                type="button"
+                                onClick={() => setShowStartTimePicker(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <div className="flex space-x-2">
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">Hour</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const hour12 = parseInt(e.target.value);
+                                    const currentTime = daySchedule.startTime;
+                                    const currentHour24 = currentTime ? parseInt(currentTime.split(':')[0]) : 0;
+                                    const isPM = currentHour24 >= 12;
+                                    const hour24 = hour12 === 12 ? (isPM ? 12 : 0) : (isPM ? hour12 + 12 : hour12);
+                                    const minute = daySchedule.startTime.split(':')[1] || '00';
+                                    handleDayChange(index, 'startTime', `${hour24.toString().padStart(2, '0')}:${minute}`);
+                                  }}
+                                  value={(() => {
+                                    const hour24 = parseInt(daySchedule.startTime.split(':')[0]) || 0;
+                                    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                                    return hour12.toString();
+                                  })()}
+                                >
+                                  <option value="">Hr</option>
+                                  {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={(i + 1).toString()}>
+                                      {(i + 1).toString()}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">Minute</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const hour = daySchedule.startTime.split(':')[0] || '00';
+                                    const minute = e.target.value.padStart(2, '0');
+                                    handleDayChange(index, 'startTime', `${hour}:${minute}`);
+                                  }}
+                                  value={daySchedule.startTime.split(':')[1] || ''}
+                                >
+                                  <option value="">Min</option>
+                                  {Array.from({ length: 60 }, (_, i) => (
+                                    <option key={i} value={i.toString().padStart(2, '0')}>
+                                      {i.toString().padStart(2, '0')}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">AM/PM</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const currentTime = daySchedule.startTime;
+                                    if (!currentTime) return;
+                                    
+                                    const [hourStr, minute] = currentTime.split(':');
+                                    const currentHour24 = parseInt(hourStr);
+                                    const hour12 = currentHour24 === 0 ? 12 : currentHour24 > 12 ? currentHour24 - 12 : currentHour24;
+                                    
+                                    let newHour24;
+                                    if (e.target.value === 'AM') {
+                                      newHour24 = hour12 === 12 ? 0 : hour12;
+                                    } else {
+                                      newHour24 = hour12 === 12 ? 12 : hour12 + 12;
+                                    }
+                                    
+                                    handleDayChange(index, 'startTime', `${newHour24.toString().padStart(2, '0')}:${minute}`);
+                                  }}
+                                  value={(() => {
+                                    const hour24 = parseInt(daySchedule.startTime.split(':')[0]) || 0;
+                                    return hour24 < 12 ? 'AM' : 'PM';
+                                  })()}
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex justify-end mt-3 space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => setShowStartTimePicker(false)}
+                                className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowStartTimePicker(false)}
+                                className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* End Time */}
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="End Time (e.g., 5:00 PM)"
+                        className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
+                        value={(() => {
+                          if (!daySchedule.endTime) return '';
+                          const [hourStr, minute] = daySchedule.endTime.split(':');
+                          const hour24 = parseInt(hourStr);
+                          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                          const ampm = hour24 < 12 ? 'AM' : 'PM';
+                          return `${hour12}:${minute} ${ampm}`;
+                        })()}
+                        onClick={() => setShowEndTimePicker(`end-${index}`)}
+                        readOnly
+                      />
+                      <IoIosTimer className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      
+                      {/* End Time Picker Modal */}
+                      {showEndTimePicker === `end-${index}` && (
+                        <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 w-full">
+                          <div className="p-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="font-medium">Select End Time</h4>
+                              <button
+                                type="button"
+                                onClick={() => setShowEndTimePicker(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <div className="flex space-x-2">
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">Hour</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const hour12 = parseInt(e.target.value);
+                                    const currentTime = daySchedule.endTime;
+                                    const currentHour24 = currentTime ? parseInt(currentTime.split(':')[0]) : 0;
+                                    const isPM = currentHour24 >= 12;
+                                    const hour24 = hour12 === 12 ? (isPM ? 12 : 0) : (isPM ? hour12 + 12 : hour12);
+                                    const minute = daySchedule.endTime.split(':')[1] || '00';
+                                    handleDayChange(index, 'endTime', `${hour24.toString().padStart(2, '0')}:${minute}`);
+                                  }}
+                                  value={(() => {
+                                    const hour24 = parseInt(daySchedule.endTime.split(':')[0]) || 0;
+                                    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                                    return hour12.toString();
+                                  })()}
+                                >
+                                  <option value="">Hr</option>
+                                  {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={(i + 1).toString()}>
+                                      {(i + 1).toString()}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">Minute</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const hour = daySchedule.endTime.split(':')[0] || '00';
+                                    const minute = e.target.value.padStart(2, '0');
+                                    handleDayChange(index, 'endTime', `${hour}:${minute}`);
+                                  }}
+                                  value={daySchedule.endTime.split(':')[1] || ''}
+                                >
+                                  <option value="">Min</option>
+                                  {Array.from({ length: 60 }, (_, i) => (
+                                    <option key={i} value={i.toString().padStart(2, '0')}>
+                                      {i.toString().padStart(2, '0')}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-sm text-gray-600 mb-1">AM/PM</label>
+                                <select
+                                  className="w-full p-2 border rounded"
+                                  onChange={(e) => {
+                                    const currentTime = daySchedule.endTime;
+                                    if (!currentTime) return;
+                                    
+                                    const [hourStr, minute] = currentTime.split(':');
+                                    const currentHour24 = parseInt(hourStr);
+                                    const hour12 = currentHour24 === 0 ? 12 : currentHour24 > 12 ? currentHour24 - 12 : currentHour24;
+                                    
+                                    let newHour24;
+                                    if (e.target.value === 'AM') {
+                                      newHour24 = hour12 === 12 ? 0 : hour12;
+                                    } else {
+                                      newHour24 = hour12 === 12 ? 12 : hour12 + 12;
+                                    }
+                                    
+                                    handleDayChange(index, 'endTime', `${newHour24.toString().padStart(2, '0')}:${minute}`);
+                                  }}
+                                  value={(() => {
+                                    const hour24 = parseInt(daySchedule.endTime.split(':')[0]) || 0;
+                                    return hour24 < 12 ? 'AM' : 'PM';
+                                  })()}
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex justify-end mt-3 space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => setShowEndTimePicker(false)}
+                                className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowEndTimePicker(false)}
+                                className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Remove Day Button */}
+                    {formData.days.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeDaySchedule(index)}
+                        className="h-[45px] px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="relative w-full md:w-1/2">
-                <input
-                  type="text"
-                  name="endTime"
-                  placeholder="End Time"
-                  className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none pr-10 cursor-pointer"
-                  value={formData.endTime}
-                  onChange={handleChange}
-                  onClick={() => setShowEndTimePicker(true)}
-                  readOnly
-                  required
-                />
-                <IoIosTimer className="absolute top-[22px] right-3 transform -translate-y-1/2 text-2xl text-gray-800" />
-                {showEndTimePicker && (
-                  <TimePicker 
-                    timeType="endTime" 
-                    onSelect={handleTimeSelect} 
-                    pickerRef={endTimePickerRef}
-                  />
-                )}
+              
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={addDaySchedule}
+                  className="flex items-center text-[#171A1F] hover:text-orange-500 transition duration-200"
+                >
+                  <span className="text-3xl font-semibold mr-2">+</span>
+                  <span className="font-medium">Add Another Day</span>
+                </button>
               </div>
             </div>
 
@@ -1292,6 +1428,14 @@ const JobPosting = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Job Posting Success Popup */}
+      {showSuccessPopup && (
+        <ProfileSuccessPopup
+          message="Job posted successfully! You will be redirected to the recent jobs page."
+          onClose={handleCloseSuccessPopup}
+        />
       )}
     </div>
   );

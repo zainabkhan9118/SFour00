@@ -13,6 +13,7 @@ const Chat = lazy(() => import("../components/company/chat/chat"));
 const ViewApplicant = lazy(() => import("../components/company/profile/jobs/ViewApplicant"));
 const AssignedJob = lazy(() => import("../components/company/profile/jobs/AssignedJob"));
 const RotaManagement = lazy(() => import("../components/company/profile/RotaManagement"));
+const FindWorker = lazy(() => import("../components/company/profile/FindWorker"));
 const ChatSupport = lazy(() => import("../components/company/profile/ChatSupport"));
 const FAQ = lazy(() => import("../components/company/profile/Faq"));
 const AssignedJobDetail = lazy(() => import("../components/company/profile/jobs/AssignedJobDetail"));
@@ -64,6 +65,7 @@ const CompanyRoutes = [
   <Route key="chat" path="/chat" element={<CompanyLayoutWrapper component={Chat} />} />,
   <Route key="job-assigned" path="/job-assigned" element={<CompanyLayoutWrapper component={AssignedJob} />} />,
   <Route key="rota-management" path="/rota-management" element={<CompanyLayoutWrapper component={RotaManagement} />} />,
+  <Route key="find-worker" path="/find-worker" element={<CompanyLayoutWrapper component={FindWorker} />} />,
   <Route key="chat-support" path="/chat-support" element={<CompanyLayoutWrapper component={ChatSupport} />} />,
   <Route key="in-progress" path="/in-progress" element={<CompanyLayoutWrapper component={Inprogess} />} />,
   <Route key="inProgress-jobDetail" path="/inProgress-jobDetail/:jobId" element={<CompanyLayoutWrapper component={InProgressJobDetail} />} />,
