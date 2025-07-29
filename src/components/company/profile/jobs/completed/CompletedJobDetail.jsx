@@ -7,6 +7,7 @@ import qr from "../../../../../assets/images/qr-code.png";
 import { JobStatus } from "../../../../../constants/enums";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { getJobsByStatus } from "../../../../../api/jobTrackingApi";
+import { createRotaManagement } from "../../../../../api/rotaManagementApi";
 import LoadingSpinner from "../../../../../components/common/LoadingSpinner";
 import { ThemeContext } from "../../../../../context/ThemeContext";
 
@@ -15,6 +16,11 @@ const CompletedJobDetail = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [savingToRota, setSavingToRota] = useState(false);
+  const [workerSavedToRota, setWorkerSavedToRota] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
@@ -25,7 +31,7 @@ const CompletedJobDetail = () => {
         setLoading(true);
         setError(null);
         
-        const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
+        const companyId = localStorage.getItem('companyId');
         const result = await getJobsByStatus(companyId, JobStatus.COMPLETED);
         
         if (result.statusCode === 200 && Array.isArray(result.data)) {
@@ -109,11 +115,73 @@ const CompletedJobDetail = () => {
     return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
   };
 
+  const handleSaveWorkerInRota = async () => {
+    try {
+      setSavingToRota(true);
+      
+      // Get company ID from localStorage
+      const companyId = localStorage.getItem('companyId');
+      if (!companyId) {
+        throw new Error('Company ID not found');
+      }
+
+      // Get assigned user information
+      const assignedUser = getAssignedUser();
+      if (!assignedUser || !assignedUser._id) {
+        throw new Error('No assigned worker found for this job');
+      }
+
+      // Prepare request body with the required format
+      const requestBody = {
+        jobSeeker_id: assignedUser._id
+      };
+
+      // Call the API using the existing function
+      const result = await createRotaManagement(companyId, requestBody);
+      
+      // Check if the result indicates the worker was already in rota
+      if (result && result.message && 
+          (result.message.toLowerCase().includes('already') || 
+           result.message.toLowerCase().includes('duplicate') ||
+           result.message.toLowerCase().includes('exists'))) {
+        // Worker already exists in rota - show error popup
+        setErrorMessage('This worker has already been added to the rota.');
+        setShowErrorPopup(true);
+      } else if (result) {
+        // Successfully added new worker - show success popup
+        setWorkerSavedToRota(true);
+        setShowSuccessPopup(true);
+      }
+    } catch (error) {
+      console.error('Error saving worker to rota:', error);
+      
+      // Check if the error is about duplicate entry
+      if (error.message && (error.message.toLowerCase().includes('duplicate') || 
+          error.message.toLowerCase().includes('already exists') ||
+          error.message.toLowerCase().includes('already added') ||
+          error.message.toLowerCase().includes('already in rota'))) {
+        setErrorMessage('This worker has already been added to the rota.');
+        setShowErrorPopup(true);
+      } else {
+        // For other errors, show generic error popup
+        setErrorMessage(`Failed to save worker to rota: ${error.message || error}`);
+        setShowErrorPopup(true);
+      }
+    } finally {
+      setSavingToRota(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
         <div className="flex flex-col flex-1">
-          <LoadingSpinner />
+          <div className="flex justify-center items-center h-full">
+            <div className="text-center">
+              <LoadingSpinner />
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading job details...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -123,7 +191,16 @@ const CompletedJobDetail = () => {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
         <div className="flex flex-col flex-1 justify-center items-center">
-          <p className="text-xl text-red-500 dark:text-red-400">Error: {error}</p>
+          <div className="text-center">
+            <p className="text-xl text-red-500 dark:text-red-400 mb-4">Error: {error}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Job ID: {jobId}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -133,7 +210,16 @@ const CompletedJobDetail = () => {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
         <div className="flex flex-col flex-1 justify-center items-center">
-          <p className="text-xl text-gray-500 dark:text-gray-400">No job details found</p>
+          <div className="text-center">
+            <p className="text-xl text-gray-500 dark:text-gray-400 mb-4">No job details found</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Job ID: {jobId}</p>
+            <button 
+              onClick={() => window.history.back()} 
+              className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -148,7 +234,6 @@ const CompletedJobDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
-
       <div className="flex flex-col flex-1">
         <div className="flex justify-end px-4 sm:px-6 md:px-8">
           <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mt-4 sm:mt-6">
@@ -261,8 +346,33 @@ const CompletedJobDetail = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                <button className="bg-[#FD7F00] dark:bg-orange-500 w-full sm:w-[180px] md:w-[220px] h-[46px] sm:h-[56px] text-white px-4 sm:px-6 py-2 rounded-full text-sm hover:bg-orange-600 dark:hover:bg-orange-600 transition">
-                  Save Worker in Rota
+                <button 
+                  onClick={handleSaveWorkerInRota}
+                  disabled={savingToRota}
+                  className={`w-full sm:w-[180px] md:w-[220px] h-[46px] sm:h-[56px] text-white px-4 sm:px-6 py-2 rounded-full text-sm transition ${
+                    workerSavedToRota 
+                      ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' 
+                      : 'bg-[#FD7F00] dark:bg-orange-500 hover:bg-orange-600 dark:hover:bg-orange-600'
+                  } ${savingToRota ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {savingToRota ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : workerSavedToRota ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Worker Saved to Rota
+                    </div>
+                  ) : (
+                    'Save Worker in Rota'
+                  )}
                 </button>
                 <button className="bg-[#1F2B44] dark:bg-gray-700 w-full sm:w-[180px] md:w-[220px] h-[46px] sm:h-[56px] text-white px-4 sm:px-6 py-2 rounded-full text-sm hover:bg-gray-800 dark:hover:bg-gray-800 transition">
                   View Invoice
@@ -272,6 +382,72 @@ const CompletedJobDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Error Popup Modal */}
+      {showErrorPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md mx-4 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <svg className="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+              
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Cannot Add Worker
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {errorMessage}
+                </p>
+                
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowErrorPopup(false)}
+                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup Modal */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md mx-4 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <svg className="w-8 h-8 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Success!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  This job seeker has been successfully added to the rota.
+                </p>
+                
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowSuccessPopup(false)}
+                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
