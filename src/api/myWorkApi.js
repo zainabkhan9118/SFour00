@@ -32,6 +32,22 @@ export const enableAssignment = async (jobId, data) => {
 // Update job location
 export const updateLocation = async (jobId, locationData) => {
   const jobSeekerId = localStorage.getItem("jobSeekerId");
+  
+  console.log("updateLocation called with:", {
+    jobId,
+    locationData,
+    jobSeekerId,
+    endpoint: `${BASE_URL}/apply/${jobId}/location`
+  });
+
+  if (!jobId) {
+    throw new Error("Job ID is required for location update");
+  }
+
+  if (!jobSeekerId) {
+    throw new Error("Job Seeker ID not found in localStorage");
+  }
+
   return axios.patch(`${BASE_URL}/apply/${jobId}/location`, locationData, {
     headers: {
       'jobSeekerId': jobSeekerId,
