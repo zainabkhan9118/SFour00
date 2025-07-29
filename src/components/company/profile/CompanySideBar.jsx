@@ -6,7 +6,7 @@ import vector1 from "../../../assets/images/vector1.png";
 import s4 from "../../../assets/images/s4.png";
 import faq from "../../../assets/images/faq.png";
 import company from "../../../assets/images/company.png";
-import { FaUser, FaBriefcase, FaKey, FaExclamationTriangle, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaChartPie } from "react-icons/fa";
+import { FaUser, FaBriefcase, FaKey, FaExclamationTriangle, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaChartPie, FaSearch } from "react-icons/fa";
 import { MdOutlineHome, MdWork, MdLogout } from "react-icons/md";
 import { toast } from "react-toastify";
 import { signOut } from "firebase/auth";
@@ -265,6 +265,22 @@ const CompanySideBar = ({ isMobile = false }) => {
       >
         <img src={vector1} alt="" className="text-orange-500 mr-3 h-3.5 w-3.5" />
         <span>Rota Management</span>
+      </Link>
+
+      <Link
+        to="/find-worker"
+        className={`${disabledStatus ? "cursor-not-allowed" : ""} flex items-center p-2 rounded-md ${
+          isActive('/find-worker')
+            ? "bg-orange-100 text-orange-700 font-medium"
+            : "text-gray-600 hover:bg-gray-50"
+        }`}
+        onClick={(e) => {
+          if (isMobile) setIsMenuOpen(false);
+          handleProtectedNavigation(e, "/find-worker");
+        }}
+      >
+        <FaSearch className="text-orange-500 mr-3" size={14} />
+        <span>Find Worker</span>
       </Link>
 
       <Link
