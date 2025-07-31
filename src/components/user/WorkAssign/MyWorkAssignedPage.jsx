@@ -15,6 +15,7 @@ import {
   updateLocation, 
   updateStatusByQR 
 } from "../../../api/myWorkApi";
+import { createRotaManagement } from "../../../api/rotaManagementApi";
 
 import { AppContext } from "../../../context/AppContext";
 import { ThemeContext } from "../../../context/ThemeContext";
@@ -209,8 +210,33 @@ export default function MyWorkAssignedPage() {
         
         //console.log("Job assignment response:", response.data);
         
-        // If the request was successful
+        // If the first API call was successful, call the rota management API
         if (response.data && (response.data.statusCode === 200 || response.data.statusCode === 201)) {
+          try {
+            // Get company ID from the job data or another source
+            const companyId = application.jobId?.companyId?._id || application.jobId?.companyId;
+            
+            if (companyId) {
+              // Call rota management API to add the job seeker to rota
+              const rotaRequestBody = {
+                jobSeeker_id: jobSeekerId
+              };
+              
+              await createRotaManagement(companyId, rotaRequestBody);
+              console.log("Job seeker successfully added to rota");
+            } else {
+              console.warn("Company ID not found, skipping rota management API call");
+            }
+          } catch (rotaError) {
+            // Don't throw error for rota management failure, just log it
+            console.error("Error adding to rota (non-blocking):", rotaError);
+            // Continue with the normal flow even if rota management fails
+          }
+          
+          // Store the jobId for use in later popups
+          setSelectedJobId(jobId);
+          localStorage.setItem("selectedJobId", jobId);
+          
           // Start the popup sequence immediately without asking for location
           setShowButton1(true);
           
@@ -559,7 +585,7 @@ export default function MyWorkAssignedPage() {
           onClose={() => {
             setShowButton3(false);
           }}
-          jobId={selectedJobId}
+          jobId={selectedJobId || localStorage.getItem("selectedJobId")}
         />
       )}
 
