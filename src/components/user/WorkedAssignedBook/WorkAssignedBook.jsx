@@ -142,8 +142,7 @@ const WorkAssignedBook = () => {
         console.log("Booking job with application ID:", applicationId);
         try {
             setSelectedApplicationId(applicationId);
-            
-            // Find the application to get jobId
+            // Find the application in our loaded data to extract job ID
             const application = assignedJobs.find(app => app._id === applicationId);
             if (application) {
                 let jobId;
@@ -152,8 +151,13 @@ const WorkAssignedBook = () => {
                 } else if (typeof application.jobId === 'string') {
                     jobId = application.jobId;
                 }
-                setSelectedJobId(jobId);
-                console.log("Setting selectedJobId for booking:", jobId);
+                                
+                if (jobId) {
+                    setSelectedJobId(jobId);
+                    localStorage.setItem("selectedJobId", jobId);
+                    console.log(`Setting selected job ID for booking: ${jobId}`);
+                }
+
             }
             
             setShowButton4(true);
@@ -196,7 +200,7 @@ const WorkAssignedBook = () => {
             setLoading(true);
             setSelectedApplicationId(applicationId);
             
-            // Find the application to get jobId
+            // Find the application in our loaded data to extract job ID
             const application = assignedJobs.find(app => app._id === applicationId);
             if (application) {
                 let jobId;
@@ -205,6 +209,7 @@ const WorkAssignedBook = () => {
                 } else if (typeof application.jobId === 'string') {
                     jobId = application.jobId;
                 }
+              
                 setSelectedJobId(jobId);
                 console.log("Setting selectedJobId:", jobId);
             }
