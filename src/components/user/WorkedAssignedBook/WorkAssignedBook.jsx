@@ -57,6 +57,7 @@ const WorkAssignedBook = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+    const [selectedJobId, setSelectedJobId] = useState(null);
     const { BASEURL } = useContext(AppContext);
 
     // const fetchAllJobs = async () => {
@@ -141,6 +142,20 @@ const WorkAssignedBook = () => {
         console.log("Booking job with application ID:", applicationId);
         try {
             setSelectedApplicationId(applicationId);
+            
+            // Find the application to get jobId
+            const application = assignedJobs.find(app => app._id === applicationId);
+            if (application) {
+                let jobId;
+                if (application.jobId?._id) {
+                    jobId = application.jobId._id;
+                } else if (typeof application.jobId === 'string') {
+                    jobId = application.jobId;
+                }
+                setSelectedJobId(jobId);
+                console.log("Setting selectedJobId for booking:", jobId);
+            }
+            
             setShowButton4(true);
         } catch (error) {
             console.error("Error selecting job to book:", error);
@@ -180,6 +195,19 @@ const WorkAssignedBook = () => {
         try {
             setLoading(true);
             setSelectedApplicationId(applicationId);
+            
+            // Find the application to get jobId
+            const application = assignedJobs.find(app => app._id === applicationId);
+            if (application) {
+                let jobId;
+                if (application.jobId?._id) {
+                    jobId = application.jobId._id;
+                } else if (typeof application.jobId === 'string') {
+                    jobId = application.jobId;
+                }
+                setSelectedJobId(jobId);
+                console.log("Setting selectedJobId:", jobId);
+            }
             
             // Call the API function to assign the job to the applicant
             const response = await assignJobToApplicant(applicationId);
@@ -368,7 +396,7 @@ const WorkAssignedBook = () => {
             )}
             
             {showButton3 && (
-                <PopupButton3 onClose={() => handlePopup3Close()} />
+                <PopupButton3 onClose={() => handlePopup3Close()} jobId={selectedJobId} />
             )}
 
             {/* Book On popups */}

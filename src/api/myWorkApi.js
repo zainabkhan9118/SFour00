@@ -20,8 +20,13 @@ export const updateJobStatus = async (jobId, data) => {
 };
 
 // Create invoice for job application
-export const createInvoice = async (jobId, invoiceData) => {
-  return axios.post(`${BASE_URL}/apply/${jobId}/invoice`, invoiceData);
+export const createInvoice = async (jobId, jobSeekerId, invoiceData) => {
+  return axios.post(`${BASE_URL}/apply/${jobId}/invoice`, invoiceData, {
+    headers: {
+      'jobSeekerId': jobSeekerId,
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 // Enable assignment
@@ -29,9 +34,44 @@ export const enableAssignment = async (jobId, data) => {
   return axios.patch(`${BASE_URL}/apply/${jobId}/enable-assignment`, data);
 };
 
+
+
+// // Update job location
+// export const updateLocation = async (jobId, locationData) => {
+//   const jobSeekerId = localStorage.getItem("jobSeekerId");
+//   return axios.patch(`${BASE_URL}/apply/${jobId}/location`, locationData, {
+//     headers: {
+//       'jobSeekerId': jobSeekerId,
+//       'Content-Type': 'application/json'
+//     }
+//   });
+// };
+
+
+
+
+
+
+
 // Update job location
 export const updateLocation = async (jobId, locationData) => {
   const jobSeekerId = localStorage.getItem("jobSeekerId");
+  
+  console.log("updateLocation called with:", {
+    jobId,
+    locationData,
+    jobSeekerId,
+    endpoint: `${BASE_URL}/apply/${jobId}/location`
+  });
+
+  if (!jobId) {
+    throw new Error("Job ID is required for location update");
+  }
+
+  if (!jobSeekerId) {
+    throw new Error("Job Seeker ID not found in localStorage");
+  }
+
   return axios.patch(`${BASE_URL}/apply/${jobId}/location`, locationData, {
     headers: {
       'jobSeekerId': jobSeekerId,
@@ -40,24 +80,33 @@ export const updateLocation = async (jobId, locationData) => {
   });
 };
 
+
+
+
+
+
+
+
+
+
+
 // Update status via QR
 export const updateStatusByQR = async (jobId, qrData) => {
   const jobSeekerId = localStorage.getItem("jobSeekerId");
   
-  // Enhanced payload with job information
-  const enhancedPayload = {
-    ...qrData,
-    jobId: jobId, // Include job ID in the payload for validation
-    jobSeekerId: jobSeekerId,
-    timestamp: new Date().toISOString() // Add timestamp for security
+  // Payload should match exactly what the API expects
+  // Based on the API screenshot, we need to send just the qrCodeData field
+  const payload = {
+    qrCodeData: qrData.qrCodeData
   };
   
   console.log(`Making QR status update request for job ${jobId}:`, {
     endpoint: `${BASE_URL}/apply/${jobId}/update-status-by-qr`,
-    payload: enhancedPayload
+    payload
   });
   
-  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, enhancedPayload, {
+  // Using PATCH as per the API screenshot with jobSeekerId in header
+  return axios.patch(`${BASE_URL}/apply/${jobId}/update-status-by-qr`, payload, {
     headers: {
       'jobSeekerId': jobSeekerId,
       'Content-Type': 'application/json'

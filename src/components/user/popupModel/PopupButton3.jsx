@@ -15,7 +15,23 @@ const PopupButton3 = ({ onClose, jobId }) => {
 
   // Get jobId from props or from URL params if not passed directly
   const { id } = useParams();
-  const currentJobId = jobId || id;
+  let currentJobId = jobId || id;
+  
+  // If still no jobId, try to get from localStorage as fallback
+  if (!currentJobId) {
+    currentJobId = localStorage.getItem("selectedJobId");
+  }
+
+
+ // Debug effect to log jobId changes
+  useEffect(() => {
+    console.log("PopupButton3 - jobId from props:", jobId);
+    console.log("PopupButton3 - id from params:", id);
+    console.log("PopupButton3 - currentJobId:", currentJobId);
+    console.log("PopupButton3 - jobSeekerId from localStorage:", localStorage.getItem("jobSeekerId"));
+  }, [jobId, id, currentJobId]);
+
+
 
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
@@ -24,20 +40,49 @@ const PopupButton3 = ({ onClose, jobId }) => {
   };
 
   const handleTurnOnLocation = () => {
+    console.log("🔍 Turn On Location Button Clicked");
+  console.log("📋 Job ID received:", currentJobId);
+  console.log("📋 Type of Job ID:", typeof currentJobId);
     setIsLoading(true);
     
+
+
+
+    // Debug logging to check jobId
+    console.log("Current jobId:", currentJobId);
+    console.log("JobId from props:", jobId);
+    console.log("JobId from params:", id);
+    
+    // Validate jobId before proceeding
+    if (!currentJobId) {
+      setIsLoading(false);
+      console.error("❌ No jobId found - Props:", jobId, "Params:", id, "LocalStorage:", localStorage.getItem("selectedJobId"));
+      setLocationMessage("Job ID not found. Please try again from the job page.");
+      return;
+    }
+    
+    console.log("✅ Using jobId:", currentJobId);
+    
+
+
+
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
+          console.log(`Job ID: ${currentJobId}, Latitude: ${latitude}, Longitude: ${longitude}`);
           
           try {
             // Call the API to update location
+            console.log(`Job ID: ${currentJobId}, Latitude: ${latitude}, Longitude: ${longitude}`);
             await updateLocation(currentJobId, { latitude, longitude });
             
             setLocationMessage(`Location shared successfully!`);
             setLocationEnabled(true);
-            console.log(`Location updated: Lat ${latitude}, Long ${longitude}`);
+            // console.log(`Location updated: Lat ${latitude}, Long ${longitude}`);
+            console.log(`Location updated successfully: Lat ${latitude}, Long ${longitude}`);
+
             
             // Navigate after location is shared successfully
             setTimeout(() => {
@@ -45,7 +90,16 @@ const PopupButton3 = ({ onClose, jobId }) => {
             }, 1500);
           } catch (error) {
             console.error("Error updating location:", error);
-            setLocationMessage("Failed to share location with company. Please try again.");
+            // setLocationMessage("Failed to share location with company. Please try again.");
+             // Enhanced error handling
+            if (error.response) {
+              console.error("Error response:", error.response.data);
+              setLocationMessage(`Failed to share location: ${error.response.data.message || 'Server error'}`);
+            } else if (error.request) {
+              setLocationMessage("Network error. Please check your internet connection.");
+            } else {
+              setLocationMessage("Failed to share location with company. Please try again.");
+            }
           } finally {
             setIsLoading(false);
           }
