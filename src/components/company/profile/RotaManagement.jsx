@@ -5,7 +5,58 @@ import { useContext } from "react";
 import { getRotaManagementByCompany } from "../../../api/rotaManagementApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 
-// No fallback data - we'll only show real data from API
+
+
+// Helper function to calculate job duration span in days
+const calculateJobDurationDays = (job) => {
+  if (!job.jobDuration) return 1; // Default to 1 day if no duration specified
+  
+  const duration = job.jobDuration.toLowerCase();
+  
+  // Parse different duration formats
+  if (duration.includes('week')) {
+    const weeks = parseInt(duration.match(/(\d+)/)?.[1] || '1');
+    return weeks * 7;
+  } else if (duration.includes('day')) {
+    const days = parseInt(duration.match(/(\d+)/)?.[1] || '1');
+    return days;
+  } else if (duration.includes('month')) {
+    const months = parseInt(duration.match(/(\d+)/)?.[1] || '1');
+    return months * 30; // Approximate
+  } else if (duration.includes('hour')) {
+    // If it's hours and less than 24, treat as 1 day
+    const hours = parseInt(duration.match(/(\d+)/)?.[1] || '8');
+    return hours > 24 ? Math.ceil(hours / 24) : 1;
+  }
+  
+  // Try to parse as a number (assume days)
+  const numericDuration = parseInt(duration);
+  if (!isNaN(numericDuration)) {
+    return numericDuration;
+  }
+  
+  return 1; // Default fallback
+};
+
+// Helper function to get all dates for a job based on start date and duration
+const getJobDateRange = (startDate, durationDays) => {
+  const dates = [];
+  const start = new Date(startDate);
+  
+  for (let i = 0; i < durationDays; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    dates.push(date);
+  }
+  
+  return dates;
+};
+
+// Helper function to check if a date falls within the current week view
+const isDateInWeekView = (date, weekDates) => {
+  const dateString = date.toDateString();
+  return weekDates.some(weekDay => weekDay.fullDate.toDateString() === dateString);
+};
 
 // Helper function to generate week dates based on week offset
 const getWeekDates = (weekOffset = 0) => {
@@ -44,18 +95,36 @@ const getCurrentWeekDates = () => {
   return getWeekDates(0);
 };
 
-// Helper function to get worker-specific shifts
-const getWorkerShifts = (dailySchedule, selectedWorker) => {
+// Helper function to get worker-specific shifts for selected job
+const getWorkerJobShifts = (dailySchedule, selectedWorker, selectedJob) => {
   if (!selectedWorker) return dailySchedule;
   
   const filteredSchedule = {};
   Object.keys(dailySchedule).forEach(day => {
-    filteredSchedule[day] = dailySchedule[day].filter(shift => 
-      shift.worker === (typeof selectedWorker === 'string' ? selectedWorker : selectedWorker.name)
-    );
+    filteredSchedule[day] = dailySchedule[day].filter(shift => {
+      const workerMatch = shift.worker === (typeof selectedWorker === 'string' ? selectedWorker : selectedWorker.name);
+      const jobMatch = selectedJob ? shift.jobId === selectedJob._id : true;
+      return workerMatch && jobMatch;
+    });
   });
   
   return filteredSchedule;
+};
+
+// Helper function to get jobs for a specific worker
+const getWorkerJobs = (rotaData, workerName) => {
+  const jobs = [];
+  rotaData.forEach(rota => {
+    if (rota.jobSeeker_id && rota.jobSeeker_id.fullname === workerName && rota.jobSeeker_id.assignedJobs) {
+      rota.jobSeeker_id.assignedJobs.forEach(job => {
+        jobs.push({
+          ...job,
+          workerDetails: rota.jobSeeker_id
+        });
+      });
+    }
+  });
+  return jobs;
 };
 
 const RotaManagement = () => {
@@ -79,6 +148,10 @@ const RotaManagement = () => {
   // Selected worker state
   const [selectedWorker, setSelectedWorker] = useState(null);
   
+  // Selected job state
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [workerJobs, setWorkerJobs] = useState([]);
+  
   // Week navigation state
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   
@@ -101,6 +174,19 @@ const RotaManagement = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Escape key to go back from schedule view
+      if (event.key === 'Escape' && selectedJob) {
+        setSelectedJob(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedJob]);
 
   // Navigation functions
   const navigateWeek = (direction) => {
@@ -166,9 +252,19 @@ const RotaManagement = () => {
           // Always set workers from API data - no fallback
           setWorkers(uniqueWorkers);
           
-          // Automatically select the first worker if workers exist and no worker is currently selected
-          if (uniqueWorkers.length > 0 && !selectedWorker) {
-            setSelectedWorker(uniqueWorkers[0].name);
+          // Don't automatically select the first worker - let user choose
+          // if (uniqueWorkers.length > 0 && !selectedWorker) {
+          //   setSelectedWorker(uniqueWorkers[0].name);
+          // }
+          
+          // Update worker jobs when worker changes
+          if (selectedWorker) {
+            const jobs = getWorkerJobs(response.data, selectedWorker);
+            setWorkerJobs(jobs);
+            // Don't auto-select job - let user choose
+            // if (jobs.length > 0 && !selectedJob) {
+            //   setSelectedJob(jobs[0]);
+            // }
           }
           
           // Create dynamic shifts based on API data
@@ -189,49 +285,77 @@ const RotaManagement = () => {
               jobSeeker.assignedJobs.forEach((job) => {
                 if (job.workDate) {
                   const workDate = new Date(job.workDate);
-                  const dayName = getDayNameFromDate(workDate);
+                  const jobDurationDays = calculateJobDurationDays(job);
+                  const jobDateRange = getJobDateRange(workDate, jobDurationDays);
                   
-                  // Find the day in our current week
-                  const dayIndex = weekDates.findIndex(day => day.dayName === dayName);
-                  
-                  if (dayIndex !== -1) {
-                    const selectedDay = weekDates[dayIndex];
+                  // Process each date in the job's duration
+                  jobDateRange.forEach((currentDate, dayOffset) => {
+                    const dayName = getDayNameFromDate(currentDate);
                     
-                    const shiftData = {
-                      id: `${rota._id}-${job._id}`,
-                      worker: jobSeeker.fullname,
-                      workerDetails: jobSeeker,
-                      day: selectedDay.fullName,
-                      dayName: selectedDay.dayName,
-                      time: `${job.startTime || '09:00'} - ${job.endTime || '17:00'}`,
-                      jobTitle: job.jobTitle,
-                      role: job.jobTitle || jobSeeker.shortBio || 'Worker',
-                      company: rota.company_id || 'Current Company',
-                      jobId: job._id,
-                      jobData: job,
-                      rotaData: rota,
-                      utrNumber: jobSeeker.utrNumber,
-                      niNumber: jobSeeker.NINumber,
-                      profilePic: jobSeeker.profilePic,
-                      pricePerHour: job.pricePerHour,
-                      jobDescription: job.jobDescription,
-                      assignedJobs: jobSeeker.assignedJobs || [],
-                      totalAssignedJobs: jobSeeker.assignedJobs ? jobSeeker.assignedJobs.length : 0,
-                      workDate: job.workDate
-                    };
+                    // Find the day in our current week
+                    const dayIndex = weekDates.findIndex(day => day.dayName === dayName && 
+                      day.fullDate.toDateString() === currentDate.toDateString());
+                    
+                    if (dayIndex !== -1) {
+                      const selectedDay = weekDates[dayIndex];
+                      
+                      
+                      let timeDisplay = `${job.startTime } - ${job.endTime }`;
+                      
+                      
+                      if (job.days && job.days.length > 0) {
+                       
+                        const matchingDay = job.days.find(daySchedule => 
+                          daySchedule.day && daySchedule.day.toLowerCase() === dayName.toLowerCase()
+                        );
+                        
+                        if (matchingDay && matchingDay.startTime && matchingDay.endTime) {
+                          timeDisplay = `${matchingDay.startTime} - ${matchingDay.endTime}`;
+                        }
+                      }
+                      
+                      const shiftData = {
+                        id: `${rota._id}-${job._id}-${dayOffset}`,
+                        worker: jobSeeker.fullname,
+                        workerDetails: jobSeeker,
+                        day: selectedDay.fullName,
+                        dayName: selectedDay.dayName,
+                        time: timeDisplay,
+                        jobTitle: job.jobTitle,
+                        role: job.jobTitle || jobSeeker.shortBio || 'Worker',
+                        company: rota.company_id || 'Current Company',
+                        jobId: job._id,
+                        jobData: job,
+                        rotaData: rota,
+                        utrNumber: jobSeeker.utrNumber,
+                        niNumber: jobSeeker.NINumber,
+                        profilePic: jobSeeker.profilePic,
+                        pricePerHour: job.pricePerHour,
+                        jobDescription: job.jobDescription,
+                        assignedJobs: jobSeeker.assignedJobs || [],
+                        totalAssignedJobs: jobSeeker.assignedJobs ? jobSeeker.assignedJobs.length : 0,
+                        workDate: job.workDate,
+                        currentDate: currentDate.toISOString().split('T')[0],
+                        dayOffset: dayOffset,
+                        totalDuration: jobDurationDays,
+                        isFirstDay: dayOffset === 0,
+                        isLastDay: dayOffset === jobDurationDays - 1,
+                        durationDisplay: `Day ${dayOffset + 1} of ${jobDurationDays}`
+                      };
 
-                    // Add to daily schedule
-                    dailyScheduleData[selectedDay.dayName].push(shiftData);
-                    
-                    // Add to shifts array
-                    dynamicShifts.push(shiftData);
-                    
-                    // Update worker's weekly shift count
-                    const workerInMap = workersMap.get(jobSeeker.fullname);
-                    if (workerInMap) {
-                      workerInMap.weeklyShifts += 1;
+                      // Add to daily schedule
+                      dailyScheduleData[selectedDay.dayName].push(shiftData);
+                      
+                      // Add to shifts array
+                      dynamicShifts.push(shiftData);
+                      
+                      // Update worker's weekly shift count
+                      const workerInMap = workersMap.get(jobSeeker.fullname);
+                      if (workerInMap) {
+                        workerInMap.weeklyShifts += 1;
+                      }
                     }
-                  }
+                  });
                 }
               });
             }
@@ -262,7 +386,26 @@ const RotaManagement = () => {
     };
 
     fetchRotaData();
-  }, [weekDates]); // Re-fetch when week changes
+  }, [weekDates, selectedWorker]); // Re-fetch when week or worker changes
+
+  // Update worker jobs when selectedWorker changes
+  useEffect(() => {
+    if (selectedWorker && rotaData.length > 0) {
+      const jobs = getWorkerJobs(rotaData, selectedWorker);
+      setWorkerJobs(jobs);
+      // Don't auto-select first job - let user choose
+      // if (jobs.length > 0 && !selectedJob) {
+      //   setSelectedJob(jobs[0]);
+      // } else if (jobs.length === 0) {
+      //   setSelectedJob(null);
+      // }
+      // Clear selected job when worker changes
+      setSelectedJob(null);
+    } else {
+      setWorkerJobs([]);
+      setSelectedJob(null);
+    }
+  }, [selectedWorker, rotaData]);
 
   // Function to open modal with job details
   const openJobDetailsModal = (shift) => {
@@ -349,17 +492,54 @@ const RotaManagement = () => {
                     £{selectedJobDetails.pricePerHour || 'N/A'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Work Date & Time</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedJobDetails.day} - {selectedJobDetails.time}
-                  </p>
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Work Date & Schedule</p>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {/* Display work date */}
+                   
+                    
+                    {/* Display days and time slots from backend */}
+                    {selectedJobDetails.jobData?.days && selectedJobDetails.jobData.days.length > 0 ? (
+                      <div>
+                        <strong>Time Schedule:</strong>
+                        <div className="mt-1 space-y-1">
+                          {selectedJobDetails.jobData.days.map((daySchedule, index) => (
+                            <div key={daySchedule._id || index} className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm">
+                              🕐 <strong>{daySchedule.day}:</strong> {daySchedule.startTime} - {daySchedule.endTime}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Fallback to job-level or shift-level timing */
+                      <div>
+                        <strong>Time Schedule:</strong>
+                        <div className="mt-1">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm">
+                            🕐 <strong>{selectedJobDetails.dayName}:</strong> {selectedJobDetails.time}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Job Duration</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <div className="font-medium text-gray-900 dark:text-white">
                     {selectedJobDetails.jobData?.jobDuration || 'N/A'}
-                  </p>
+                    {selectedJobDetails.jobData?.jobDuration && (
+                      <div className="mt-1">
+                        <span className="text-sm bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 px-2 py-1 rounded">
+                          {calculateJobDurationDays(selectedJobDetails.jobData)} day{calculateJobDurationDays(selectedJobDetails.jobData) > 1 ? 's' : ''}
+                        </span>
+                        {selectedJobDetails.durationDisplay && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            Current view: {selectedJobDetails.durationDisplay}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Job Description</p>
@@ -465,69 +645,27 @@ const RotaManagement = () => {
                       - {typeof selectedWorker === 'string' ? selectedWorker : selectedWorker.name}
                     </span>
                   )}
-                </h1>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 sm:mt-0">
-                {/* Week Navigation */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigateWeek(-1)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Previous Week"
-                  >
-                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-gray-800 dark:text-white">
-                      {getWeekTitle()}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      {weekDates[0]?.fullDate.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })} - {weekDates[6]?.fullDate.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric' 
-                      })}
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => navigateWeek(1)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    title="Next Week"
-                  >
-                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                  {currentWeekOffset !== 0 && (
-                    <button
-                      onClick={goToCurrentWeek}
-                      className="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
-                    >
-                      Current Week
-                    </button>
+                  {selectedJob && (
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400 ml-2">
+                      → {selectedJob.jobTitle}
+                    </span>
                   )}
-                  <button
-                    onClick={() => {
-                      setCurrentWeekOffset(0); // Reset to current week
-                      setSelectedWorker(workers.length > 0 ? workers[0].name : null);
-                    }}
-                    className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-                  >
-                    Refresh
-                  </button>
-                </div>
+                </h1>
+                {selectedJob && selectedJob.days && selectedJob.days.length > 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Viewing full schedule: {selectedJob.days.length} scheduled day{selectedJob.days.length > 1 ? 's' : ''} for this job
+                  </p>
+                ) : selectedWorker && !selectedJob ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Select a job to view the full-width schedule for {selectedWorker}
+                  </p>
+                ) : !selectedWorker ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Select a worker and their job to view the full-width schedule
+                  </p>
+                ) : null}
               </div>
+             
             </div>
             
             {/* Error Message */}
@@ -545,15 +683,16 @@ const RotaManagement = () => {
                 <LoadingSpinner />
               </div>
             ) : (
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Workers Section - Collapsible */}
-                <div className={`transition-all duration-300 ease-in-out bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${
-                  isWorkersOpen ? 'w-full lg:w-48' : 'w-full lg:w-10'
-                }`}>
+              <div className="flex flex-col xl:flex-row gap-4">
+                {/* Workers Section - Collapsible - Hidden when job is selected */}
+                {!selectedJob && (
+                  <div className={`transition-all duration-300 ease-in-out bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${
+                    isWorkersOpen ? 'w-full xl:w-48' : 'w-full xl:w-10'
+                  }`}>
                   {/* Workers Header with Toggle */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
                     <span className={`text-yellow-500 dark:text-yellow-400 text-sm font-medium transition-opacity duration-300 ${
-                      isWorkersOpen ? 'opacity-100' : 'opacity-0 lg:opacity-0'
+                      isWorkersOpen ? 'opacity-100' : 'opacity-0 xl:opacity-0'
                     }`}>
                       👥 Workers ({workers.length})
                     </span>
@@ -603,7 +742,11 @@ const RotaManagement = () => {
                                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-300 dark:border-blue-600'
                                     : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                                 }`}
-                                onClick={() => setSelectedWorker(selectedWorker === workerName || selectedWorker === worker ? null : workerName)}
+                                onClick={() => {
+                                  const newWorker = selectedWorker === workerName || selectedWorker === worker ? null : workerName;
+                                  setSelectedWorker(newWorker);
+                                  setSelectedJob(null); // Reset selected job when worker changes
+                                }}
                               >
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="font-medium text-xs truncate">{workerName}</span>
@@ -677,15 +820,163 @@ const RotaManagement = () => {
                       <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">{workers.length}</div>
                     </div>
                   )}
-                </div>
+                  </div>
+                )}
 
-                {/* Calendar Grid - 7 Days */}
-                <div className="flex-1">
-                  {/* Table Header */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    {/* Table Headers - Show Calendar Dates */}
+                {/* Jobs Section - Show when worker is selected but job is not selected */}
+                {selectedWorker && !selectedJob && (
+                  <div className="w-full xl:w-64 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    {/* Jobs Header */}
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-green-500 dark:text-green-400 text-sm font-medium">
+                        💼 Jobs for {selectedWorker} ({workerJobs.length})
+                      </span>
+                    </div>
+                    
+                    {/* Jobs List */}
+                    <div className="p-4 max-h-96 overflow-y-auto">
+                      {workerJobs.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 dark:text-gray-500 text-sm">
+                            <div className="text-2xl mb-2">💼</div>
+                            <div>No jobs assigned yet</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {workerJobs.map((job, index) => (
+                            <div 
+                              key={job._id || index} 
+                              className={`text-sm p-3 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                                selectedJob && selectedJob._id === job._id
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-300 dark:border-green-600'
+                                  : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                              }`}
+                              onClick={() => setSelectedJob(selectedJob && selectedJob._id === job._id ? null : job)}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-xs truncate">{job.jobTitle}</span>
+                                {selectedJob && selectedJob._id === job._id && (
+                                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              
+                              {/* Price per hour */}
+                              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                💰 £{job.pricePerHour || 'N/A'}/hour
+                              </div>
+                              
+                              {/* Work date */}
+                              {job.workDate && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                  📅 {new Date(job.workDate).toLocaleDateString()}
+                                </div>
+                              )}
+                              
+                              {/* Job duration */}
+                              {job.jobDuration && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                  ⏱️ Duration: {job.jobDuration}
+                                  {calculateJobDurationDays(job) > 1 && (
+                                    <span className="ml-1 text-purple-600 dark:text-purple-400 font-semibold">
+                                      ({calculateJobDurationDays(job)} days)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Number of days if available */}
+                              {job.days && job.days.length > 0 && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                  📊 {job.days.length} day{job.days.length > 1 ? 's' : ''} scheduled
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Calendar Grid - 7 Days - Only show when a job is selected */}
+                {selectedJob ? (
+                  <div className="flex-1">
+                    {/* Back Button and Job Info Header */}
+                    <div className="mb-4 flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setSelectedJob(null)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                          title="Press Escape key or click to go back"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                          Back to Jobs
+                          <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 py-0.5 rounded">ESC</span>
+                        </button>
+                       
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Schedule View
+                      </div>
+                    </div>
+                    
+                    {/* Table Header */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    {/* Table Headers - Show Calendar Dates or Job-specific Days */}
                     <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                      {weekDates.map((day, index) => {
+                      {/* Show job-specific days if a job is selected, otherwise show week view */}
+                      {selectedJob && selectedJob.days && selectedJob.days.length > 0 ? (
+                      // Job-specific days view
+                      <>
+                        {selectedJob.days.slice(0, 7).map((daySchedule, index) => {
+                          const isToday = daySchedule.day === new Date().toLocaleDateString('en-US', { weekday: 'long' });
+                          
+                          return (
+                            <div key={daySchedule._id || index} className={`p-2 md:p-4 text-center border-r border-gray-200 dark:border-gray-600 last:border-r-0 ${
+                              isToday ? 'bg-blue-100 dark:bg-blue-900/30' : ''
+                            }`}>
+                              <div className={`text-xs md:text-sm font-semibold ${
+                                isToday 
+                                  ? 'text-blue-800 dark:text-blue-200' 
+                                  : 'text-gray-900 dark:text-white'
+                              }`}>
+                                {daySchedule.day}
+                              </div>
+                              <div className={`text-xs mt-1 ${
+                                isToday 
+                                  ? 'text-blue-700 dark:text-blue-300 font-semibold' 
+                                  : 'text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {daySchedule.startTime} - {daySchedule.endTime}
+                              </div>
+                              {selectedJob.workDate && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                  {new Date(selectedJob.workDate).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* Fill remaining columns if job has fewer than 7 days */}
+                        {Array.from({ length: 7 - Math.min(selectedJob.days.length, 7) }, (_, index) => (
+                          <div key={`empty-${index}`} className="p-2 md:p-4 text-center border-r border-gray-200 dark:border-gray-600 last:border-r-0 bg-gray-100 dark:bg-gray-800">
+                            <div className="text-xs text-gray-400 dark:text-gray-500">
+                              No Schedule
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      // Default week view
+                      weekDates.map((day, index) => {
                         const today = new Date();
                         const isToday = day.fullDate.toDateString() === today.toDateString();
                         
@@ -714,67 +1005,196 @@ const RotaManagement = () => {
                             )}
                           </div>
                         );
-                      })}
-                    </div>
+                      })
+                    )}
+                  </div>
 
                     {/* Table Body - Daily Schedules */}
                     <div className="grid grid-cols-7 min-h-[300px] md:min-h-[400px]">
-                      {weekDates.map((day, dayIndex) => {
-                        // Get shifts for this day, filtered by selected worker if any
-                        const displaySchedule = getWorkerShifts(dailySchedule, selectedWorker);
-                        const dayShifts = displaySchedule[day.dayName] || [];
-                        
-                        return (
-                          <div key={dayIndex} className="border-r border-gray-200 dark:border-gray-600 last:border-r-0 p-1 md:p-2">
-                            {/* Day's Shifts - Stacked Vertically */}
-                            <div className="space-y-2 md:space-y-3">
-                              {dayShifts.length > 0 ? (
-                                dayShifts.map((shift, shiftIndex) => (
-                                  <div 
-                                    key={shift.id || shiftIndex}
-                                    onClick={() => openJobDetailsModal(shift)}
-                                    className={`p-2 rounded-lg border hover:shadow-md transition-all cursor-pointer transform hover:scale-105 ${
-                                      selectedWorker === shift.worker
-                                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 border-blue-300 dark:border-blue-600'
-                                        : 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700'
-                                    }`}
-                                  >
-                                    {/* Simplified Content */}
-                                    <div className="text-center">
-                                      {/* Time */}
-                                      <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-2">
-                                        ⏰ {shift.time}
-                                      </div>
-                                      
-                                      {/* Job Title */}
-                                      <div className="text-xs font-semibold text-blue-700 dark:text-blue-300 truncate">
-                                        {shift.jobTitle || shift.role}
-                                      </div>
-                                      
-                                      {/* Worker Name */}
-                                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                        {shift.worker}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="h-20 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                      {selectedJob && selectedJob.days && selectedJob.days.length > 0 ? (
+                        // Job-specific schedule view
+                        <>
+                          {selectedJob.days.slice(0, 7).map((daySchedule, dayIndex) => (
+                            <div key={daySchedule._id || dayIndex} className="border-r border-gray-200 dark:border-gray-600 last:border-r-0 p-1 md:p-2">
+                              <div className="space-y-2 md:space-y-3">
+                                <div 
+                                  onClick={() => openJobDetailsModal({
+                                    ...selectedJob,
+                                    worker: selectedWorker,
+                                    day: daySchedule.day,
+                                    dayName: daySchedule.day,
+                                    time: `${daySchedule.startTime} - ${daySchedule.endTime}`,
+                                    jobTitle: selectedJob.jobTitle,
+                                    jobData: selectedJob,
+                                    workerDetails: selectedJob.workerDetails,
+                                    utrNumber: selectedJob.workerDetails?.utrNumber,
+                                    niNumber: selectedJob.workerDetails?.NINumber,
+                                    profilePic: selectedJob.workerDetails?.profilePic,
+                                    pricePerHour: selectedJob.pricePerHour,
+                                    jobDescription: selectedJob.jobDescription,
+                                    dayOffset: dayIndex,
+                                    totalDuration: selectedJob.days ? selectedJob.days.length : 1,
+                                    durationDisplay: `Day ${dayIndex + 1} of ${selectedJob.days ? selectedJob.days.length : 1}`
+                                  })}
+                                  className="p-2 rounded-lg border bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700 hover:shadow-md transition-all cursor-pointer transform hover:scale-105"
+                                >
                                   <div className="text-center">
-                                    <div className="text-lg mb-1">📅</div>
-                                    <div className="text-xs">
-                                      {selectedWorker ? `No shifts` : 'No shifts'}
+                                    {/* Duration indicator for multi-day jobs */}
+                                    {selectedJob.days && selectedJob.days.length > 1 && (
+                                      <div className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100 px-2 py-1 rounded-full mb-2">
+                                        Day {dayIndex + 1} of {selectedJob.days.length}
+                                        {dayIndex === 0 && ' 🟢'}
+                                        {dayIndex === selectedJob.days.length - 1 && ' 🔴'}
+                                        {dayIndex > 0 && dayIndex < selectedJob.days.length - 1 && ' 🟡'}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Time */}
+                                    <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-2">
+                                      ⏰ {daySchedule.startTime} - {daySchedule.endTime}
                                     </div>
+                                    
+                                    {/* Job Title */}
+                                    <div className="text-xs font-semibold text-green-700 dark:text-green-300 truncate">
+                                      {selectedJob.jobTitle}
+                                    </div>
+                                    
+                                    {/* Worker Name */}
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {selectedWorker}
+                                    </div>
+                                    
+                                    {/* Work Date and Duration */}
+                                    {selectedJob.workDate && (
+                                      <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                        📅 {new Date(selectedJob.workDate).toLocaleDateString()}
+                                      </div>
+                                    )}
+                                    
+                                    {selectedJob.jobDuration && (
+                                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                        📊 {selectedJob.jobDuration}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          ))}
+                          {/* Fill remaining columns if job has fewer than 7 days */}
+                          {Array.from({ length: 7 - Math.min(selectedJob.days.length, 7) }, (_, index) => (
+                            <div key={`empty-body-${index}`} className="border-r border-gray-200 dark:border-gray-600 last:border-r-0 p-1 md:p-2">
+                              <div className="h-20 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                <div className="text-center">
+                                  <div className="text-lg mb-1">🚫</div>
+                                  <div className="text-xs">No Schedule</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        // Default week view
+                        weekDates.map((day, dayIndex) => {
+                          // Get shifts for this day, filtered by selected worker and job
+                          const displaySchedule = getWorkerJobShifts(dailySchedule, selectedWorker, selectedJob);
+                          const dayShifts = displaySchedule[day.dayName] || [];
+                          
+                          return (
+                            <div key={dayIndex} className="border-r border-gray-200 dark:border-gray-600 last:border-r-0 p-1 md:p-2">
+                              {/* Day's Shifts - Stacked Vertically */}
+                              <div className="space-y-2 md:space-y-3">
+                                {dayShifts.length > 0 ? (
+                                  dayShifts.map((shift, shiftIndex) => {
+                                    // Determine styling based on job duration
+                                    const isMultiDay = shift.totalDuration > 1;
+                                    const isFirstDay = shift.isFirstDay;
+                                    const isLastDay = shift.isLastDay;
+                                    
+                                    // Choose colors based on duration and position
+                                    let gradientClass = 'bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 border-blue-300 dark:border-blue-600';
+                                    let durationBadgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100';
+                                    
+                                    if (isMultiDay) {
+                                      if (isFirstDay) {
+                                        gradientClass = 'bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900/40 dark:to-green-800/40 border-green-300 dark:border-green-600';
+                                        durationBadgeClass = 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100';
+                                      } else if (isLastDay) {
+                                        gradientClass = 'bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 border-red-300 dark:border-red-600';
+                                        durationBadgeClass = 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+                                      } else {
+                                        gradientClass = 'bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-900/40 dark:to-yellow-800/40 border-yellow-300 dark:border-yellow-600';
+                                        durationBadgeClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+                                      }
+                                    }
+                                    
+                                    return (
+                                      <div 
+                                        key={shift.id || shiftIndex}
+                                        onClick={() => openJobDetailsModal(shift)}
+                                        className={`p-2 rounded-lg border hover:shadow-md transition-all cursor-pointer transform hover:scale-105 ${
+                                          selectedWorker === shift.worker ? gradientClass : 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700'
+                                        }`}
+                                      >
+                                        {/* Simplified Content */}
+                                        <div className="text-center">
+                                          {/* Duration Badge for multi-day jobs */}
+                                          {isMultiDay && (
+                                            <div className={`text-xs px-2 py-1 rounded-full mb-1 ${durationBadgeClass}`}>
+                                              {shift.durationDisplay}
+                                              {isFirstDay && ' 🟢'}
+                                              {isLastDay && ' 🔴'}
+                                              {!isFirstDay && !isLastDay && ' 🟡'}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Time */}
+                                          <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-2">
+                                            ⏰ {shift.time}
+                                          </div>
+                                          
+                                          {/* Job Title */}
+                                          <div className="text-xs font-semibold text-blue-700 dark:text-blue-300 truncate">
+                                            {shift.jobTitle || shift.role}
+                                          </div>
+                                          
+                                          {/* Worker Name */}
+                                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            {shift.worker}
+                                          </div>
+                                          
+                                          {/* Job Duration Info */}
+                                          {isMultiDay && (
+                                            <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                              📊 {shift.jobData.jobDuration}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <div className="h-20 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <div className="text-center">
+                                      <div className="text-lg mb-1">📅</div>
+                                      <div className="text-xs">
+                                        {selectedWorker ? `No shifts` : 'No shifts'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </div>
+                ) : (
+                  <div className="flex-1">
+                  </div>
+                )}
               </div>
             )}
           </div>
