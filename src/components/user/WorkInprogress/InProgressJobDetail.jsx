@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { getJobDetailsById } from '../../../api/jobApplicationApi';
-import { createInvoice } from '../../../api/invoice'; // Import the invoice API
+import { createInvoice } from '../../../api/myWorkApi'; // Import the invoice API
 import salary from "../../../assets/images/salary.png";
 import { AiOutlineInfoCircle } from "react-icons/ai"; 
 import { IoMdArrowBack } from "react-icons/io";
@@ -56,7 +56,7 @@ const MapModal = ({ isOpen, onClose, position, theme }) => {
   );
 };
 
-const AppliedjobDetail = () => {
+const InProgressJobDetail = () => {
     const [isInProgressOpen, setIsInProgressOpen] = useState(false);
     const [isMapOpen, setIsMapOpen] = useState(false);
     const [isInvoiceSuccessOpen, setIsInvoiceSuccessOpen] = useState(false);
@@ -67,7 +67,6 @@ const AppliedjobDetail = () => {
     const [error, setError] = useState(null);
     const [errorPopupMessage, setErrorPopupMessage] = useState('');
     const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
-    const [showPopupButton4, setShowPopupButton4] = useState(false); // Add state for PopupButton4
     const { id } = useParams();
     const { theme } = useContext(ThemeContext) || { theme: 'light' };
     const navigate = useNavigate();
@@ -117,14 +116,14 @@ const AppliedjobDetail = () => {
       }
     }, [id]);
 
-    // Handler for booking a job
-    const handleBookJob = () => {
+    // Handler for booking off a job (generating an invoice)
+    const handleBookJob = async () => {
       try {
         // Check if user is logged in
         const jobSeekerId = localStorage.getItem("jobSeekerId");
         
         if (!jobSeekerId) {
-          setErrorPopupMessage("Please login to book this job");
+          setErrorPopupMessage("Please login to book off this job");
           setIsErrorPopupOpen(true);
           return;
         }
@@ -135,13 +134,78 @@ const AppliedjobDetail = () => {
           return;
         }
         
-        // Show PopupButton4 instead of creating invoice directly
-        setShowPopupButton4(true);
+        setIsLoading(true);
+        
+        // Calculate hours worked based on job start/end time
+        let startTime = jobDetails.startTime || "09:00";
+        let endTime = jobDetails.endTime || "17:00";
+        
+        // Simple time calculation (assuming format like "09:00" and "17:00")
+        const calculateHours = (start, end) => {
+          if (!start || !end) return 8; // Default to 8 hours if times not available
+          
+          try {
+            const [startHour, startMin] = start.split(':').map(Number);
+            const [endHour, endMin] = end.split(':').map(Number);
+            
+            const startTotalMins = startHour * 60 + startMin;
+            const endTotalMins = endHour * 60 + endMin;
+            
+            // Calculate difference in hours
+            const diffMins = endTotalMins - startTotalMins;
+            return Math.max(0, diffMins / 60);
+          } catch (err) {
+            console.error("Error calculating hours:", err);
+            return 8; // Default
+          }
+        };
+        
+        const hoursWorked = calculateHours(startTime, endTime);
+        const totalPrice = (jobDetails.pricePerHour || 5) * hoursWorked;
+        
+        // Create invoice data object according to API specification
+        // Make sure we match exactly the format shown in the API screenshot
+        const invoiceData = {
+          startTime: startTime || "09:00",
+          endTime: endTime || "17:00",
+          pricePerHour: parseInt(jobDetails.pricePerHour) || 5,
+          workDate: jobDetails.workDate ? new Date(jobDetails.workDate).toISOString().split('T')[0] : "2025-07-26",
+          totalHours: parseInt(hoursWorked) || 8,
+          totalPrice: parseInt(totalPrice) || 40
+        };
+        
+        console.log("Creating invoice with data:", invoiceData);
+        
+        // Call the API to generate invoice
+        const response = await createInvoice(id, jobSeekerId, invoiceData);
+        
+        console.log("Invoice creation response:", response);
+        
+        // Format the date for display
+        const formattedDate = jobDetails.workDate ? 
+          new Date(jobDetails.workDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'July 26, 2025';
+        
+        // Set invoice details for the popup
+        setInvoiceDetails({
+          ...invoiceData,
+          formattedDate,
+          jobTitle: jobDetails.jobTitle,
+          companyName: jobDetails.companyId?.companyName || 'Company'
+        });
+        
+        // Show success popup
+        setIsInvoiceSuccessOpen(true);
         
       } catch (error) {
-        console.error("Error booking job:", error);
-        setErrorPopupMessage(error.message || "An error occurred while processing your request");
+        console.error("Error generating invoice:", error);
+        setErrorPopupMessage(error.message || "An error occurred while generating your invoice");
         setIsErrorPopupOpen(true);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -363,7 +427,7 @@ const AppliedjobDetail = () => {
                     onClick={handleBookJob}
                     className={`w-[200px] h-[50px] bg-[#FD7F00] text-white font-semibold rounded-full hover:bg-orange-600 transition duration-200 ${theme === 'dark' ? 'hover:bg-orange-700' : 'hover:bg-orange-600'}`}
                   >
-                    Book On
+                    Book Off
                   </button>
                   
                   <button className={`w-[200px] h-[50px] px-6 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1F2B44] hover:bg-gray-900'} text-white font-semibold rounded-full transition duration-200`}>
@@ -410,15 +474,16 @@ const AppliedjobDetail = () => {
             message={errorPopupMessage} 
           />
         )}
-        {showPopupButton4 && (
-          <PopupButton4 
-            onClose4={() => setShowPopupButton4(false)} 
-            onClose={() => setShowPopupButton4(false)}
-            jobDetails={jobDetails}
-          />
+        {isLoading && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mb-4"></div>
+              <p className="text-white">Processing your booking...</p>
+            </div>
+          </div>
         )}
       </div>
     );
 }
 
-export default AppliedjobDetail
+export default InProgressJobDetail

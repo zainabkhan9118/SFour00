@@ -142,7 +142,6 @@ const WorkAssignedBook = () => {
         console.log("Booking job with application ID:", applicationId);
         try {
             setSelectedApplicationId(applicationId);
-            
             // Find the application in our loaded data to extract job ID
             const application = assignedJobs.find(app => app._id === applicationId);
             if (application) {
@@ -152,12 +151,13 @@ const WorkAssignedBook = () => {
                 } else if (typeof application.jobId === 'string') {
                     jobId = application.jobId;
                 }
-                
+                                
                 if (jobId) {
                     setSelectedJobId(jobId);
                     localStorage.setItem("selectedJobId", jobId);
                     console.log(`Setting selected job ID for booking: ${jobId}`);
                 }
+
             }
             
             setShowButton4(true);
@@ -209,12 +209,9 @@ const WorkAssignedBook = () => {
                 } else if (typeof application.jobId === 'string') {
                     jobId = application.jobId;
                 }
-                
-                if (jobId) {
-                    setSelectedJobId(jobId);
-                    localStorage.setItem("selectedJobId", jobId);
-                    console.log(`Setting selected job ID: ${jobId}`);
-                }
+              
+                setSelectedJobId(jobId);
+                console.log("Setting selectedJobId:", jobId);
             }
             
             // Call the API function to assign the job to the applicant
@@ -404,10 +401,7 @@ const WorkAssignedBook = () => {
             )}
             
             {showButton3 && (
-                <PopupButton3 
-                    onClose={() => handlePopup3Close()}
-                    jobId={selectedJobId || localStorage.getItem("selectedJobId")}
-                />
+                <PopupButton3 onClose={() => handlePopup3Close()} jobId={selectedJobId} />
             )}
 
             {/* Book On popups */}

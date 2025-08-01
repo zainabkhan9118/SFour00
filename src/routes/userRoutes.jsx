@@ -26,6 +26,7 @@ const UserChatPage = lazy(() => import("../components/user/Chat/UserChatPage"));
 const UserWorkInprogess = lazy(() => import("../components/user/WorkInprogress/UserWorkInprogess"));
 const WorkAssignedBook = lazy(() => import("../components/user/WorkedAssignedBook/WorkAssignedBook"));
 const AppliedjobDetail = lazy(() => import("../components/user/WorkApplied/AppliedjobDetail"));
+const InProgressJobDetail = lazy(() => import("../components/user/WorkInprogress/InProgressJobDetail")); // New component for Book Off
 const ReportProblem = lazy(() => import("../components/user/reportProblem/ReportProblem"));
 const UserCompleted = lazy(() => import("../components/user/completed/UserCompleted"));
 const ContactSupport = lazy(() => import("../components/user/profile/ContactSupport/ContactSupport"));
@@ -56,6 +57,7 @@ const UserRoutes = [
   <Route key="User-ReportProblem-With-Id" path="/User-reportProblem/:jobId" element={<SuspenseWrapper><WithUserLayout Component={ReportProblem} /></SuspenseWrapper>} />,
   <Route key="User-WorkCompleted" path="/User-WorkCompleted" element={<SuspenseWrapper><WithUserLayout Component={UserCompleted} /></SuspenseWrapper>} />,
   <Route key="User-workInprogess" path="/User-workInprogess" element={<SuspenseWrapper><WithUserLayout Component={UserWorkInprogess} /></SuspenseWrapper>} />,
+  <Route key="User-InProgressJobDetail" path="/User-InProgressJobDetail/:id" element={<SuspenseWrapper><WithUserLayout Component={InProgressJobDetail} /></SuspenseWrapper>} />,
   <Route key="User-UserNotification" path="/User-UserNotification" element={<SuspenseWrapper><WithUserLayout Component={UserNotification} /></SuspenseWrapper>} />,
   <Route key="User-UserSidebar" path="/User-UserSidebar" element={<SuspenseWrapper><WithUserLayout Component={UserSidebar} /></SuspenseWrapper>} />,
   <Route key="User-PersonalDetails" path="/User-PersonalDetails" element={<SuspenseWrapper><WithUserLayout Component={PersonalDetails} /></SuspenseWrapper>} />,
