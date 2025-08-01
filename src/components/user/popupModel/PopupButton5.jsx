@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { FaQrcode } from "react-icons/fa";
-import { updateStatusByQR } from "../../../api/myWorkApi";
+import { updateStatusByQR, updateJobStatus } from "../../../api/myWorkApi";
 import { ThemeContext } from "../../../context/ThemeContext";
 import axios from "axios";
 import jsQR from "jsqr";
@@ -187,6 +187,8 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
   const [scanSuccessful, setScanSuccessful] = useState(false);
   const [jobDetails, setJobDetails] = useState(null);
   const [cameraStatus, setCameraStatus] = useState("initializing"); // Add camera status state
+  const [qrMismatchError, setQrMismatchError] = useState(null); // New state for QR mismatch errors
+  const [isQrValid, setIsQrValid] = useState(false); // Track if QR is valid for enabling/disabling Book On button
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   useEffect(() => {
@@ -326,7 +328,7 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
     };
   }, []);
 
-  const handleScanResult = (result, error) => {
+  const handleScanResult = async (result, error) => {
     if (result && result.text) {
       console.log("QR Code scanned successfully:", result.text);
       
@@ -337,6 +339,164 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
       setQrData(result.text);
       setShowScanner(false);
       setScanSuccessful(true);
+      
+      // Clear previous errors
+      setQrMismatchError(null);
+      setError(null);
+
+      // Update job status to inProgress immediately after successful scan
+      try {
+        setLoading(true);
+        
+        // Get the current job ID
+        const currentJobId = jobId || localStorage.getItem("selectedJobId");
+        const jobSeekerId = localStorage.getItem("jobSeekerId");
+
+        if (currentJobId && jobSeekerId) {
+          // Create the QR data object for status update
+          const enhancedQrData = {
+            qrCodeData: result.text,
+            jobId: currentJobId,
+            jobSeekerId: jobSeekerId,
+            status: "inProgress" // Explicitly set status to inProgress
+          };
+
+          console.log(`🔄 Updating job status to inProgress for job ${currentJobId} with QR data:`, enhancedQrData);
+
+          // Try the QR-specific API first
+          let response;
+          try {
+            response = await updateStatusByQR(currentJobId, enhancedQrData);
+            console.log("📡 QR API Response:", response);
+            
+            // If we get here, the QR was valid and accepted
+            setIsQrValid(true);
+            setQrMismatchError(null);
+            
+          } catch (qrError) {
+            console.warn("⚠️ QR API failed:", qrError);
+            
+            // Check if this is a QR mismatch error (400 status)
+            if (qrError.response?.status === 400) {
+              const errorMessage = qrError.response?.data?.message;
+              if (errorMessage && errorMessage.toLowerCase().includes('qr code does not match')) {
+                console.error("❌ QR Code mismatch:", errorMessage);
+                setQrMismatchError(errorMessage);
+                setIsQrValid(false);
+                setScanSuccessful(false);
+                
+                // Show error but don't proceed with status update
+                setLoading(false);
+                return;
+              }
+            }
+            
+            // If it's not a QR mismatch error, try the regular status update API
+            try {
+              response = await updateJobStatus(currentJobId, { 
+                status: "inProgress",
+                qrCodeData: result.text,
+                timestamp: new Date().toISOString()
+              });
+              console.log("📡 Regular API Response:", response);
+              setIsQrValid(true);
+              setQrMismatchError(null);
+            } catch (regularError) {
+              console.error("❌ Both APIs failed:", regularError);
+              
+              // Check if regular API also returned QR mismatch
+              if (regularError.response?.status === 400) {
+                const errorMessage = regularError.response?.data?.message;
+                if (errorMessage && errorMessage.toLowerCase().includes('qr code does not match')) {
+                  setQrMismatchError(errorMessage);
+                  setIsQrValid(false);
+                  setScanSuccessful(false);
+                  setLoading(false);
+                  return;
+                }
+              }
+              
+              throw regularError;
+            }
+          }
+          
+          console.log("📡 Full API Response:", response);
+          
+          if (response && response.data) {
+            console.log("✅ Job status updated to inProgress successfully:", response.data);
+            
+            // Verify the status was actually updated by checking the current job status
+            try {
+              const BASE_URL = import.meta.env.VITE_BASE_URL;
+              const verifyResponse = await axios.get(`${BASE_URL}/apply/${jobSeekerId}`, {
+                params: { status: "inProgress" }
+              });
+              console.log("🔍 Verification - Current inProgress jobs:", verifyResponse.data);
+              
+              // Check if our job is in the response
+              const updatedJob = verifyResponse.data?.data?.find(job => 
+                job._id === currentJobId || 
+                (job.jobId && job.jobId._id === currentJobId)
+              );
+              
+              if (updatedJob) {
+                console.log("✅ VERIFIED: Job found in inProgress list:", updatedJob);
+              } else {
+                console.warn("⚠️ Job not found in inProgress list yet - might need a moment to update");
+              }
+            } catch (verifyError) {
+              console.warn("⚠️ Could not verify status update:", verifyError);
+            }
+            
+            // Clear the cache so fresh data is fetched
+            const cacheKey = `in-progress-jobs-${jobSeekerId}`;
+            if (window.sessionStorage) {
+              window.sessionStorage.removeItem(cacheKey);
+            }
+            if (window.localStorage) {
+              const keys = Object.keys(window.localStorage);
+              keys.forEach(key => {
+                if (key.includes('in-progress-jobs') || key.includes(cacheKey)) {
+                  window.localStorage.removeItem(key);
+                }
+              });
+            }
+            console.log("🗑️ Cache cleared for in-progress jobs");
+            
+          } else {
+            console.warn("⚠️ Status update response was unexpected:", response);
+          }
+        } else {
+          console.error("❌ Missing jobId or jobSeekerId for status update", {
+            currentJobId,
+            jobSeekerId
+          });
+        }
+      } catch (err) {
+        console.error("❌ Error updating job status to inProgress:", err);
+        console.error("❌ Error details:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        });
+        
+        // Check if this is a QR mismatch error
+        if (err.response?.status === 400) {
+          const errorMessage = err.response?.data?.message;
+          if (errorMessage && errorMessage.toLowerCase().includes('qr code does not match')) {
+            setQrMismatchError(errorMessage);
+            setIsQrValid(false);
+            setScanSuccessful(false);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // For other errors, don't show error to user as the scan was successful
+        // The status update failure shouldn't break the flow
+      } finally {
+        setLoading(false);
+      }
 
       // If we're in QR-only mode, call the callback with the data
       if (useQROnly && onQRScanned) {
@@ -436,10 +596,12 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
       }
 
       // Create an enhanced QR code data object with job details
+      // If QR was already scanned, this might be a confirmation or completion step
       const enhancedQrData = {
         qrCodeData: dataToUse,
         jobId: currentJobId,
         jobSeekerId: jobSeekerId,
+        status: qrData ? "confirmed" : "inProgress" // Use "confirmed" if QR was already scanned, otherwise "inProgress"
        // jobTitle: jobDetails?.jobTitle || '',
         //companyName: jobDetails?.companyId?.companyName || '',
         //jobDate: jobDetails?.workDate || new Date().toISOString(),
@@ -483,6 +645,8 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
     setScanningStatus("scanning");
     setScanSuccessful(false);
     setCameraError(null);
+    setQrMismatchError(null); // Clear QR mismatch error when starting new scan
+    setIsQrValid(false); // Reset QR validity
     console.log("Scanner opened, camera should initialize now");
   };
 
@@ -524,6 +688,49 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
                     >
                       Close
                     </button>
+                  </div>
+                ) : scanSuccessful && !qrMismatchError ? (
+                  <div className="text-center p-4">
+                    <div className="text-green-500 mb-3 text-5xl">✓</div>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
+                      QR Code successfully scanned and validated!
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400 mt-2 break-all">{qrData}</p>
+                    {useQROnly && (
+                      <button
+                        onClick={closeCameraAndPopup}
+                        className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                      >
+                        Use This Value
+                      </button>
+                    )}
+                  </div>
+                ) : qrMismatchError ? (
+                  <div className="text-center p-4">
+                    <div className="text-red-500 mb-3 text-5xl">❌</div>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">
+                      QR Code Mismatch!
+                    </p>
+                    <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-3 mb-4">
+                      <p className="text-red-600 dark:text-red-300 text-sm">{qrMismatchError}</p>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                      The QR code you scanned doesn't match any checkpoint for this job. Please scan the correct QR code.
+                    </p>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={openScanner}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                      >
+                        Scan Again
+                      </button>
+                      <button
+                        onClick={() => useQROnly ? closeCameraAndPopup() : setShowScanner(false)}
+                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : scanSuccessful ? (
                   <div className="text-center p-4">
@@ -712,7 +919,11 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
                 {/* For demo/testing purposes - bypass QR scanning if camera isn't working */}
                 <div className="w-full px-4 mt-4">
                   <button
-                    onClick={() => setQrData("MOCK-QR-CODE-12345")}
+                    onClick={() => {
+                      setQrData("MOCK-QR-CODE-12345");
+                      setIsQrValid(true); // Mark the test QR as valid
+                      setQrMismatchError(null); // Clear any mismatch errors
+                    }}
                     className="text-xs text-blue-500 dark:text-blue-400 underline w-full text-center"
                   >
                     Use test QR code (for demo)
@@ -722,15 +933,35 @@ const PopupButton5 = ({ onClose, onClose5, jobId, useQROnly = false, onQRScanned
                 {/* Book On Button */}
                 <button
                   onClick={handleBookOnClick}
-                  disabled={loading}
+                  disabled={loading || !isQrValid || qrMismatchError}
                   className={`mt-6 px-6 py-3 w-full md:w-auto ${
-                    loading
-                      ? "bg-gray-400 dark:bg-gray-600"
+                    loading || !isQrValid || qrMismatchError
+                      ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                       : "bg-[#FD7F00] hover:bg-orange-600"
                   } text-white rounded-full transition duration-200`}
                 >
-                  {loading ? "Processing..." : "Book On"}
+                  {loading ? "Processing..." : 
+                   !isQrValid || qrMismatchError ? "Scan Valid QR Code First" : 
+                   "Book On"}
                 </button>
+
+                {/* Show QR mismatch error message below the main form */}
+                {qrMismatchError && !showScanner && (
+                  <div className="w-full mt-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-red-600 dark:text-red-300 text-sm font-medium">QR Code Mismatch</p>
+                        <p className="text-red-600 dark:text-red-300 text-xs">{qrMismatchError}</p>
+                      </div>
+                      <button
+                        onClick={openScanner}
+                        className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Scan Again
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -415,6 +415,7 @@ const WorkAssignedBook = () => {
                 <PopupButton4
                     onClose={() => handlePopup4Close(true)}
                     onClose4={() => handlePopup4Close(false)}
+                    jobId={selectedJobId || localStorage.getItem("selectedJobId")}
                 />
             )}
 

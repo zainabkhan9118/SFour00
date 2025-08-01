@@ -15,10 +15,7 @@ const PopupButton1 = ({ onClose, onClose1 }) => {
   };
 
   const handleAccept = () => {
-    onClose(); // Close Popup 1
-    setTimeout(() => {
-      setShowPopup2(true); // Show Popup 2
-    }, 100);
+    onClose(); // This will call confirmAcceptJob() from parent
   };
 
   return (

@@ -163,13 +163,21 @@ export default function MyWorkAssignedPage() {
     fetchAssignedJobs();
   }, [BASEURL]);
 
-  const handleAccept = async (applicationId) => {
-   // console.log("Accepting job application with ID:", applicationId);
+  const handleAccept = (applicationId) => {
+    // Just store the application ID and show the confirmation popup
+    setSelectedApplicationId(applicationId);
+    setShowButton1(true);
+  };
+
+  const confirmAcceptJob = async () => {
+    if (!selectedApplicationId) return;
+    
+    // console.log("Accepting job application with ID:", selectedApplicationId);
     try {
       setLoading(true);
       
       // Find the application in our already loaded data
-      const application = assignableJobs.find(app => app._id === applicationId);
+      const application = assignableJobs.find(app => app._id === selectedApplicationId);
       
       if (!application) {
         console.error("Could not find application in loaded data");
@@ -233,8 +241,9 @@ export default function MyWorkAssignedPage() {
           setSelectedJobId(jobId);
           localStorage.setItem("selectedJobId", jobId);
           
-          // Start the popup sequence immediately without asking for location
-          setShowButton1(true);
+          // Close first popup and show second popup after successful API calls
+          setShowButton1(false);
+          setShowButton2(true);
           
           // Refresh the jobs list
           await refreshJobsList(jobSeekerId);
@@ -242,10 +251,11 @@ export default function MyWorkAssignedPage() {
           // Direct response with 409 status code
           //console.log("Job is already assigned (409 from direct response)");
           setErrorMessage("This job has already been assigned to another job seeker.");
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
           
           // Remove this job from the list
-          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+          setAssignableJobs(prev => prev.filter(job => job._id !== selectedApplicationId));
         }
       } catch (error) {
         //console.error("API error:", error);
@@ -255,39 +265,45 @@ export default function MyWorkAssignedPage() {
           // Error response with 409 status
           //console.log("Job is already assigned (409 from error response)");
           setErrorMessage(error.response.data?.message || "This job has already been assigned to another job seeker.");
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
           
           // Remove this job from the list
-          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+          setAssignableJobs(prev => prev.filter(job => job._id !== selectedApplicationId));
         } else if (error.response && error.response.data && error.response.data.message) {
           // Show the specific error message from the API
           setErrorMessage(error.response.data.message);
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
         } else if (error.message && error.message.includes("409")) {
           // Fallback for when status code might be in the error message
           //console.log("Job is already assigned (409 in error message)");
           setErrorMessage("This job has already been assigned to another job seeker.");
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
           
           // Remove this job from the list
-          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+          setAssignableJobs(prev => prev.filter(job => job._id !== selectedApplicationId));
         } else if (error.message && error.message.includes("already assigned")) {
           // Fallback for when error message contains "already assigned"
           //console.log("Job is already assigned (from error message text)");
           setErrorMessage(error.message);
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
           
           // Remove this job from the list
-          setAssignableJobs(prev => prev.filter(job => job._id !== applicationId));
+          setAssignableJobs(prev => prev.filter(job => job._id !== selectedApplicationId));
         } else {
           // Generic error message
           setErrorMessage("Failed to assign job. Please try again later.");
+          setShowButton1(false);
           setShowAlreadyAssignedPopup(true);
         }
       }
     } catch (error) {
-      console.error("Error in handleAccept:", error);
+      console.error("Error in confirmAcceptJob:", error);
       setErrorMessage(error.message || "Something went wrong. Please try again.");
+      setShowButton1(false);
       setShowAlreadyAssignedPopup(true);
     } finally {
       setLoading(false);
@@ -552,7 +568,7 @@ export default function MyWorkAssignedPage() {
         <PopupButton1
           onClose={() => {
             setShowButton1(false);
-            setShowButton2(true); 
+            confirmAcceptJob(); // Call the API when user confirms
           }}
           onClose1 = {() => setShowButton1(false)}
         />
@@ -584,6 +600,7 @@ export default function MyWorkAssignedPage() {
             confirmBookJob();
           }}
           onClose4={() => setShowButton4(false)}
+          jobId={selectedJobId || localStorage.getItem("selectedJobId")}
         />
       )}
 
