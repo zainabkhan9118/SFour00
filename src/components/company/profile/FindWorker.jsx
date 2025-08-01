@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import CompanySideBar from "./CompanySideBar";
 import { ThemeContext } from "../../../context/ThemeContext";
-import { getRotaManagementByCompany } from "../../../api/rotaManagementApi";
+import { getAvailableJobSeekers } from "../../../api/rotaManagementApi";
 import LoadingSpinner from "../../common/LoadingSpinner";
 import { FaSearch, FaCalendarAlt, FaClock, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaMapMarkerAlt } from "react-icons/fa";
 
@@ -12,7 +12,7 @@ const FindWorker = () => {
   
   // State for search parameters
   const [searchParams, setSearchParams] = useState({
-    date: '',
+    day: '',
     startTime: '',
     endTime: '',
     searchQuery: ''
@@ -20,7 +20,6 @@ const FindWorker = () => {
   
   // State for available workers
   const [availableWorkers, setAvailableWorkers] = useState([]);
-  const [allWorkers, setAllWorkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
@@ -37,61 +36,6 @@ const FindWorker = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch all workers on component mount
-  useEffect(() => {
-    const fetchAllWorkers = async () => {
-      try {
-        setLoading(true);
-        const companyId = localStorage.getItem('companyId');
-        
-        if (!companyId) {
-          throw new Error('Company ID not found. Please complete your company profile first.');
-        }
-
-        const response = await getRotaManagementByCompany(companyId);
-        
-        if (response && response.data) {
-          // Extract unique workers with their details from the API response
-          const workersMap = new Map();
-          response.data
-            .filter(rota => rota.jobSeeker_id && rota.jobSeeker_id.fullname)
-            .forEach(rota => {
-              const jobSeeker = rota.jobSeeker_id;
-              if (!workersMap.has(jobSeeker.fullname)) {
-                workersMap.set(jobSeeker.fullname, {
-                  id: jobSeeker._id,
-                  name: jobSeeker.fullname,
-                  utrNumber: jobSeeker.utrNumber,
-                  niNumber: jobSeeker.NINumber,
-                  shortBio: jobSeeker.shortBio,
-                  profilePic: jobSeeker.profilePic,
-                  email: jobSeeker.email,
-                  phone: jobSeeker.phone,
-                  address: jobSeeker.address,
-                  assignedJobs: jobSeeker.assignedJobs || [],
-                  totalAssignedJobs: jobSeeker.assignedJobs ? jobSeeker.assignedJobs.length : 0,
-                  rotaData: rota
-                });
-              }
-            });
-          
-          const uniqueWorkers = Array.from(workersMap.values());
-          setAllWorkers(uniqueWorkers);
-        }
-        
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching workers data:', err);
-        setError(err.message || 'Failed to fetch workers data');
-        setAllWorkers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllWorkers();
-  }, []);
-
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -101,52 +45,10 @@ const FindWorker = () => {
     }));
   };
 
-  // Check if a worker is available at the specified date and time
-  const isWorkerAvailable = (worker, searchDate, startTime, endTime) => {
-    if (!worker.assignedJobs || worker.assignedJobs.length === 0) {
-      return true; // Worker has no jobs, so is available
-    }
-
-    const searchDateTime = new Date(searchDate);
-    const searchStart = new Date(`${searchDate}T${startTime}:00`);
-    const searchEnd = new Date(`${searchDate}T${endTime}:00`);
-
-    // Check if worker has any conflicting jobs
-    const hasConflict = worker.assignedJobs.some(job => {
-      if (!job.workDate) return false;
-
-      const jobDate = new Date(job.workDate);
-      
-      // Check if the job is on the same date
-      if (jobDate.toDateString() !== searchDateTime.toDateString()) {
-        return false;
-      }
-
-      // If job has specific times, check for overlap
-      if (job.startTime && job.endTime) {
-        const jobStart = new Date(`${searchDate}T${job.startTime}:00`);
-        const jobEnd = new Date(`${searchDate}T${job.endTime}:00`);
-        
-        // Check for time overlap
-        return (searchStart < jobEnd && searchEnd > jobStart);
-      }
-
-      // If job doesn't have specific times, assume it conflicts for the whole day
-      return true;
-    });
-
-    return !hasConflict;
-  };
-
   // Handle search for available workers
-  const handleSearch = () => {
-    if (!searchParams.date || !searchParams.startTime || !searchParams.endTime) {
-      setError('Please fill in all required fields (Date, Start Time, End Time)');
-      return;
-    }
-
-    if (searchParams.startTime >= searchParams.endTime) {
-      setError('End time must be after start time');
+  const handleSearch = async () => {
+    if (!searchParams.day || !searchParams.startTime || !searchParams.endTime) {
+      setError('Please fill in all required fields (Day, Start Time, End Time)');
       return;
     }
 
@@ -155,24 +57,74 @@ const FindWorker = () => {
     setSearched(true);
 
     try {
-      let filteredWorkers = allWorkers.filter(worker => 
-        isWorkerAvailable(worker, searchParams.date, searchParams.startTime, searchParams.endTime)
-      );
-
-      // Apply search query filter if provided
-      if (searchParams.searchQuery.trim()) {
-        const query = searchParams.searchQuery.toLowerCase();
-        filteredWorkers = filteredWorkers.filter(worker =>
-          worker.name.toLowerCase().includes(query) ||
-          (worker.shortBio && worker.shortBio.toLowerCase().includes(query)) ||
-          (worker.email && worker.email.toLowerCase().includes(query)) ||
-          (worker.utrNumber && worker.utrNumber.toLowerCase().includes(query))
-        );
+      const companyId = localStorage.getItem('companyId');
+      
+      if (!companyId) {
+        throw new Error('Company ID not found. Please complete your company profile first.');
       }
 
-      setAvailableWorkers(filteredWorkers);
+      // Call the new API endpoint
+      const response = await getAvailableJobSeekers(
+        companyId,
+        searchParams.day,
+        searchParams.startTime,
+        searchParams.endTime
+      );
+
+      console.log('API Response:', response); // Debug log
+
+      if (response && response.statusCode === 200) {
+        let filteredWorkers = response.data || [];
+        
+        console.log('Available workers from API:', filteredWorkers); // Debug log
+
+        // Apply search query filter if provided
+        if (searchParams.searchQuery.trim()) {
+          const query = searchParams.searchQuery.toLowerCase();
+          filteredWorkers = filteredWorkers.filter(item =>
+            (item.jobSeeker_id && item.jobSeeker_id.fullname && item.jobSeeker_id.fullname.toLowerCase().includes(query)) ||
+            (item.jobSeeker_id && item.jobSeeker_id.shortBio && item.jobSeeker_id.shortBio.toLowerCase().includes(query)) ||
+            (item.jobSeeker_id && item.jobSeeker_id.email && item.jobSeeker_id.email.toLowerCase().includes(query)) ||
+            (item.jobSeeker_id && item.jobSeeker_id.utrNumber && item.jobSeeker_id.utrNumber.toLowerCase().includes(query)) ||
+            (item.jobSeeker_id && item.jobSeeker_id.NINumber && item.jobSeeker_id.NINumber.toLowerCase().includes(query))
+          );
+        }
+
+        // Transform the API response to match our component structure
+        const transformedWorkers = filteredWorkers
+          .filter(item => item.jobSeeker_id && item.jobSeeker_id.fullname) // Filter out items without worker data
+          .map(item => {
+            const worker = item.jobSeeker_id;
+            return {
+              id: worker._id,
+              name: worker.fullname,
+              utrNumber: worker.utrNumber,
+              niNumber: worker.NINumber,
+              shortBio: worker.shortBio,
+              profilePic: worker.profilePic,
+              email: worker.email,
+              phone: worker.phone,
+              address: worker.address && worker.address.length > 0 ? worker.address[0].address : null,
+              assignedJobs: worker.assignedJobs || [],
+              totalAssignedJobs: worker.assignedJobs ? worker.assignedJobs.length : 0,
+              availabilityStatus: 'Available for selected time'
+            };
+          });
+
+        console.log('Transformed workers:', transformedWorkers); // Debug log
+        setAvailableWorkers(transformedWorkers);
+        
+        if (transformedWorkers.length === 0) {
+          setError('No workers are available for the selected day and time period');
+        }
+      } else {
+        setAvailableWorkers([]);
+        setError(response?.message || 'No available workers found for the selected time period');
+      }
     } catch (err) {
-      setError('Error searching for available workers');
+      console.error('Error searching for available workers:', err);
+      setError(err.message || 'Failed to search for available workers');
+      setAvailableWorkers([]);
     } finally {
       setLoading(false);
     }
@@ -193,7 +145,7 @@ const FindWorker = () => {
   // Reset search
   const resetSearch = () => {
     setSearchParams({
-      date: '',
+      day: '',
       startTime: '',
       endTime: '',
       searchQuery: ''
@@ -201,12 +153,6 @@ const FindWorker = () => {
     setAvailableWorkers([]);
     setSearched(false);
     setError(null);
-  };
-
-  // Get current date for min date validation
-  const getCurrentDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
   };
 
   // Worker Details Modal Component
@@ -299,7 +245,7 @@ const FindWorker = () => {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Availability Status</p>
                   <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                    Available for selected time
+                    {selectedWorker.availabilityStatus || 'Available for selected time'}
                   </span>
                 </div>
               </div>
@@ -329,14 +275,9 @@ const FindWorker = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Date</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Day</p>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {new Date(searchParams.date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    {searchParams.day}
                   </p>
                 </div>
                 <div>
@@ -401,7 +342,7 @@ const FindWorker = () => {
                   Find Available Workers
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Search for workers available at specific dates and times
+                  Search for workers available on specific days and times using real-time availability checking
                 </p>
               </div>
             </div>
@@ -420,21 +361,28 @@ const FindWorker = () => {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                {/* Date Input */}
+                {/* Day Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <FaCalendarAlt className="inline mr-2 text-orange-500" />
-                    Date *
+                    Day *
                   </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={searchParams.date}
+                  <select
+                    name="day"
+                    value={searchParams.day}
                     onChange={handleInputChange}
-                    min={getCurrentDate()}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
                     required
-                  />
+                  >
+                    <option value="">Select a day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
                 </div>
 
                 {/* Start Time Input */}
@@ -444,10 +392,11 @@ const FindWorker = () => {
                     Start Time *
                   </label>
                   <input
-                    type="time"
+                    type="text"
                     name="startTime"
                     value={searchParams.startTime}
                     onChange={handleInputChange}
+                    placeholder="e.g., 09:00, 9:00 AM"
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
                     required
                   />
@@ -460,10 +409,11 @@ const FindWorker = () => {
                     End Time *
                   </label>
                   <input
-                    type="time"
+                    type="text"
                     name="endTime"
                     value={searchParams.endTime}
                     onChange={handleInputChange}
+                    placeholder="e.g., 17:00, 5:00 PM"
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
                     required
                   />
@@ -533,14 +483,9 @@ const FindWorker = () => {
                       {availableWorkers.length} workers found
                     </span>
                   </div>
-                  {searchParams.date && (
+                  {searchParams.day && (
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Available on {new Date(searchParams.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })} from {searchParams.startTime} to {searchParams.endTime}
+                      Available on {searchParams.day} from {searchParams.startTime} to {searchParams.endTime}
                     </p>
                   )}
                 </div>
@@ -553,95 +498,95 @@ const FindWorker = () => {
                         <FaUser className="mx-auto text-4xl mb-4" />
                         <h3 className="text-lg font-medium mb-2">No Available Workers Found</h3>
                         <p className="text-sm">
-                          {allWorkers.length === 0 
-                            ? "No workers are registered in your rota system yet."
-                            : "All workers have conflicting schedules for the selected time period."
-                          }
+                          No workers are available for the selected day and time period.
+                          They may have conflicting schedules or assignments.
                         </p>
-                        {allWorkers.length > 0 && (
-                          <p className="text-xs mt-2">
-                            Try searching for a different date or time slot.
-                          </p>
-                        )}
+                        <p className="text-xs mt-2">
+                          Try searching for a different day or time slot.
+                        </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {availableWorkers.map((worker, index) => (
-                        <div
-                          key={worker.id || index}
-                          className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-200 dark:border-gray-600"
-                          onClick={() => openWorkerModal(worker)}
-                        >
-                          {/* Worker Info */}
-                          <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0">
-                              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {worker.name.charAt(0).toUpperCase()}
+                    <>
+                     
+                      {/* Detailed card grid view */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {availableWorkers.map((worker, index) => (
+                          <div
+                            key={worker.id || index}
+                            className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-200 dark:border-gray-600"
+                            onClick={() => openWorkerModal(worker)}
+                          >
+                            {/* Worker Info */}
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0">
+                                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                  {worker.name.charAt(0).toUpperCase()}
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                                  {worker.name}
+                                </h3>
+                                {worker.shortBio && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {worker.shortBio}
+                                  </p>
+                                )}
                               </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                                {worker.name}
-                              </h3>
-                              {worker.shortBio && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                  {worker.shortBio}
-                                </p>
+
+                            {/* Worker Details */}
+                            <div className="mt-4 space-y-2">
+                              {worker.email && (
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                  <FaEnvelope className="mr-2 text-orange-500 flex-shrink-0" />
+                                  <span className="truncate">{worker.email}</span>
+                                </div>
+                              )}
+                              {worker.phone && (
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                  <FaPhone className="mr-2 text-orange-500 flex-shrink-0" />
+                                  <span>{worker.phone}</span>
+                                </div>
+                              )}
+                              {worker.utrNumber && (
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                  <FaBriefcase className="mr-2 text-orange-500 flex-shrink-0" />
+                                  <span>UTR: {worker.utrNumber}</span>
+                                </div>
                               )}
                             </div>
-                          </div>
 
-                          {/* Worker Details */}
-                          <div className="mt-4 space-y-2">
-                            {worker.email && (
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                <FaEnvelope className="mr-2 text-orange-500 flex-shrink-0" />
-                                <span className="truncate">{worker.email}</span>
+                            {/* Stats */}
+                            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Total Jobs: {worker.totalAssignedJobs}
+                                </span>
+                                <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+                                  Available
+                                </span>
                               </div>
-                            )}
-                            {worker.phone && (
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                <FaPhone className="mr-2 text-orange-500 flex-shrink-0" />
-                                <span>{worker.phone}</span>
-                              </div>
-                            )}
-                            {worker.utrNumber && (
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                <FaBriefcase className="mr-2 text-orange-500 flex-shrink-0" />
-                                <span>UTR: {worker.utrNumber}</span>
-                              </div>
-                            )}
-                          </div>
+                            </div>
 
-                          {/* Stats */}
-                          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Total Jobs: {worker.totalAssignedJobs}
-                              </span>
-                              <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
-                                Available
+                            {/* Click indicator */}
+                            <div className="mt-3 text-center">
+                              <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                                Click to view details & assign job →
                               </span>
                             </div>
                           </div>
-
-                          {/* Click indicator */}
-                          <div className="mt-3 text-center">
-                            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                              Click to view details & assign job →
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Initial state - show total workers count */}
-            {!searched && !loading && allWorkers.length > 0 && (
+            {/* Initial state - show ready to search message */}
+            {!searched && !loading && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="text-center">
                   <FaUser className="mx-auto text-4xl text-orange-500 mb-4" />
@@ -649,9 +594,9 @@ const FindWorker = () => {
                     Ready to Find Available Workers
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    You have {allWorkers.length} workers registered in your rota system.
+                    Use the search form above to find workers available for specific days and times.
                     <br />
-                    Use the search form above to find who's available for specific dates and times.
+                    The system will check real-time availability based on current job assignments.
                   </p>
                 </div>
               </div>
