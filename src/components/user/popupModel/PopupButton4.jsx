@@ -6,9 +6,14 @@ import { ThemeContext } from "../../../context/ThemeContext";
 import { getJobDetailsById } from "../../../api/jobApplicationApi";
 import axios from "axios";
 
+
 const PopupButton4 = ({onClose, onClose4, jobId }) => {
+
   const [showPopup5, setShowPopup5] = useState(false);
+  const [pinValues, setPinValues] = useState(['', '', '', '']);
+  const [pinError, setPinError] = useState('');
   const buttonRef = useRef();
+  const inputRefs = useRef([]);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   
   // PIN and job-related states
@@ -98,11 +103,27 @@ const PopupButton4 = ({onClose, onClose4, jobId }) => {
     fetchJobDetails();
   }, [jobId]);
 
+  // Set up input refs
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, 4);
+  }, []);
+
+  // Debug job details when component mounts
+  useEffect(() => {
+    console.log("Job details in PopupButton4:", jobDetails);
+    if (jobDetails?.jobPin) {
+      console.log("Job PIN from details:", jobDetails.jobPin);
+    } else {
+      console.log("No job PIN found in job details");
+    }
+  }, [jobDetails]);
+
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
       onClose();
     }
   };
+
 
   // Handle PIN input changes
   const handlePinChange = (index, value) => {
@@ -171,6 +192,7 @@ const PopupButton4 = ({onClose, onClose4, jobId }) => {
       setPinError("An error occurred while validating PIN. Please try again.");
     } finally {
       setIsValidating(false);
+
     }
   };
 
@@ -207,16 +229,19 @@ const PopupButton4 = ({onClose, onClose4, jobId }) => {
 
             {/* Title */}
             <h2 className="text-2xl font-extrabold text-center text-gray-800 dark:text-gray-200">
+
               {jobDetails?.jobTitle || "Loading..."}
             </h2>
             {/* <p className="text-gray-500 dark:text-gray-400 text-center font-medium mt-1 text-base">
               {jobDetails?.companyId?.companyName || jobDetails?.companyName || "Company"}
             </p> */}
 
+
             {/* Message */}
             <p className="text-gray-500 dark:text-gray-400 text-center mt-4 text-sm">
               Enter your job pin to continue
             </p>
+
 
             {/* Show loading state */}
             {loading && (
@@ -286,14 +311,17 @@ const PopupButton4 = ({onClose, onClose4, jobId }) => {
                 </button>
               </>
             )}
+
           </div>
         </div>
       ) : (
         <PopupButton5 
           onClose={() => setShowPopup5(false)} 
+
           onClose5={onClose4}
           jobId={jobId}
         />
+
       )}
     </>
   );
