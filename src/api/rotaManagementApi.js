@@ -156,6 +156,27 @@ export const getRotaStatistics = async (companyId, period = 'week') => {
   }
 };
 
+// Get available job seekers for specific time slot
+export const getAvailableJobSeekers = async (companyId, day, startTime, endTime) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/rota-management/available-jobseekers`, {
+      params: {
+        companyId,
+        day,
+        startTime,
+        endTime
+      },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching available job seekers:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
 export default {
   createRotaManagement,
   getRotaManagementByCompany,
@@ -165,5 +186,6 @@ export default {
   getRotaManagementByEmployee,
   bulkCreateRotaManagement,
   assignEmployeeToRota,
-  getRotaStatistics
+  getRotaStatistics,
+  getAvailableJobSeekers
 };

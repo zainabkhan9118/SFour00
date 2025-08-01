@@ -838,16 +838,9 @@ const JobPosting = () => {
                     <div className="relative flex-1">
                       <input
                         type="text"
-                        placeholder="Start Time (e.g., 9:00 AM)"
+                        placeholder="Start Time (e.g., 09:00)"
                         className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
-                        value={(() => {
-                          if (!daySchedule.startTime) return '';
-                          const [hourStr, minute] = daySchedule.startTime.split(':');
-                          const hour24 = parseInt(hourStr);
-                          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-                          const ampm = hour24 < 12 ? 'AM' : 'PM';
-                          return `${hour12}:${minute} ${ampm}`;
-                        })()}
+                        value={daySchedule.startTime || ''}
                         onClick={() => setShowStartTimePicker(`start-${index}`)}
                         readOnly
                       />
@@ -869,28 +862,20 @@ const JobPosting = () => {
                             </div>
                             <div className="flex space-x-2">
                               <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">Hour</label>
+                                <label className="block text-sm text-gray-600 mb-1">Hour (24h)</label>
                                 <select
                                   className="w-full p-2 border rounded"
                                   onChange={(e) => {
-                                    const hour12 = parseInt(e.target.value);
-                                    const currentTime = daySchedule.startTime;
-                                    const currentHour24 = currentTime ? parseInt(currentTime.split(':')[0]) : 0;
-                                    const isPM = currentHour24 >= 12;
-                                    const hour24 = hour12 === 12 ? (isPM ? 12 : 0) : (isPM ? hour12 + 12 : hour12);
-                                    const minute = daySchedule.startTime.split(':')[1] || '00';
-                                    handleDayChange(index, 'startTime', `${hour24.toString().padStart(2, '0')}:${minute}`);
+                                    const hour = e.target.value.padStart(2, '0');
+                                    const minute = daySchedule.startTime ? daySchedule.startTime.split(':')[1] : '00';
+                                    handleDayChange(index, 'startTime', `${hour}:${minute}`);
                                   }}
-                                  value={(() => {
-                                    const hour24 = parseInt(daySchedule.startTime.split(':')[0]) || 0;
-                                    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-                                    return hour12.toString();
-                                  })()}
+                                  value={daySchedule.startTime ? daySchedule.startTime.split(':')[0] : ''}
                                 >
-                                  <option value="">Hr</option>
-                                  {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={(i + 1).toString()}>
-                                      {(i + 1).toString()}
+                                  <option value="">Hour</option>
+                                  {Array.from({ length: 24 }, (_, i) => (
+                                    <option key={i} value={i.toString().padStart(2, '0')}>
+                                      {i.toString().padStart(2, '0')}
                                     </option>
                                   ))}
                                 </select>
@@ -900,11 +885,11 @@ const JobPosting = () => {
                                 <select
                                   className="w-full p-2 border rounded"
                                   onChange={(e) => {
-                                    const hour = daySchedule.startTime.split(':')[0] || '00';
+                                    const hour = daySchedule.startTime ? daySchedule.startTime.split(':')[0] : '00';
                                     const minute = e.target.value.padStart(2, '0');
                                     handleDayChange(index, 'startTime', `${hour}:${minute}`);
                                   }}
-                                  value={daySchedule.startTime.split(':')[1] || ''}
+                                  value={daySchedule.startTime ? daySchedule.startTime.split(':')[1] : ''}
                                 >
                                   <option value="">Min</option>
                                   {Array.from({ length: 60 }, (_, i) => (
@@ -912,36 +897,6 @@ const JobPosting = () => {
                                       {i.toString().padStart(2, '0')}
                                     </option>
                                   ))}
-                                </select>
-                              </div>
-                              <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">AM/PM</label>
-                                <select
-                                  className="w-full p-2 border rounded"
-                                  onChange={(e) => {
-                                    const currentTime = daySchedule.startTime;
-                                    if (!currentTime) return;
-                                    
-                                    const [hourStr, minute] = currentTime.split(':');
-                                    const currentHour24 = parseInt(hourStr);
-                                    const hour12 = currentHour24 === 0 ? 12 : currentHour24 > 12 ? currentHour24 - 12 : currentHour24;
-                                    
-                                    let newHour24;
-                                    if (e.target.value === 'AM') {
-                                      newHour24 = hour12 === 12 ? 0 : hour12;
-                                    } else {
-                                      newHour24 = hour12 === 12 ? 12 : hour12 + 12;
-                                    }
-                                    
-                                    handleDayChange(index, 'startTime', `${newHour24.toString().padStart(2, '0')}:${minute}`);
-                                  }}
-                                  value={(() => {
-                                    const hour24 = parseInt(daySchedule.startTime.split(':')[0]) || 0;
-                                    return hour24 < 12 ? 'AM' : 'PM';
-                                  })()}
-                                >
-                                  <option value="AM">AM</option>
-                                  <option value="PM">PM</option>
                                 </select>
                               </div>
                             </div>
@@ -970,16 +925,9 @@ const JobPosting = () => {
                     <div className="relative flex-1">
                       <input
                         type="text"
-                        placeholder="End Time (e.g., 5:00 PM)"
+                        placeholder="End Time (e.g., 17:00)"
                         className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
-                        value={(() => {
-                          if (!daySchedule.endTime) return '';
-                          const [hourStr, minute] = daySchedule.endTime.split(':');
-                          const hour24 = parseInt(hourStr);
-                          const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-                          const ampm = hour24 < 12 ? 'AM' : 'PM';
-                          return `${hour12}:${minute} ${ampm}`;
-                        })()}
+                        value={daySchedule.endTime || ''}
                         onClick={() => setShowEndTimePicker(`end-${index}`)}
                         readOnly
                       />
@@ -1001,28 +949,20 @@ const JobPosting = () => {
                             </div>
                             <div className="flex space-x-2">
                               <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">Hour</label>
+                                <label className="block text-sm text-gray-600 mb-1">Hour (24h)</label>
                                 <select
                                   className="w-full p-2 border rounded"
                                   onChange={(e) => {
-                                    const hour12 = parseInt(e.target.value);
-                                    const currentTime = daySchedule.endTime;
-                                    const currentHour24 = currentTime ? parseInt(currentTime.split(':')[0]) : 0;
-                                    const isPM = currentHour24 >= 12;
-                                    const hour24 = hour12 === 12 ? (isPM ? 12 : 0) : (isPM ? hour12 + 12 : hour12);
-                                    const minute = daySchedule.endTime.split(':')[1] || '00';
-                                    handleDayChange(index, 'endTime', `${hour24.toString().padStart(2, '0')}:${minute}`);
+                                    const hour = e.target.value.padStart(2, '0');
+                                    const minute = daySchedule.endTime ? daySchedule.endTime.split(':')[1] : '00';
+                                    handleDayChange(index, 'endTime', `${hour}:${minute}`);
                                   }}
-                                  value={(() => {
-                                    const hour24 = parseInt(daySchedule.endTime.split(':')[0]) || 0;
-                                    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-                                    return hour12.toString();
-                                  })()}
+                                  value={daySchedule.endTime ? daySchedule.endTime.split(':')[0] : ''}
                                 >
-                                  <option value="">Hr</option>
-                                  {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={(i + 1).toString()}>
-                                      {(i + 1).toString()}
+                                  <option value="">Hour</option>
+                                  {Array.from({ length: 24 }, (_, i) => (
+                                    <option key={i} value={i.toString().padStart(2, '0')}>
+                                      {i.toString().padStart(2, '0')}
                                     </option>
                                   ))}
                                 </select>
@@ -1032,11 +972,11 @@ const JobPosting = () => {
                                 <select
                                   className="w-full p-2 border rounded"
                                   onChange={(e) => {
-                                    const hour = daySchedule.endTime.split(':')[0] || '00';
+                                    const hour = daySchedule.endTime ? daySchedule.endTime.split(':')[0] : '00';
                                     const minute = e.target.value.padStart(2, '0');
                                     handleDayChange(index, 'endTime', `${hour}:${minute}`);
                                   }}
-                                  value={daySchedule.endTime.split(':')[1] || ''}
+                                  value={daySchedule.endTime ? daySchedule.endTime.split(':')[1] : ''}
                                 >
                                   <option value="">Min</option>
                                   {Array.from({ length: 60 }, (_, i) => (
@@ -1044,36 +984,6 @@ const JobPosting = () => {
                                       {i.toString().padStart(2, '0')}
                                     </option>
                                   ))}
-                                </select>
-                              </div>
-                              <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">AM/PM</label>
-                                <select
-                                  className="w-full p-2 border rounded"
-                                  onChange={(e) => {
-                                    const currentTime = daySchedule.endTime;
-                                    if (!currentTime) return;
-                                    
-                                    const [hourStr, minute] = currentTime.split(':');
-                                    const currentHour24 = parseInt(hourStr);
-                                    const hour12 = currentHour24 === 0 ? 12 : currentHour24 > 12 ? currentHour24 - 12 : currentHour24;
-                                    
-                                    let newHour24;
-                                    if (e.target.value === 'AM') {
-                                      newHour24 = hour12 === 12 ? 0 : hour12;
-                                    } else {
-                                      newHour24 = hour12 === 12 ? 12 : hour12 + 12;
-                                    }
-                                    
-                                    handleDayChange(index, 'endTime', `${newHour24.toString().padStart(2, '0')}:${minute}`);
-                                  }}
-                                  value={(() => {
-                                    const hour24 = parseInt(daySchedule.endTime.split(':')[0]) || 0;
-                                    return hour24 < 12 ? 'AM' : 'PM';
-                                  })()}
-                                >
-                                  <option value="AM">AM</option>
-                                  <option value="PM">PM</option>
                                 </select>
                               </div>
                             </div>
