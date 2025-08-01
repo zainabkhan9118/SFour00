@@ -85,8 +85,9 @@ const UserWorkInprogess = () => {
     console.error("Could not find valid job ID in:", applicationData);
     return;
   }
-  console.log(`Navigating to job details with ID: ${jobId}`);
-  navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
+  console.log(`Navigating to in-progress job details with ID: ${jobId}`);
+  // Navigate to our new InProgressJobDetail component instead of AppliedAndAssignedDetail
+  navigate(`/User-InProgressJobDetail/${jobId}`);
 };
 
   if (loading) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import HeaderWork from "../HeaderWork";
 import PopupButton1 from "../popupModel/PopupButton1";
 import PopupButton2 from "../popupModel/PopupButton2";
@@ -78,6 +79,9 @@ export default function MyWorkAssignedPage() {
   const [selectedJobId, setSelectedJobId] = useState(null); 
   const { BASEURL } = useContext(AppContext);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
+
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAssignedJobs = async () => {
@@ -437,6 +441,12 @@ export default function MyWorkAssignedPage() {
     }
   };
 
+
+  const handleNavigate = (jobId) => {
+    navigate(`/User-AppliedAndAssignedDetail/${jobId}`);
+  };
+
+
   if (loading) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
@@ -513,7 +523,8 @@ export default function MyWorkAssignedPage() {
                     <div className="flex flex-wrap sm:flx-col items-center justify-end gap-3 sm:gap-2 col-span-1 md:col-span-1">
                       {application.status === "assigned" ? (
                         <button
-                          onClick={() => handleBookOn(application._id)}
+                          // onClick={() => handleBookOn(application._id)}
+                          onClick={() => handleNavigate(job._id)}
                           className="bg-orange-500 text-white w-full font-semibold sm:w-[110px] h-[40px] text-sm rounded-full hover:bg-orange-400"
                         >
                           Book On
@@ -565,6 +576,7 @@ export default function MyWorkAssignedPage() {
             setShowButton3(true);
           }}
           onClose2 = {() => setShowButton2(false)}
+          jobId={selectedJobId}
         />
       )}
       

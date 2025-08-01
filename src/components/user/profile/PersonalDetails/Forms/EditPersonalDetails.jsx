@@ -27,7 +27,7 @@ const EditPersonalDetails = () => {
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
   const { profileSteps, getNextStep } = useProfileSteps(); // Use the profile steps hook
   const [formData, setFormData] = useState({
-    name: "Henry Kanwil",
+    name: "",
     addresses: [{ address: "", duration: "", isCurrent: false }],
     bio: "",
   });

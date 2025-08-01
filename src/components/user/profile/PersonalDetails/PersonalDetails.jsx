@@ -362,7 +362,7 @@ const PersonalDetails = () => {
             />
           </div>
           
-          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
+          <div className="mx-auto bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
             {/* Profile Section */}
             <div className="flex flex-col md:flex-row">
               <div className="relative flex-shrink-0">
