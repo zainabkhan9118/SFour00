@@ -132,6 +132,29 @@ const AppliedjobDetail = () => {
           setIsErrorPopupOpen(true);
           return;
         }
+
+        // Stop location tracking when booking off
+        try {
+          if (window.locationTrackingInterval) {
+            clearInterval(window.locationTrackingInterval);
+            window.locationTrackingInterval = null;
+            console.log("Location tracking interval stopped - job booked off");
+          }
+          
+          if (window.locationWatchId) {
+            navigator.geolocation.clearWatch(window.locationWatchId);
+            window.locationWatchId = null;
+            console.log("Location watch stopped - job booked off");
+          }
+          
+          // Clear localStorage tracking data
+          localStorage.removeItem(`locationTracking_${id}`);
+          localStorage.removeItem('locationTrackingJobId');
+          
+          console.log("All location tracking stopped successfully - job booked off");
+        } catch (locationError) {
+          console.error("Error stopping location tracking:", locationError);
+        }
         
         // Debug job details
         console.log("Job Details for invoice:", {

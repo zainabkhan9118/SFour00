@@ -11,6 +11,7 @@ const PopupButton3 = ({ onClose, jobId, onLocationEnabled }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const buttonRef = useRef();
+  const intervalRef = useRef(null);
   const { theme } = useContext(ThemeContext) || { theme: 'light' };
 
   // Get jobId from props or from URL params if not passed directly
@@ -23,12 +24,100 @@ const PopupButton3 = ({ onClose, jobId, onLocationEnabled }) => {
     console.log("PopupButton3 - id from params:", id);
     console.log("PopupButton3 - currentJobId:", currentJobId);
     console.log("PopupButton3 - jobSeekerId from localStorage:", localStorage.getItem("jobSeekerId"));
+    
+    // Check if location tracking is already active for this job
+    const trackingActive = localStorage.getItem(`locationTracking_${currentJobId}`);
+    if (trackingActive === 'active') {
+      console.log("Location tracking already active for this job");
+    }
   }, [jobId, id, currentJobId]);
+
+  // Cleanup interval on component unmount - but keep it running globally
+  useEffect(() => {
+    return () => {
+      // Don't clear interval on unmount - let location tracking continue globally
+      console.log("Component unmounting - location tracking continues globally");
+    };
+  }, []);
 
   const closeModel = (e) => {
     if (buttonRef.current === e.target) {
+      // Don't clear interval when closing the modal - let it continue running
+      console.log("Modal closed - location tracking continues in background");
       onClose(); // Close the popup when clicking outside
     }
+  };
+
+  // Global function to stop all location tracking
+  window.stopLocationTracking = () => {
+    try {
+      if (window.locationTrackingInterval) {
+        clearInterval(window.locationTrackingInterval);
+        window.locationTrackingInterval = null;
+        console.log("Location tracking interval stopped");
+      }
+      
+      if (window.locationWatchId) {
+        navigator.geolocation.clearWatch(window.locationWatchId);
+        window.locationWatchId = null;
+        console.log("Location watch stopped");
+      }
+      
+      // Clear all localStorage tracking data
+      const jobId = localStorage.getItem('locationTrackingJobId');
+      if (jobId) {
+        localStorage.removeItem(`locationTracking_${jobId}`);
+      }
+      localStorage.removeItem('locationTrackingJobId');
+      
+      console.log("All location tracking stopped successfully");
+      return true;
+    } catch (error) {
+      console.error("Error stopping location tracking:", error);
+      return false;
+    }
+  };
+
+  // Function to start continuous location tracking every 3 seconds
+  const startLocationTracking = () => {
+    console.log("Starting continuous location tracking every 3 seconds");
+    
+    // Store the interval globally so it persists across component unmounts
+    const globalInterval = setInterval(() => {
+      console.log("Auto-updating location every 3 seconds...");
+      
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            try {
+              console.log(`Auto-updating location for job ${currentJobId} with coordinates:`, { latitude, longitude });
+              
+              // Call the PATCH API to update location
+              await updateLocation(currentJobId, { latitude, longitude });
+              
+              console.log(`Location auto-updated successfully: Lat ${latitude}, Long ${longitude}`);
+            } catch (error) {
+              console.error("Error in auto location update:", error);
+            }
+          },
+          (error) => {
+            console.log("Silent location update failed:", error.message);
+          }
+        );
+      } else {
+        console.log("Geolocation not supported");
+      }
+    }, 3000); // 3 seconds = 3000 milliseconds
+    
+    // Store interval ID globally
+    window.locationTrackingInterval = globalInterval;
+    intervalRef.current = globalInterval;
+    
+    // Store in localStorage for persistence
+    localStorage.setItem(`locationTracking_${currentJobId}`, 'active');
+    localStorage.setItem('locationTrackingJobId', currentJobId);
   };
 
   const handleTurnOnLocation = () => {
@@ -60,6 +149,9 @@ const PopupButton3 = ({ onClose, jobId, onLocationEnabled }) => {
             setLocationMessage(`Location shared successfully!`);
             setLocationEnabled(true);
             console.log(`Location updated successfully: Lat ${latitude}, Long ${longitude}`);
+            
+            // Start continuous location tracking every 3 seconds
+            startLocationTracking();
             
             // Call parent callback if provided, otherwise navigate
             if (onLocationEnabled) {
