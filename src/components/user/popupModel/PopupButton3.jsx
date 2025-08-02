@@ -5,7 +5,7 @@ import logo from '../../../assets/images/Vector.svg';
 import { updateLocation } from '../../../api/myWorkApi';
 import { ThemeContext } from "../../../context/ThemeContext";
 
-const PopupButton3 = ({ onClose, jobId }) => {
+const PopupButton3 = ({ onClose, jobId, onLocationEnabled }) => {
   const [locationMessage, setLocationMessage] = useState("");
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,10 +61,17 @@ const PopupButton3 = ({ onClose, jobId }) => {
             setLocationEnabled(true);
             console.log(`Location updated successfully: Lat ${latitude}, Long ${longitude}`);
             
-            // Navigate after location is shared successfully
-            setTimeout(() => {
-              navigate("/User-MyWorkAssignedPage");
-            }, 1500);
+            // Call parent callback if provided, otherwise navigate
+            if (onLocationEnabled) {
+              setTimeout(() => {
+                onLocationEnabled();
+              }, 1500);
+            } else {
+              // Navigate after location is shared successfully (fallback)
+              setTimeout(() => {
+                navigate("/User-MyWorkAssignedPage");
+              }, 1500);
+            }
           } catch (error) {
             console.error("Error updating location:", error);
             

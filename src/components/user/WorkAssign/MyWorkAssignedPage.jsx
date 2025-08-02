@@ -219,9 +219,8 @@ export default function MyWorkAssignedPage() {
           setSelectedJobId(jobId);
           localStorage.setItem("selectedJobId", jobId);
           
-          // Close first popup and show second popup after successful API calls
+          // Close first popup - no more popups for Accept flow
           setShowButton1(false);
-          setShowButton2(true);
           
           // Refresh the jobs list
           await refreshJobsList(jobSeekerId);
@@ -345,6 +344,14 @@ export default function MyWorkAssignedPage() {
     }
     
     setSelectedApplicationId(applicationId);
+    // Start with PopupButton2 for Book On flow
+    setShowButton2(true);
+  };
+
+  const handleLocationEnabled = () => {
+    // This function is called after location is enabled in PopupButton3
+    // Close PopupButton3 and show PopupButton4 (Book On confirmation)
+    setShowButton3(false);
     setShowButton4(true);
   };
 
@@ -548,7 +555,7 @@ export default function MyWorkAssignedPage() {
             setShowButton1(false);
             confirmAcceptJob(); // Call the API when user confirms
           }}
-          onClose1 = {() => setShowButton1(false)}
+          onClose1={() => setShowButton1(false)}
         />
       )}
 
@@ -558,7 +565,8 @@ export default function MyWorkAssignedPage() {
             setShowButton2(false);
             setShowButton3(true);
           }}
-          onClose2 = {() => setShowButton2(false)}
+          onClose2={() => setShowButton2(false)}
+          jobId={selectedJobId || localStorage.getItem("selectedJobId")}
         />
       )}
       
@@ -567,6 +575,7 @@ export default function MyWorkAssignedPage() {
           onClose={() => {
             setShowButton3(false);
           }}
+          onLocationEnabled={handleLocationEnabled}
           jobId={selectedJobId || localStorage.getItem("selectedJobId")}
         />
       )}
