@@ -12,6 +12,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { getJobById } from "../../../api/jobsApi";
 import { ThemeContext } from "../../../context/ThemeContext";
 
+
 const ApplicantProfile = () => {
   const location = useLocation();
   const { applicantId, jobId } = useParams();
