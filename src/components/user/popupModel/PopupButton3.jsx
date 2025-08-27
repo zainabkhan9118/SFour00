@@ -109,7 +109,7 @@ const PopupButton3 = ({ onClose, jobId, onLocationEnabled }) => {
       } else {
         console.log("Geolocation not supported");
       }
-    }, 3000); // 3 seconds = 3000 milliseconds
+    }, 300000); // 5 minutes = 300000 milliseconds
     
     // Store interval ID globally
     window.locationTrackingInterval = globalInterval;
