@@ -265,8 +265,8 @@ const PopupButton4 = ({onClose, onClose4, jobId }) => {
                     ))}
                 </div>
 
-                {/* Show expected PIN for debugging (remove in production) */}
-                {process.env.NODE_ENV === 'development' && jobDetails?.jobPin && (
+                {/* Show expected PIN for debugging */}
+                {jobDetails?.jobPin && (
                   <div className="mt-2 text-xs text-blue-500 dark:text-blue-400">
                     Expected PIN is {jobDetails.jobPin}
                   </div>

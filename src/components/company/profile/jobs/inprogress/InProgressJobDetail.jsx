@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
 import time from "../../../../../assets/images/time.png";
 import qr from "../../../../../assets/images/qr-code.png";
 import LoadingSpinner from "../../../../common/LoadingSpinner";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { JobStatus } from "../../../../../constants/enums";
@@ -21,40 +21,153 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+// Create custom red icon for worker location
+const redIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Create custom green icon for previous locations
+const greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [20, 32],
+  iconAnchor: [10, 32],
+  popupAnchor: [1, -28],
+  shadowSize: [32, 32]
+});
+
+// Create custom orange icon for historical locations
+const orangeIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [18, 28],
+  iconAnchor: [9, 28],
+  popupAnchor: [1, -24],
+  shadowSize: [28, 28]
+});
+
 // Map modal component to display worker location
-const MapModal = ({ isOpen, onClose, location }) => {
+const MapModal = ({ isOpen, onClose, location, jobLocation, isOutsideRadius, lastUpdated, locationHistory }) => {
+  const intervalRef = useRef(null);
+  
   if (!isOpen) return null;
   
-  // Default coordinates if no location data (for demonstration)
-  const lat = location.latitude || 34.1973229;
-  const lng = location.longitude || 73.2422251;
+  // Worker coordinates
+  const workerLat = location.latitude || 34.1973229;
+  const workerLng = location.longitude || 73.2422251;
+  
+  // Job location coordinates (center of the radius)
+  const jobLat = jobLocation.latitude || 34.1973229;
+  const jobLng = jobLocation.longitude || 73.2422251;
+  
+  // Radius in meters - set to 500m as requested
+  const allowedRadius = 500;
+
+  // Debug: Log coordinates to ensure they're correct
+  console.log('Map coordinates - Job:', { jobLat, jobLng }, 'Worker:', { workerLat, workerLng }, 'Radius:', allowedRadius);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">Worker Location</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">Worker Location Tracking</h2>
+            <div className="flex items-center gap-4 mt-2">
+              <span className="text-sm text-gray-500">Last updated: {lastUpdated}</span>
+              {isOutsideRadius && (
+                <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium animate-pulse">
+                  ⚠ Worker is outside allowed radius
+                </span>
+              )}
+            </div>
+          </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-xl">
             &times;
           </button>
         </div>
         <div className="h-[500px] w-full">
           <MapContainer
-            center={[lat, lng]}
-            zoom={15}
+            center={[jobLat, jobLng]}
+            zoom={14}
             style={{ height: "100%", width: "100%" }}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker position={[lat, lng]}>
+            
+            {/* Job location marker (blue - center of radius) */}
+            <Marker position={[jobLat, jobLng]}>
               <Popup>
-                <strong>Worker is here</strong><br />
-                Last updated: {new Date().toLocaleTimeString()}
+                <strong>Job Location</strong><br />
+                Work site center
+              </Popup>
+            </Marker>
+            
+            {/* Allowed radius circle - Pink/Red colored circle like in the image */}
+            <Circle
+              center={[jobLat, jobLng]}
+              radius={allowedRadius}
+              pathOptions={{
+                fillColor: '#ff1493', // Bright pink color
+                fillOpacity: 0.2, // Semi-transparent fill
+                color: '#ff0080', // Bright pink border
+                weight: 3, // Thicker border
+                opacity: 1, // Fully opaque border
+                dashArray: '10, 5', // Dashed line pattern for better visibility
+              }}
+            />
+            
+            {/* Historical location markers - Blue markers for all location changes */}
+            {locationHistory && locationHistory.length > 0 && locationHistory.map((histLocation, index) => (
+              <Marker 
+                key={`history-${index}-${histLocation.timestamp}`}
+                position={[histLocation.latitude, histLocation.longitude]} 
+                icon={new L.Icon({
+                  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                })}
+              >
+                <Popup>
+                  <strong>Location Change #{index + 1}</strong><br />
+                  Time: {histLocation.timestamp}<br />
+                  Distance from job: {histLocation.distanceFromJob}m<br />
+                  Status: {histLocation.outsideRadius ? 
+                    <span className="text-red-600 font-semibold">Outside radius</span> : 
+                    <span className="text-green-600 font-semibold">Within radius</span>
+                  }
+                </Popup>
+              </Marker>
+            ))}
+            
+            {/* Worker current location marker (red center marker) */}
+            <Marker position={[workerLat, workerLng]} icon={redIcon}>
+              <Popup>
+                <strong>Worker Current Location</strong><br />
+                Last updated: {lastUpdated}<br />
+                Status: {isOutsideRadius ? 
+                  <span className="text-red-600 font-semibold">Outside radius</span> : 
+                  <span className="text-green-600 font-semibold">Within radius</span>
+                }<br />
+                Total location changes: {locationHistory.length}
               </Popup>
             </Marker>
           </MapContainer>
+        </div>
+        <div className="p-4 bg-gray-50 dark:bg-gray-700 text-sm text-gray-600 dark:text-gray-300">
+          <div className="flex items-center justify-between">
+            <span>� Job Center &nbsp;&nbsp;&nbsp; � Location Changes &nbsp;&nbsp;&nbsp; 🌸 Allowed Radius &nbsp;&nbsp;&nbsp; Radius: {allowedRadius}m</span>
+            <span className="animate-pulse">🔄 Auto-updating every 10 seconds</span>
+          </div>
         </div>
       </div>
     </div>
@@ -76,6 +189,148 @@ const InProgressJobDetail = () => {
   const [reportLogs, setReportLogs] = useState([]);
   const [reportLogsLoading, setReportLogsLoading] = useState(false);
   const [reportLogsError, setReportLogsError] = useState(null);
+  const [isOutsideRadius, setIsOutsideRadius] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const locationIntervalRef = useRef(null);
+  const [previousRadiusStatus, setPreviousRadiusStatus] = useState(false);
+  const [showRadiusAlert, setShowRadiusAlert] = useState(false);
+  const [locationHistory, setLocationHistory] = useState([]);
+
+  // Calculate distance between two coordinates in meters
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distance in meters
+  };
+
+  // Function to fetch worker location and check radius
+  const fetchWorkerLocationContinuous = async () => {
+    if (!jobId || !job) return;
+    
+    try {
+      const companyId = localStorage.getItem('companyId');
+      
+      // Validate companyId before making API call
+      if (!companyId) {
+        console.error("Company ID not found in localStorage");
+        return;
+      }
+      
+      // Get the correct job ID from the job data structure
+      const actualJobId = (job.jobId && job.jobId._id) ? job.jobId._id : job._id;
+      
+      const result = await getWorkerLocation(companyId, actualJobId);
+      
+      if (result.statusCode === 200) {
+        let newLocation;
+        let historyData = [];
+        
+        if (result.data && result.data.jobSeekerLatitude && result.data.jobSeekerLongitude) {
+          newLocation = {
+            latitude: result.data.jobSeekerLatitude,
+            longitude: result.data.jobSeekerLongitude
+          };
+          
+          // Process jobSeekerHistory from API response
+          if (result.data.jobSeekerHistory && Array.isArray(result.data.jobSeekerHistory)) {
+            historyData = result.data.jobSeekerHistory.map((histItem, index) => {
+              // Calculate distance from job location for each history point
+              const jobData = getJobData();
+              const distance = calculateDistance(
+                histItem.latitude || histItem.jobSeekerLatitude,
+                histItem.longitude || histItem.jobSeekerLongitude,
+                jobData.latitude || 34.1973229,
+                jobData.longitude || 73.2422251
+              );
+              
+              return {
+                latitude: histItem.latitude || histItem.jobSeekerLatitude,
+                longitude: histItem.longitude || histItem.jobSeekerLongitude,
+                timestamp: histItem.timestamp ? new Date(histItem.timestamp).toLocaleTimeString() : `Entry ${index + 1}`,
+                outsideRadius: distance > 500, // 500m radius check
+                distanceFromJob: Math.round(distance)
+              };
+            });
+          }
+        } else {
+          // Use default coordinates if data is null
+          newLocation = {
+            latitude: 34.1973229,
+            longitude: 73.2422251
+          };
+        }
+        
+        setWorkerLocation(newLocation);
+        setLastUpdated(new Date().toLocaleTimeString());
+        
+        // Update location history with API data
+        setLocationHistory(historyData);
+        
+        // Check if worker is outside the allowed radius
+        const jobData = getJobData();
+        const distance = calculateDistance(
+          newLocation.latitude,
+          newLocation.longitude,
+          jobData.latitude || 34.1973229,
+          jobData.longitude || 73.2422251
+        );
+        
+        const allowedRadius = 500; // 500 meters as requested
+        const wasOutsideRadius = isOutsideRadius;
+        const currentlyOutside = distance > allowedRadius;
+        setIsOutsideRadius(currentlyOutside);
+        
+        // Show alert if worker just went outside radius
+        if (!wasOutsideRadius && currentlyOutside) {
+          setShowRadiusAlert(true);
+          setTimeout(() => setShowRadiusAlert(false), 8000); // Hide after 8 seconds
+        }
+        
+        // Log the distance for debugging
+        console.log(`Worker distance from job location: ${distance.toFixed(2)}m`);
+        console.log(`Location history entries: ${historyData.length}`);
+        
+      }
+    } catch (err) {
+      console.error("Failed to fetch worker location continuously:", err);
+      setLocationError(err.message);
+    }
+  };
+
+  // Start continuous location tracking when map opens
+  useEffect(() => {
+    if (isMapOpen) {
+      // Fetch immediately when map opens
+      fetchWorkerLocationContinuous();
+      
+      // Set up interval for continuous updates every 10 seconds
+      locationIntervalRef.current = setInterval(() => {
+        fetchWorkerLocationContinuous();
+      }, 10000);
+    } else {
+      // Clear interval when map closes
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+        locationIntervalRef.current = null;
+      }
+    }
+
+    // Cleanup interval on component unmount
+    return () => {
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+      }
+    };
+  }, [isMapOpen, jobId]);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -119,19 +374,27 @@ const InProgressJobDetail = () => {
     fetchJobDetails();
   }, [jobId]);
 
-  // Track worker function - calls the API to get worker location
+  // Track worker function - calls the API to get worker location and opens map
   const trackWorker = async () => {
-    if (!jobId) return;
+    if (!jobId || !job) return;
     
     try {
       setLocationLoading(true);
       setLocationError(null);
       
       // Get company ID from localStorage
-      const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
+      const companyId = localStorage.getItem('companyId');
+      
+      // Validate companyId before making API call
+      if (!companyId) {
+        throw new Error("Company ID not found in localStorage");
+      }
+      
+      // Get the correct job ID from the job data structure
+      const actualJobId = (job.jobId && job.jobId._id) ? job.jobId._id : job._id;
       
       // Use the imported getWorkerLocation function from locationApi.js
-      const result = await getWorkerLocation(companyId, jobId);
+      const result = await getWorkerLocation(companyId, actualJobId);
       
       console.log("Worker location API response:", result);
       
@@ -150,7 +413,10 @@ const InProgressJobDetail = () => {
           });
           console.log("Using default location as API returned null data");
         }
-        // Open map modal in both cases
+        
+        setLastUpdated(new Date().toLocaleTimeString());
+        
+        // Open map modal - this will trigger the continuous polling
         setIsMapOpen(true);
       } else {
         throw new Error("Invalid response from server");
@@ -263,6 +529,23 @@ const InProgressJobDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
+      
+      {/* Radius Alert Notification */}
+      {showRadiusAlert && (
+        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
+          <div className="text-2xl">🚨</div>
+          <div>
+            <div className="font-semibold">Worker Outside 500m Radius!</div>
+            <div className="text-sm opacity-90">The worker has moved outside the allowed work area (500m).</div>
+          </div>
+          <button 
+            onClick={() => setShowRadiusAlert(false)}
+            className="ml-4 text-white hover:text-gray-200 text-lg"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col flex-1">
         <div className="flex justify-end px-4 sm:px-6 md:px-8">
@@ -403,7 +686,11 @@ const InProgressJobDetail = () => {
       <MapModal 
         isOpen={isMapOpen} 
         onClose={() => setIsMapOpen(false)} 
-        location={workerLocation} 
+        location={workerLocation}
+        jobLocation={{ latitude: jobData.latitude, longitude: jobData.longitude }}
+        isOutsideRadius={isOutsideRadius}
+        lastUpdated={lastUpdated}
+        locationHistory={locationHistory}
       />
     </div>
   );
