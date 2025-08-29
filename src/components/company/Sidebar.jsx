@@ -7,7 +7,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getCompanyProfile } from "../../api/companyApi";
 import { ThemeContext } from "../../context/ThemeContext";
 import logo from "../../assets/images/logo.png";
-import LoadingSpinner from "../common/LoadingSpinner";
+// import LoadingSpinner from "../common/LoadingSpinner";
 import LogoutSuccessPopup from "../user/popupModel/LogoutSuccessPopup";
 import CompanyProfileCompletionPopup from "./profile/CompanyProfileCompletionPopup";
 import { useCompanyProfileCompletion } from "../../context/profile/CompanyProfileCompletionContext";
@@ -234,7 +234,7 @@ export default function Sidebar() {
         <div className="flex justify-center mb-10">
           {logoLoading ? (
             <div className="w-24 h-24 flex items-center justify-center">
-              <LoadingSpinner size="sm" />
+              {/* Loading spinner removed */}
             </div>
           ) : hasProfile ? (
             // Show actual company logo if profile exists and has a logo
@@ -252,7 +252,7 @@ export default function Sidebar() {
 
         {loading ? (
           <div className="flex justify-center mt-4">
-            <LoadingSpinner size="sm" />
+            {/* Loading spinner removed */}
           </div>
         ) : (
           <nav className="flex flex-col space-y-8 mb-auto">
