@@ -1,9 +1,10 @@
 import { createContext, useState, useEffect } from "react";
+
 import { auth } from "../config/firebaseConfig";
 
 export const AppContext = createContext();
 
-export const AppContextProvider = ({ children }) => {
+function AppContextProvider({ children }) {
   // Initialize state from localStorage
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")) || null);
   const [role, setRole] = useState(() => localStorage.getItem("userRole") || null);
@@ -11,6 +12,7 @@ export const AppContextProvider = ({ children }) => {
   const [profileDp, setProfileDp] = useState(() => localStorage.getItem("profileDp") || null);
   const [sessionData, setSessionData] = useState(() => JSON.parse(localStorage.getItem("sessionData")) || null);
   const [currentAuthUser, setCurrentAuthUser] = useState(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const BASEURL = import.meta.env.VITE_BASE_URL;
 
@@ -20,28 +22,45 @@ export const AppContextProvider = ({ children }) => {
       // If the auth user has changed (new login or logout)
       if (JSON.stringify(user?.uid) !== JSON.stringify(currentAuthUser?.uid)) {
         setCurrentAuthUser(user);
-        
         // If there's no user (logout) or a new user is logging in
         if (!user) {
-          // Clear local data on logout
           clearSession();
         } else {
-          // Check if this is a new user compared to stored user
           const storedUserId = localStorage.getItem('currentUserId');
           if (storedUserId && user.uid !== storedUserId) {
-            // This is a different user than before, clear previous user data
             clearSession();
             localStorage.setItem('currentUserId', user.uid);
           } else if (!storedUserId) {
-            // First login, store the user ID
             localStorage.setItem('currentUserId', user.uid);
           }
         }
       }
     });
-    
     return () => unsubscribe();
   }, [currentAuthUser]);
+
+  // Session expiration check (global)
+  useEffect(() => {
+    if (!sessionData || !sessionData.timestamp) {
+      setSessionExpired(false);
+      return;
+    }
+    const checkSession = () => {
+      const currentTime = Date.now();
+      // 1 hour = 3600000 ms (adjust as needed)
+      if (currentTime - sessionData.timestamp >= 3600000) {
+        setSessionExpired(true);
+        clearSession();
+      } else {
+        setSessionExpired(false);
+      }
+    };
+    // Check immediately
+    checkSession();
+    // Also check every minute
+    const interval = setInterval(checkSession, 60000);
+    return () => clearInterval(interval);
+  }, [sessionData]);
 
   // Save `profileName` to localStorage whenever it changes
   useEffect(() => {
@@ -95,6 +114,11 @@ export const AppContextProvider = ({ children }) => {
     localStorage.removeItem("userRole");
   };
 
+  // Handler to close session expired popup
+  const handleCloseSessionExpired = () => {
+    setSessionExpired(false);
+  };
+
   const value = {
     BASEURL,
     user,
@@ -106,11 +130,15 @@ export const AppContextProvider = ({ children }) => {
     profileDp,
     setProfileDp,
     sessionData,
-    setSessionData: updateSessionData, 
+    setSessionData: updateSessionData,
     clearSession,
+    sessionExpired,
+    handleCloseSessionExpired,
   };
 
+
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
-};
+}
 
 export default AppContextProvider;
+
