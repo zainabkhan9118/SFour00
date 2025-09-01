@@ -47,6 +47,9 @@ export default function CreateAccount() {
       is: "company",
       then: Yup.string().required("Company Name is required"),
     }),
+    terms: Yup.boolean()
+      .oneOf([true], "You must accept the terms and conditions")
+      .required("You must accept the terms and conditions"),
   });
 
   const handleSubmit = async (values, { setFieldError }) => {
@@ -124,7 +127,7 @@ export default function CreateAccount() {
                 Already have an account?{" "}
                 <span
                   className="text-orange-500 cursor-pointer hover:text-orange-600 dark:hover:text-orange-400"
-                  onClick={() => navigate("/user-login")}
+                  onClick={() => navigate("/login")}
                 >
                   Log In
                 </span>
@@ -151,41 +154,14 @@ export default function CreateAccount() {
               phone: "",
               fullName: "",
               companyName: "",
+              terms: false,
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
-            {({ values }) => (
+            {({ values, isSubmitting, isValid }) => (
               <Form className="mt-6 space-y-4">
-                {userType === "jobseeker" ? (
-                  <div>
-                    <Field
-                      type="text"
-                      name="fullName"
-                      placeholder="Full Name"
-                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    />
-                    <ErrorMessage
-                      name="fullName"
-                      component="div"
-                      className="text-red-500 text-xs md:text-sm mt-1"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <Field
-                      type="text"
-                      name="companyName"
-                      placeholder="Company Name"
-                      className="w-full border px-4 py-2 md:py-3 rounded-full text-sm focus:outline-orange-500 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    />
-                    <ErrorMessage
-                      name="companyName"
-                      component="div"
-                      className="text-red-500 text-xs md:text-sm mt-1"
-                    />
-                  </div>
-                )}
+                {/* Full Name and Company Name fields removed as requested */}
 
                 <div>
                   <Field
@@ -266,11 +242,16 @@ export default function CreateAccount() {
                     </span>
                   </label>
                 </div>
+                <ErrorMessage
+                  name="terms"
+                  component="div"
+                  className="text-red-500 text-xs md:text-sm mt-1"
+                />
 
                 <button
                   type="submit"
                   className="w-full bg-orange-500 text-white py-2 md:py-3 rounded-full text-sm font-semibold hover:bg-orange-600 transition mt-4"
-                  disabled={loading}
+                  disabled={loading || !values.terms}
                 >
                   {loading ? "Creating Account..." : "Create Account →"}
                 </button>

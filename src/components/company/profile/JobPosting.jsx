@@ -217,6 +217,8 @@ function CurrentLocationMarker({ setPosition, setLocationName }) {
 }
 
 const JobPosting = () => {
+  // Validation state
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const [isToggled, setIsToggled] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -266,6 +268,8 @@ const JobPosting = () => {
   
   // Refs
   const pointDropdownRef = useRef(null);
+  // Refs for job pin inputs
+  const jobPinRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   
   
   const availablePoints = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -296,12 +300,53 @@ const JobPosting = () => {
     }
   };
 
+  // Inline validation on change/blur
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
+    validateField(name, value);
+  };
+
+  const validateField = (name, value) => {
+    let error = '';
+    if (!value || (typeof value === 'string' && value.trim() === '')) {
+      error = 'This field is required';
+    } else if (name === 'pricePerHour' && isNaN(Number(value))) {
+      error = 'Must be a number';
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Validate all fields before submit
+  const validateAll = () => {
+    const newErrors = {};
+    if (!formData.jobTitle) newErrors.jobTitle = 'This field is required';
+    if (!formData.pricePerHour) newErrors.pricePerHour = 'This field is required';
+    else if (isNaN(Number(formData.pricePerHour))) newErrors.pricePerHour = 'Must be a number';
+    if (!formData.jobLocation) newErrors.jobLocation = 'This field is required';
+    if (!formData.workDate) newErrors.workDate = 'This field is required';
+    if (!formData.jobDuration) newErrors.jobDuration = 'This field is required';
+    if (!formData.alertDuration) newErrors.alertDuration = 'This field is required';
+    if (!formData.jobDescription) newErrors.jobDescription = 'This field is required';
+    // Validate jobPin
+    if (!formData.jobPin || formData.jobPin.some((d) => !d)) newErrors.jobPin = 'All 4 digits required';
+    // Validate days
+    formData.days.forEach((day, idx) => {
+      if (!day.day || !day.startTime || !day.endTime) {
+        newErrors[`days-${idx}`] = 'All fields required';
+      }
+    });
+    // Validate checkpoints
+    formData.checkpoints.forEach((cp, idx) => {
+      if (!cp.name || !cp.qrCodeData) {
+        newErrors[`checkpoint-${idx}`] = 'All fields required';
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Handle day schedule changes
@@ -416,7 +461,6 @@ const JobPosting = () => {
     if (!/^\d*$/.test(value) && value !== '') {
       return;
     }
-    
     setFormData((prevData) => {
       const newJobPin = [...prevData.jobPin];
       newJobPin[index] = value;
@@ -425,6 +469,22 @@ const JobPosting = () => {
         jobPin: newJobPin,
       };
     });
+    // Validate jobPin inline
+    const newPin = [...formData.jobPin];
+    newPin[index] = value;
+    if (newPin.some((d) => !d)) {
+      setErrors((prev) => ({ ...prev, jobPin: 'All 4 digits required' }));
+    } else {
+      setErrors((prev) => { const { jobPin, ...rest } = prev; return rest; });
+    }
+    // Auto-focus next input if value is entered and not last box
+    if (value && index < jobPinRefs.length - 1) {
+      jobPinRefs[index + 1].current && jobPinRefs[index + 1].current.focus();
+    }
+    // If value is empty and not first box, focus previous
+    if (!value && index > 0) {
+      jobPinRefs[index - 1].current && jobPinRefs[index - 1].current.focus();
+    }
   };
 
   // Handle success popup close
@@ -435,12 +495,18 @@ const JobPosting = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validate all fields before submit
+    if (!validateAll()) {
+      setIsSubmitting(false);
+      return;
+    }
+
     // Reset states
     setSubmitError(null);
     setSubmitSuccess(false);
     setIsSubmitting(true);
-    
+
     try {
       
       const companyId = localStorage.getItem('companyId');
@@ -749,36 +815,39 @@ const JobPosting = () => {
                 type="text"
                 name="jobTitle"
                 placeholder="Enter job title"
-                className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none"
+                className={`w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none ${errors.jobTitle ? 'border-red-500' : ''}`}
                 value={formData.jobTitle}
                 onChange={handleChange}
-                required
+                onBlur={(e) => validateField('jobTitle', e.target.value)}
               />
+              {errors.jobTitle && <div className="text-red-500 text-sm mt-1">{errors.jobTitle}</div>}
             </div>
-            
+
             <div className="mb-6">
               <input
                 type="text"
                 name="pricePerHour"
                 placeholder="Enter rate per hour"
-                className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none"
+                className={`w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none ${errors.pricePerHour ? 'border-red-500' : ''}`}
                 value={formData.pricePerHour}
                 onChange={handleChange}
-                required
+                onBlur={(e) => validateField('pricePerHour', e.target.value)}
               />
+              {errors.pricePerHour && <div className="text-red-500 text-sm mt-1">{errors.pricePerHour}</div>}
             </div>
-            
+
             <div className="mb-6">
               <input
                 type="text"
                 name="jobLocation"
                 placeholder="Click to choose location from map"
-                className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none cursor-pointer"
+                className={`w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none cursor-pointer ${errors.jobLocation ? 'border-red-500' : ''}`}
                 value={formData.jobLocation}
                 onClick={handleLocationClick}
                 readOnly
-                required
+                onBlur={(e) => validateField('jobLocation', e.target.value)}
               />
+              {errors.jobLocation && <div className="text-red-500 text-sm mt-1">{errors.jobLocation}</div>}
             </div>
 
             {/* Added Date input field with visible calendar icon */}
@@ -787,19 +856,17 @@ const JobPosting = () => {
                 type="date"
                 name="workDate"
                 placeholder="Select Job Date"
-                className="w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none pr-10 cursor-pointer appearance-none"
+                className={`w-full h-[50px] bg-[#3950801A] p-4 border rounded-full outline-none pr-10 cursor-pointer appearance-none ${errors.workDate ? 'border-red-500' : ''}`}
                 value={formData.workDate}
                 onChange={handleChange}
+                onBlur={(e) => validateField('workDate', e.target.value)}
                 onClick={(e) => {
-                  // This helps ensure the date picker opens on some browsers
                   e.target.showPicker && e.target.showPicker();
                 }}
-                required
               />
               <FaCalendarAlt 
                 className="absolute top-[22px] right-3 transform -translate-y-1/2 text-xl text-gray-800 cursor-pointer" 
                 onClick={() => {
-                  // Find the date input and programmatically click it to open calendar
                   const dateInput = document.querySelector('input[name="workDate"]');
                   if (dateInput) {
                     dateInput.focus();
@@ -808,6 +875,7 @@ const JobPosting = () => {
                   }
                 }}
               />
+              {errors.workDate && <div className="text-red-500 text-sm mt-1">{errors.workDate}</div>}
             </div>
 
             {/* Days Schedule Section */}
@@ -815,8 +883,10 @@ const JobPosting = () => {
               <h3 className="text-xl font-bold mb-4">Work Days Schedule</h3>
               
               <div className="space-y-4">
-                {formData.days.map((daySchedule, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50">
+                {formData.days.map((daySchedule, index) => {
+                  return (
+                    <React.Fragment key={index}>
+                      <div className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50">
                     {/* Day Selection */}
                     <div className="w-32">
                       <select
@@ -839,10 +909,14 @@ const JobPosting = () => {
                       <input
                         type="text"
                         placeholder="Start Time (e.g., 09:00)"
-                        className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
+                        className={`w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer ${errors[`days-${index}`] && !daySchedule.startTime ? 'border-red-500' : ''}`}
                         value={daySchedule.startTime || ''}
                         onClick={() => setShowStartTimePicker(`start-${index}`)}
                         readOnly
+                        onBlur={() => {
+                          if (!daySchedule.startTime) setErrors((prev) => ({ ...prev, [`days-${index}`]: 'All fields required' }));
+                          else setErrors((prev) => { const { [`days-${index}`]: _, ...rest } = prev; return rest; });
+                        }}
                       />
                       <IoIosTimer className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       
@@ -926,10 +1000,14 @@ const JobPosting = () => {
                       <input
                         type="text"
                         placeholder="End Time (e.g., 17:00)"
-                        className="w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer"
+                        className={`w-full h-[45px] bg-white p-3 border rounded-lg outline-none cursor-pointer ${errors[`days-${index}`] && !daySchedule.endTime ? 'border-red-500' : ''}`}
                         value={daySchedule.endTime || ''}
                         onClick={() => setShowEndTimePicker(`end-${index}`)}
                         readOnly
+                        onBlur={() => {
+                          if (!daySchedule.endTime) setErrors((prev) => ({ ...prev, [`days-${index}`]: 'All fields required' }));
+                          else setErrors((prev) => { const { [`days-${index}`]: _, ...rest } = prev; return rest; });
+                        }}
                       />
                       <IoIosTimer className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       
@@ -1009,17 +1087,20 @@ const JobPosting = () => {
                     </div>
 
                     {/* Remove Day Button */}
-                    {formData.days.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDaySchedule(index)}
-                        className="h-[45px] px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        {formData.days.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeDaySchedule(index)}
+                            className="h-[45px] px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                      {errors[`days-${index}`] && <div className="text-red-500 text-sm mt-1">{errors[`days-${index}`]}</div>}
+                    </React.Fragment>
+                  );
+                })}
               </div>
               
               <div className="mt-4">
@@ -1060,13 +1141,16 @@ const JobPosting = () => {
                     key={index}
                     type="text"
                     maxLength="1"
-                    className="w-[67px] h-[63px] outline-none p-2 border border-gray-400 rounded text-center text-xl font-bold"
+                    className={`w-[67px] h-[63px] outline-none p-2 border ${errors.jobPin ? 'border-red-500' : 'border-gray-400'} rounded text-center text-xl font-bold`}
                     value={formData.jobPin[index]}
                     onChange={(e) => handleJobPinChange(index, e.target.value)}
                     readOnly={isToggled}
+                    ref={jobPinRefs[index]}
+                    onFocus={e => e.target.select()}
                   />
                 ))}
               </div>
+              {errors.jobPin && <div className="text-red-500 text-sm mt-1 text-center">{errors.jobPin}</div>}
             </div>
 
             {/* Job Duration dropdown - updated to match design */}
@@ -1075,10 +1159,10 @@ const JobPosting = () => {
               <div className="relative">
                 <select
                   name="jobDuration"
-                  className="w-full h-[56px] bg-gray-100 px-6 border border-gray-200 rounded-full outline-none pr-12 appearance-none cursor-pointer text-gray-700"
+                  className={`w-full h-[56px] bg-gray-100 px-6 border border-gray-200 rounded-full outline-none pr-12 appearance-none cursor-pointer text-gray-700 ${errors.jobDuration ? 'border-red-500' : ''}`}
                   value={formData.jobDuration}
                   onChange={handleChange}
-                  required
+                  onBlur={(e) => validateField('jobDuration', e.target.value)}
                 >
                   <option value="1 Day">1 Day</option>
                   <option value="2 Days">2 Days</option>
@@ -1093,6 +1177,7 @@ const JobPosting = () => {
                   </svg>
                 </div>
               </div>
+              {errors.jobDuration && <div className="text-red-500 text-sm mt-1">{errors.jobDuration}</div>}
             </div>
 
             <div className="flex flex-col mb-8">
@@ -1103,13 +1188,14 @@ const JobPosting = () => {
               </div>
               
               <div className="flex flex-col space-y-4 mb-6">
-                {formData.checkpoints.map((checkpoint, index) => (
-                  <div 
-                    key={index} 
-                    className="flex flex-row items-center space-x-3"
-                    onMouseEnter={() => setHoveredCheckpoint(index)}
-                    onMouseLeave={() => setHoveredCheckpoint(null)}
-                  >
+                {formData.checkpoints.map((checkpoint, index) => {
+                  return (
+                    <React.Fragment key={index}>
+                      <div 
+                        className="flex flex-row items-center space-x-3"
+                        onMouseEnter={() => setHoveredCheckpoint(index)}
+                        onMouseLeave={() => setHoveredCheckpoint(null)}
+                      >
                     <div className="w-32 relative">
                       <div 
                         className="w-full h-[50px] bg-[#3950801A] border rounded-full px-4 flex items-center justify-center cursor-pointer hover:bg-[#3950801F]"
@@ -1152,10 +1238,14 @@ const JobPosting = () => {
                       <input
                         type="text"
                         placeholder="QR Code Value / ID"
-                        className="w-full h-[50px] bg-[#3950801A] p-4 pl-4 pr-12 border rounded-full outline-none cursor-pointer"
+                        className={`w-full h-[50px] bg-[#3950801A] p-4 pl-4 pr-12 border rounded-full outline-none cursor-pointer ${errors[`checkpoint-${index}`] && !checkpoint.qrCodeData ? 'border-red-500' : ''}`}
                         value={checkpoint.qrCodeData}
                         onChange={(e) => handleCheckpointChange(index, e.target.value)}
                         onClick={() => openScannerForCheckpoint(index)}
+                        onBlur={() => {
+                          if (!checkpoint.qrCodeData) setErrors((prev) => ({ ...prev, [`checkpoint-${index}`]: 'All fields required' }));
+                          else setErrors((prev) => { const { [`checkpoint-${index}`]: _, ...rest } = prev; return rest; });
+                        }}
                       />
                       <button
                         type="button"
@@ -1166,17 +1256,20 @@ const JobPosting = () => {
                       </button>
                     </div>
                     
-                    {formData.checkpoints.length > 1 && hoveredCheckpoint === index && (
-                      <button
-                        type="button"
-                        onClick={() => removeCheckpoint(index)}
-                        className="h-[50px] px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        {formData.checkpoints.length > 1 && hoveredCheckpoint === index && (
+                          <button
+                            type="button"
+                            onClick={() => removeCheckpoint(index)}
+                            className="h-[50px] px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                      {errors[`checkpoint-${index}`] && <div className="text-red-500 text-sm mt-1">{errors[`checkpoint-${index}`]}</div>}
+                    </React.Fragment>
+                  );
+                })}
               </div>
               
               <div className="mb-8">
@@ -1194,10 +1287,10 @@ const JobPosting = () => {
                 <label className="block mb-3 text-lg font-medium">Alert Duration</label>
                 <select
                   name="alertDuration"
-                  className="w-full h-[50px] bg-[#3950801A] outline-none border rounded-full px-4"
+                  className={`w-full h-[50px] bg-[#3950801A] outline-none border rounded-full px-4 ${errors.alertDuration ? 'border-red-500' : ''}`}
                   value={formData.alertDuration}
                   onChange={handleChange}
-                  required
+                  onBlur={(e) => validateField('alertDuration', e.target.value)}
                 >
                   <option value="" className="bg-white text-gray-500">Choose alert duration</option>
                   <option value="15" className="bg-white text-gray-500">15 Minutes</option>
@@ -1205,6 +1298,7 @@ const JobPosting = () => {
                   <option value="60" className="bg-white text-gray-500">1 Hour</option>
                   <option value="120" className="bg-white text-gray-500">2 Hours</option>
                 </select>
+                {errors.alertDuration && <div className="text-red-500 text-sm mt-1">{errors.alertDuration}</div>}
               </div>
             </div>
 
@@ -1212,12 +1306,13 @@ const JobPosting = () => {
               <textarea
                 name="jobDescription"
                 placeholder="Enter job description"
-                className="w-full h-[150px] bg-[#3950801A] p-5 border rounded-md outline-none"
+                className={`w-full h-[150px] bg-[#3950801A] p-5 border rounded-md outline-none ${errors.jobDescription ? 'border-red-500' : ''}`}
                 rows="3"
                 value={formData.jobDescription}
                 onChange={handleChange}
-                required
+                onBlur={(e) => validateField('jobDescription', e.target.value)}
               ></textarea>
+              {errors.jobDescription && <div className="text-red-500 text-sm mt-1">{errors.jobDescription}</div>}
             </div>
             
             <div className="flex justify-end mt-8">
