@@ -3,15 +3,24 @@ import LoadingSpinner from "../../../common/LoadingSpinner";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
-import { FaFacebook, FaTwitter, FaPinterest, FaMapMarkerAlt } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaPinterest, FaMapMarkerAlt, FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { getJobById } from "../../../../api/jobsApi";
+import { getRotaManagementByCompany } from "../../../../api/rotaManagementApi";
 import { ThemeContext } from "../../../../context/ThemeContext";
+
+import AssignJobButton from "./popupsButtons/AssignJobButton";
 
 const JobDetail = () => {
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [savedWorkers, setSavedWorkers] = useState([]);
+    const [selectedWorker, setSelectedWorker] = useState("");
+    const [showAssignPopup, setShowAssignPopup] = useState(false);
+
+    // Find the selected worker object
+    const selectedWorkerObj = savedWorkers.find(w => w._id === selectedWorker);
     const { theme } = useContext(ThemeContext) || { theme: 'light' };
     
     const { jobId } = useParams();
@@ -73,6 +82,30 @@ const JobDetail = () => {
         fetchJobDetails();
     }, [jobId]);
 
+    // Fetch saved workers from rota
+    useEffect(() => {
+        const fetchSavedWorkers = async () => {
+            try {
+                const companyId = localStorage.getItem('companyId') || "68076cb1a9cc0fa2f47ab34e";
+                const result = await getRotaManagementByCompany(companyId);
+                // Use jobSeeker_id from each rota record
+                if (result && Array.isArray(result.data)) {
+                    const workersMap = new Map();
+                    result.data.forEach(rota => {
+                        const js = rota.jobSeeker_id;
+                        if (js && js._id && js.fullname && !workersMap.has(js._id)) {
+                            workersMap.set(js._id, js);
+                        }
+                    });
+                    setSavedWorkers(Array.from(workersMap.values()));
+                }
+            } catch (err) {
+                // Optionally handle error
+            }
+        };
+        fetchSavedWorkers();
+    }, []);
+
     
     // Display loading state
     if (loading) {
@@ -106,17 +139,20 @@ const JobDetail = () => {
 
     return (
         <div className={`flex flex-col lg:flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-           
-
             <div className="flex flex-col flex-1 overflow-x-hidden">
-              
-
-                <div className="flex justify-end px-4 lg:px-8">
-                    <p className={`mt-4 lg:mt-6 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
+                {/* Backward Arrow */}
+                <div className="flex items-center px-4 lg:px-8 mt-4 lg:mt-6">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="mr-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"
+                        aria-label="Go Back"
+                    >
+                        <FaArrowLeft className={`text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`} />
+                    </button>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
                         Find Job / {job.jobDuration || "Job Duration"} / Job Details
                     </p>
                 </div>
-
                 <div className="flex flex-col px-4 lg:px-8 space-y-4">
                     <div className={`flex flex-col lg:flex-row p-4 lg:p-6 justify-between rounded-lg w-full shadow-sm ${
                         theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'
@@ -268,13 +304,36 @@ const JobDetail = () => {
                         }`}>
                             Assign from Saved Workers:
                         </p>
-                        <select className={`w-full sm:w-[319px] h-[50px] outline-none p-3 rounded-full ${
-                            theme === 'dark' 
-                                ? 'bg-gray-700 text-gray-300 border-gray-600' 
-                                : 'border text-gray-500 bg-gray-100'
-                        }`}>
-                            <option>Select Worker</option>
+                        <select
+                            className={`w-full sm:w-[319px] h-[50px] outline-none p-3 rounded-full ${
+                                theme === 'dark' 
+                                    ? 'bg-gray-700 text-gray-300 border-gray-600' 
+                                    : 'border text-gray-500 bg-gray-100'
+                            }`}
+                            value={selectedWorker}
+                            onChange={e => {
+                                setSelectedWorker(e.target.value);
+                                if (e.target.value) setShowAssignPopup(true);
+                            }}
+                        >
+                            <option value="">Select Worker</option>
+                            {savedWorkers.length > 0 && savedWorkers.map(worker => (
+                                <option key={worker?._id} value={worker?._id}>
+                                    {worker?.fullname || worker?.name || worker?.email || worker?._id}
+                                </option>
+                            ))}
                         </select>
+                        {/* AssignJobButton Popup for Saved Worker */}
+                        {showAssignPopup && selectedWorkerObj && job && (
+                            <AssignJobButton
+                                onClose={() => {
+                                    setShowAssignPopup(false);
+                                    setSelectedWorker("");
+                                }}
+                                applicant={selectedWorkerObj}
+                                job={job}
+                            />
+                        )}
                     </div>
 
                     {/* Social Share Buttons */}
