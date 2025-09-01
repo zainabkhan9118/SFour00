@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { FaArrowLeft } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
@@ -235,8 +236,17 @@ const CompletedJobDetail = () => {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="flex flex-col flex-1">
-        <div className="flex justify-end px-4 sm:px-6 md:px-8">
-          <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mt-4 sm:mt-6">
+        {/* Back Arrow at the top */}
+        <div className="flex items-center px-4 sm:px-6 md:px-8 mt-4 sm:mt-6">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-gray-700 dark:text-gray-200 hover:text-orange-500 dark:hover:text-orange-400 focus:outline-none mr-2"
+            aria-label="Go Back"
+          >
+            <FaArrowLeft className="mr-1" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+          <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 ml-auto">
             Find Job / Completed Jobs / Job Details
           </p>
         </div>

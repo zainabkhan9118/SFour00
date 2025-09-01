@@ -159,47 +159,7 @@ const Header = () => {
         </button>
 
         {/* Company Info */}
-        <div className="flex items-center space-x-2">
-          {loading ? (
-            <div className="w-8 h-8 md:w-10 md:h-10">
-              <LoadingSpinner size="sm" />
-            </div>
-          ) : hasProfile ? (
-            // Show actual company data if profile exists and has name
-            <>
-              <img
-                src={companyProfile?.companyLogo || logo}
-                alt="Company Logo"
-                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200"
-              />
-              <span className="font-medium text-sm md:text-base max-w-[100px] md:max-w-[200px] truncate">
-                {companyProfile?.companyName || "Company Name"}
-              </span>
-              <span className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></span>
-            </>
-          ) : (
-            // Show placeholder for new companies without profiles
-            <>
-              <div 
-                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 border border-gray-200 cursor-pointer"
-                onClick={handleProfileClick}
-              >
-                <FaUsers className="text-lg" />
-              </div>
-              <div 
-                className="flex flex-col cursor-pointer"
-                onClick={handleProfileClick}
-              >
-                <span className="font-medium text-sm md:text-base text-gray-600 dark:text-gray-300">
-                  New Company
-                </span>
-                <span className="text-xs text-orange-500">
-                  Complete Profile
-                </span>
-              </div>
-            </>
-          )}
-        </div>
+       
       </div>
     </div>
   );

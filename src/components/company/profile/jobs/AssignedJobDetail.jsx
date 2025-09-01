@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import insta from "../../../../assets/images/insta.png";
 import salary from "../../../../assets/images/salary.png";
 import time from "../../../../assets/images/time.png";
@@ -295,12 +296,17 @@ const AssignedJobDetail = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-gray-900">
-      
-
       <div className="flex flex-col flex-1">
-      
-        <div className="flex justify-end px-4 md:px-8">
-          <p className="text-gray-400 dark:text-gray-300 mt-4 md:mt-6 text-sm md:text-base">
+        {/* Backward Arrow */}
+        <div className="flex items-center px-4 md:px-8 mt-4 md:mt-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"
+            aria-label="Go Back"
+          >
+            <FaArrowLeft className={`text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`} />
+          </button>
+          <p className="text-gray-400 dark:text-gray-300 text-sm md:text-base">
             Find Job / {jobData.jobDuration || "Job"} / Job Details
           </p>
         </div>
