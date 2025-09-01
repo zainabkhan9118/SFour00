@@ -112,9 +112,10 @@ export default function Sidebar() {
       profile: "/company-profile",
       chat: "/chat", 
       notifications: "/notification",
-      qrCode: "/qr-code"
+      qrCode: "/qr-code",
+      rota: "/rota-management",
+      findWorker: "/find-worker"
     };
-    
     setRoutes(sidebarRoutes);
     setLoading(false);
   }, []);
@@ -264,7 +265,7 @@ export default function Sidebar() {
                 <span>Profile</span>
               </div>
             </Link>
-            
+
             <Link 
               to={routes.chat}
               onClick={(e) => handleNavigation(e, routes.chat)}
@@ -290,7 +291,7 @@ export default function Sidebar() {
                 <span>Notifications</span>
               </div>
             </Link>
-            
+
             <Link 
               to={routes.qrCode}
               onClick={(e) => handleNavigation(e, routes.qrCode)}
@@ -301,6 +302,34 @@ export default function Sidebar() {
               >
                 <FaQrcode className="h-5 w-5" />
                 <span>QR Code</span>
+              </div>
+            </Link>
+
+            {/* Rota Management */}
+            <Link 
+              to={routes.rota}
+              onClick={(e) => handleNavigation(e, routes.rota)}
+              className={disabledStatus ? "cursor-not-allowed" : ""}
+            >
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.rota) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaBriefcase className="h-5 w-5" />
+                <span>Rota Management</span>
+              </div>
+            </Link>
+
+            {/* Find Worker */}
+            <Link 
+              to={routes.findWorker}
+              onClick={(e) => handleNavigation(e, routes.findWorker)}
+              className={disabledStatus ? "cursor-not-allowed" : ""}
+            >
+              <div 
+                className={`flex items-center space-x-3 ${isActive(routes.findWorker) ? 'text-white' : 'text-[#395080] dark:text-gray-400'} hover:text-white ml-8 cursor-pointer`}
+              >
+                <FaUsers className="h-5 w-5" />
+                <span>Find Worker</span>
               </div>
             </Link>
           </nav>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
+import { FaArrowLeft } from "react-icons/fa";
 import { useParams, useNavigate } from "react-router-dom";
 import insta from "../../../../../assets/images/insta.png";
 import salary from "../../../../../assets/images/salary.png";
@@ -529,7 +530,6 @@ const InProgressJobDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 dark:bg-gray-900">
-      
       {/* Radius Alert Notification */}
       {showRadiusAlert && (
         <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
@@ -548,8 +548,16 @@ const InProgressJobDetail = () => {
       )}
 
       <div className="flex flex-col flex-1">
-        <div className="flex justify-end px-4 sm:px-6 md:px-8">
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-4 sm:mt-6">
+        {/* Back Arrow Button */}
+        <div className="flex items-center px-4 sm:px-6 md:px-8 mt-4 sm:mt-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-2xl focus:outline-none"
+            aria-label="Go back"
+          >
+            <FaArrowLeft />
+          </button>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
             Find Job / {jobData.jobDuration} / Job Details
           </p>
         </div>
