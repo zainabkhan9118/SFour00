@@ -153,14 +153,20 @@ const ViewApplicant = () => {
 
     return (
         <div className={`flex flex-col md:flex-row min-h-screen ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-            
-
+            {/* Back Button at the top */}
             <div className="flex flex-col flex-1 w-full">
-                
-                <div className="flex justify-end px-4 md:px-8">
-                    <p className="text-gray-400 mt-4 md:mt-6 text-sm md:text-base">
-                        Find Job / {job.jobDuration || "Job Duration"} / Job Applicants
-                    </p>
+                <div className="flex items-center px-4 md:px-8 mt-4 md:mt-6 mb-2">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center text-[#023047] hover:text-[#FD7F00] font-semibold text-base md:text-lg focus:outline-none mr-4"
+                        aria-label="Go back"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 mr-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                        Back
+                    </button>
+                    
                 </div>
 
                 <div className="flex flex-col px-4 md:px-8 space-y-4 md:space-y-6">
