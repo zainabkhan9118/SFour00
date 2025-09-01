@@ -44,19 +44,27 @@ const InvoiceSuccessPopup = ({ invoiceDetails, onClose }) => {
           {invoiceDetails && (
             <div className="w-full p-4 mb-5 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <div className="flex justify-between mb-2">
-                <span className="text-gray-600 dark:text-gray-300">Date:</span>
+                <span className="text-gray-600 dark:text-gray-300">Work Date:</span>
                 <span className="font-medium text-gray-800 dark:text-gray-200">{invoiceDetails.workDate}</span>
               </div>
               <div className="flex justify-between mb-2">
-                <span className="text-gray-600 dark:text-gray-300">Hours:</span>
+                <span className="text-gray-600 dark:text-gray-300">Start Time:</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{invoiceDetails.startTime}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-600 dark:text-gray-300">End Time:</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">{invoiceDetails.endTime}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-600 dark:text-gray-300">Total Hours:</span>
                 <span className="font-medium text-gray-800 dark:text-gray-200">{invoiceDetails.totalHours}</span>
               </div>
               <div className="flex justify-between mb-2">
-                <span className="text-gray-600 dark:text-gray-300">Rate:</span>
+                <span className="text-gray-600 dark:text-gray-300">Rate per Hour:</span>
                 <span className="font-medium text-gray-800 dark:text-gray-200">${invoiceDetails.pricePerHour}/hr</span>
               </div>
               <div className="flex justify-between font-bold">
-                <span className="text-gray-800 dark:text-gray-200">Total:</span>
+                <span className="text-gray-800 dark:text-gray-200">Total Price:</span>
                 <span className="text-gray-800 dark:text-gray-200">${invoiceDetails.totalPrice}</span>
               </div>
             </div>

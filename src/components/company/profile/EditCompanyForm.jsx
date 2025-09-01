@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
+// Progress bar for form completion
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from "react-icons/fa";
 import { FiArrowRight } from "react-icons/fi";
@@ -6,6 +7,16 @@ import CompanySideBar from "./CompanySideBar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import company from "../../../assets/images/company.png";
 import LoadingSpinner from "../../common/LoadingSpinner";
+
+// Simple progress bar component
+const ProgressBar = ({ percent }) => (
+  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4">
+    <div
+      className="bg-orange-500 h-3 rounded-full transition-all duration-300"
+      style={{ width: `${percent}%` }}
+    ></div>
+  </div>
+);
 import { getCompanyProfile, updateCompanyProfile, createCompanyProfile } from "../../../api/companyApi";
 import { ThemeContext } from "../../../context/ThemeContext";
 
@@ -31,7 +42,25 @@ const EditCompanyForm = () => {
       managerPhone: ''
     }
   });
+  const [errors, setErrors] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
+
+  // Calculate progress percentage based on filled fields (including logo)
+  const getProfileCompletion = () => {
+    let total = 9; // total required fields (including logo)
+    let filled = 0;
+    if (formData.companyName) filled++;
+    if (formData.companyContact) filled++;
+    if (formData.companyEmail) filled++;
+    if (formData.address) filled++;
+    if (formData.bio) filled++;
+    if (formData.manager.managerName) filled++;
+    if (formData.manager.managerEmail) filled++;
+    if (formData.manager.managerPhone) filled++;
+    // Consider logo filled if previewImage exists and is not the default image
+    if (previewImage && previewImage !== company) filled++;
+    return Math.round((filled / total) * 100);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -113,19 +142,34 @@ const EditCompanyForm = () => {
     }
   };
 
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.companyName) newErrors.companyName = 'Company name is required';
+    if (!formData.companyContact) newErrors.companyContact = 'Company contact is required';
+    if (!formData.companyEmail) newErrors.companyEmail = 'Company email is required';
+    if (!formData.address) newErrors.address = 'Address is required';
+    if (!formData.bio) newErrors.bio = 'Company bio is required';
+    if (!formData.manager.managerName) newErrors.managerName = 'Manager name is required';
+    if (!formData.manager.managerEmail) newErrors.managerEmail = 'Manager email is required';
+    if (!formData.manager.managerPhone) newErrors.managerPhone = 'Manager phone is required';
+    return newErrors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
     setIsLoading(true);
-    
     const auth = getAuth();
     const currentUser = auth.currentUser;
-    
     if (!currentUser) {
       console.error("User not authenticated");
       setIsLoading(false);
       return;
     }
-
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('companyName', formData.companyName);
@@ -133,30 +177,24 @@ const EditCompanyForm = () => {
       formDataToSend.append('companyEmail', formData.companyEmail);
       formDataToSend.append('address', formData.address);
       formDataToSend.append('bio', formData.bio);
-      
       if (formData.companyLogo instanceof File) {
         formDataToSend.append('companyLogo', formData.companyLogo);
       }
-      
       formDataToSend.append('manager[managerName]', formData.manager.managerName);
       formDataToSend.append('manager[managerEmail]', formData.manager.managerEmail);
       formDataToSend.append('manager[managerPhone]', formData.manager.managerPhone);
-      
       let response;
       if (isDataAlreadyPosted) {
         response = await updateCompanyProfile(currentUser.uid, formDataToSend);
       } else {
         response = await createCompanyProfile(currentUser.uid, formDataToSend);
       }
-
       console.log(`Company data ${isDataAlreadyPosted ? 'updated' : 'saved'} successfully:`, response);
-      
       if (response && response.data) {
         localStorage.setItem('companyProfile', JSON.stringify(response.data));
         localStorage.setItem('companyId', response.data._id);
         console.log('Company profile stored in localStorage with ID:', response.data._id);
       }
-      
       navigate(-1);
     } catch (error) {
       console.error("Error saving company data:", error);
@@ -191,6 +229,13 @@ const EditCompanyForm = () => {
             </div>
 
             <div className="max-w-2xl mx-auto">
+              {/* Progress bar for profile completion */}
+              <div className="mb-2">
+                <ProgressBar percent={getProfileCompletion()} />
+                <div className="text-xs text-gray-600 dark:text-gray-300 text-right mb-2">
+                  Profile Completion: {getProfileCompletion()}%
+                </div>
+              </div>
               <form onSubmit={handleSubmit} className="flex flex-col space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-center mb-2">
                   <div className="relative">
@@ -218,102 +263,118 @@ const EditCompanyForm = () => {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-name" className="font-medium text-gray-700 dark:text-gray-300">Company Name</label>
+                  <label htmlFor="company-name" className="font-medium text-gray-700 dark:text-gray-300">Company Name<span className="text-red-500">*</span></label>
                   <input
                     id="company-name"
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                    className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.companyName ? 'border-red-500' : ''}`}
                     placeholder="Enter company name"
+                    required
                   />
+                  {errors.companyName && <span className="text-red-500 text-sm">{errors.companyName}</span>}
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-address" className="font-medium text-gray-700 dark:text-gray-300">Address</label>
+                  <label htmlFor="company-address" className="font-medium text-gray-700 dark:text-gray-300">Address<span className="text-red-500">*</span></label>
                   <input
                     id="company-address"
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                    className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.address ? 'border-red-500' : ''}`}
                     placeholder="Enter company address"
+                    required
                   />
+                  {errors.address && <span className="text-red-500 text-sm">{errors.address}</span>}
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-bio" className="font-medium text-gray-700 dark:text-gray-300">About Company</label>
+                  <label htmlFor="company-bio" className="font-medium text-gray-700 dark:text-gray-300">About Company<span className="text-red-500">*</span></label>
                   <textarea
                     id="company-bio"
                     value={formData.bio}
                     onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                    className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg resize-none h-28 focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.bio ? 'border-red-500' : ''}`}
                     placeholder="Describe your company"
                     rows="4"
+                    required
                   />
+                  {errors.bio && <span className="text-red-500 text-sm">{errors.bio}</span>}
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-email" className="font-medium text-gray-700 dark:text-gray-300">Company Email</label>
+                  <label htmlFor="company-email" className="font-medium text-gray-700 dark:text-gray-300">Company Email<span className="text-red-500">*</span></label>
                   <input
                     id="company-email"
                     type="email"
                     value={formData.companyEmail}
                     onChange={(e) => setFormData({...formData, companyEmail: e.target.value})}
-                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                    className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.companyEmail ? 'border-red-500' : ''}`}
                     placeholder="Enter company email"
+                    required
                   />
+                  {errors.companyEmail && <span className="text-red-500 text-sm">{errors.companyEmail}</span>}
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="company-contact" className="font-medium text-gray-700 dark:text-gray-300">Company Contact</label>
+                  <label htmlFor="company-contact" className="font-medium text-gray-700 dark:text-gray-300">Company Contact<span className="text-red-500">*</span></label>
                   <input
                     id="company-contact"
                     type="text"
                     value={formData.companyContact}
                     onChange={(e) => setFormData({...formData, companyContact: e.target.value})}
-                    className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                    className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.companyContact ? 'border-red-500' : ''}`}
                     placeholder="Enter company contact number"
+                    required
                   />
+                  {errors.companyContact && <span className="text-red-500 text-sm">{errors.companyContact}</span>}
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 my-2">
                   <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">Manager Details</h3>
                   
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-name" className="font-medium text-gray-700 dark:text-gray-300">Manager Name</label>
+                    <label htmlFor="manager-name" className="font-medium text-gray-700 dark:text-gray-300">Manager Name<span className="text-red-500">*</span></label>
                     <input
                       id="manager-name"
                       type="text"
                       value={formData.manager.managerName}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerName: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                      className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.managerName ? 'border-red-500' : ''}`}
                       placeholder="Enter manager name"
+                      required
                     />
+                    {errors.managerName && <span className="text-red-500 text-sm">{errors.managerName}</span>}
                   </div>
 
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-email" className="font-medium text-gray-700 dark:text-gray-300">Manager Email</label>
+                    <label htmlFor="manager-email" className="font-medium text-gray-700 dark:text-gray-300">Manager Email<span className="text-red-500">*</span></label>
                     <input
                       id="manager-email"
                       type="email"
                       value={formData.manager.managerEmail}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerEmail: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                      className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.managerEmail ? 'border-red-500' : ''}`}
                       placeholder="Enter manager email"
+                      required
                     />
+                    {errors.managerEmail && <span className="text-red-500 text-sm">{errors.managerEmail}</span>}
                   </div>
 
                   <div className="flex flex-col space-y-1 mt-2">
-                    <label htmlFor="manager-phone" className="font-medium text-gray-700 dark:text-gray-300">Manager Phone</label>
+                    <label htmlFor="manager-phone" className="font-medium text-gray-700 dark:text-gray-300">Manager Phone<span className="text-red-500">*</span></label>
                     <input
                       id="manager-phone"
                       type="text"
                       value={formData.manager.managerPhone}
                       onChange={(e) => setFormData({...formData, manager: {...formData.manager, managerPhone: e.target.value}})}
-                      className="w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600"
+                      className={`w-full p-4 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none border border-gray-200 dark:border-gray-600 ${errors.managerPhone ? 'border-red-500' : ''}`}
                       placeholder="Enter manager phone number"
+                      required
                     />
+                    {errors.managerPhone && <span className="text-red-500 text-sm">{errors.managerPhone}</span>}
                   </div>
                 </div>
 
